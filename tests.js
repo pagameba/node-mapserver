@@ -2,7 +2,7 @@ var util = require('util'),
     mapserver = require('./mapserver'),
     fs = require('fs');
     
-var map = new mapserver.loadMap('/ms4w/apps/gmap/htdocs/gmap75_debug.map','/ms4w/apps/gmap/htdocs/');
+var map = new mapserver.loadMap('./data/test.map','./data');
 
 console.log("map size: (" + map.width + "," + map.height + ")");
 
