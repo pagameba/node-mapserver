@@ -191,9 +191,9 @@ class Mapserver {
 
           char * data = (char *)msSaveImageBuffer(im, &size, map->_map->outputformat);
           // Buffer *retbuf = Buffer::New((char *)data, (size_t)size);
-          Buffer *retbuf = Buffer::New(size);
+          Buffer *retbuf = Buffer::New(data, (size_t) size);
           
-          memcpy(Buffer::Data(retbuf), data, size);
+          // memcpy(Buffer::Data(retbuf), data, size);
 
           msFree(data);
           msFreeImage(im);
