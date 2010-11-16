@@ -133,7 +133,8 @@ class Mapserver {
           t->Inherit(EventEmitter::constructor_template);
           t->InstanceTemplate()->SetInternalFieldCount(1);
         
-          NODE_SET_PROTOTYPE_METHOD(t, "drawMap", DrawMap);
+          NODE_SET_PROTOTYPE_METHOD(t, "drawMapRaw", DrawMapRaw);
+          NODE_SET_PROTOTYPE_METHOD(t, "drawMapBuffer", DrawMapBuffer);
         
           t->PrototypeTemplate()->SetAccessor(String::NewSymbol("width"), WidthGetter, NULL, Handle<Value>(), PROHIBITS_OVERWRITING, ReadOnly);
           t->PrototypeTemplate()->SetAccessor(String::NewSymbol("height"), HeightGetter, NULL, Handle<Value>(), PROHIBITS_OVERWRITING, ReadOnly);
@@ -183,22 +184,26 @@ class Mapserver {
           return scope.Close(result);
         }
   
-        static Handle<Value> DrawMap (const Arguments& args) {
+        static Handle<Value> DrawMapBuffer (const Arguments& args) {
           HandleScope scope;
           Map *map = ObjectWrap::Unwrap<Map>(args.This());
           imageObj * im = msDrawMap(map->_map, MS_FALSE);
           int size;
 
-          char * data = (char *)msSaveImageBuffer(im, &size, map->_map->outputformat);
-          // Buffer *retbuf = Buffer::New((char *)data, (size_t)size);
-          Buffer *retbuf = Buffer::New(data, (size_t) size);
+          unsigned char * data = msSaveImageBuffer(im, &size, map->_map->outputformat);
+          Buffer *retbuf = Buffer::New((char *) data, (size_t) size);
           
-          // memcpy(Buffer::Data(retbuf), data, size);
-
           msFree(data);
           msFreeImage(im);
 
           return scope.Close(retbuf->handle_);
+        }
+        static Handle<Value> DrawMapRaw (const Arguments& args) {
+          Map *map = ObjectWrap::Unwrap<Map>(args.This());
+          imageObj * im = msDrawMap(map->_map, MS_FALSE);
+          int size;
+          unsigned char * data = msSaveImageBuffer(im, &size, map->_map->outputformat);
+          RETURN_DATA();
         }
     };
 

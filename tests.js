@@ -6,10 +6,15 @@ var map = new mapserver.loadMap('/ms4w/apps/gmap/htdocs/gmap75_debug.map','/ms4w
 
 console.log("map size: (" + map.width + "," + map.height + ")");
 
-// var buffer = new Buffer(map.drawMap(), 'binary');
-var buffer = map.drawMap();
-
-fs.writeFile('test.gif', buffer, function(err) {
+var buffer = new Buffer(map.drawMapRaw(), 'binary');
+fs.writeFile('test_raw.gif', buffer, function(err) {
   if (err) throw err;
-  // console.log('drawmap done.');
+  console.log('saved test_raw.gif');
 });
+
+var buffer = map.drawMapBuffer();
+
+fs.writeFile('test_buffer.gif', buffer, function(err) {
+  if (err) throw err;
+  console.log('saved test_buffer.gif');
+})
