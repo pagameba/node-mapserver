@@ -59,19 +59,6 @@ using namespace node;
                   String::New("Argument " #I " invalid")));             \
   Local<External> VAR = Local<External>::Cast(args[I]);
 
-/*
-#define OPT_STR_ARG(I, VAR, DEFAULT)                                    \
-  String::Utf8Value * VAR;                                              \
-  if (args.Length() <= (I)) {                                           \
-    VAR = (DEFAULT);                                                    \
-  } else if (args[I]->IsString()) {                                     \
-    VAR = args[I]->ToString();                                          \
-  } else {                                                              \
-    return ThrowException(Exception::TypeError(                         \
-                  String::New("Argument " #I " must be a string")));    \
-  }
-*/
-
 #define OPT_INT_ARG(I, VAR, DEFAULT)                                    \
   int VAR;                                                              \
   if (args.Length() <= (I)) {                                           \
@@ -84,12 +71,18 @@ using namespace node;
   }
 
 #define RETURN_MAP(MAP)                                               \
-	if (!MAP) return Null();                                            \
-	HandleScope scope;                                                  \
-	Local<Value> _arg_ = External::New(MAP);                            \
-	Persistent<Object> _map_(Map::constructor_template->GetFunction()->NewInstance(1, &_arg_)); \
-	return scope.Close(_map_);
+  if (!MAP) return Null();                                            \
+  HandleScope scope;                                                  \
+  Local<Value> _arg_ = External::New(MAP);                            \
+  Persistent<Object> _map_(Map::constructor_template->GetFunction()->NewInstance(1, &_arg_)); \
+  return scope.Close(_map_);
 
+#define RETURN_ERROR(ERROR)                                               \
+  if (!ERROR) return Null();                                            \
+  HandleScope scope;                                                  \
+  Local<Value> _arg_ = External::New(ERROR);                            \
+  Persistent<Object> _err_(ErrorObj::constructor_template->GetFunction()->NewInstance(1, &_arg_)); \
+  return scope.Close(_err_);
 
 #define RETURN_DATA()                                                   \
   HandleScope scope;                                                    \
@@ -105,8 +98,14 @@ class Mapserver {
       HandleScope scope;
       
       NODE_SET_METHOD(target, "loadMap", LoadMap);
+      NODE_SET_METHOD(target, "getVersion", GetVersion);
+      NODE_SET_METHOD(target, "getVersionInt", GetVersionInt);
+
+      NODE_SET_METHOD(target, "resetErrorList", ResetErrorList);
+      NODE_SET_METHOD(target, "getError", GetError);
       
       Map::Init(target);
+      ErrorObj::Init(target);
     }
 
   protected:
@@ -116,9 +115,112 @@ class Mapserver {
       REQ_STR_ARG(1, path);
       
       mapObj * map = msLoadMap(*filename, *path);
-      
+      if (map == NULL) {
+        THROW_ERROR(Error, "Ugh");
+      }
       RETURN_MAP(map);
     }
+    
+    static Handle<Value> ResetErrorList (const Arguments& args) {
+      msResetErrorList();
+      return Undefined();
+    }
+    
+    static Handle<Value> GetError (const Arguments& args) {
+      errorObj * err = msGetErrorObj();
+      
+      if (err == NULL) {
+        return Undefined();
+      } 
+      RETURN_ERROR(err);
+    }
+    
+    static Handle<Value> GetVersion (const Arguments& args) {
+      HandleScope scope;
+      char * version = msGetVersion();
+
+      Local<String> result = String::New(version);
+      return scope.Close(result);
+    }
+    
+    static Handle<Value> GetVersionInt (const Arguments& args) {
+      HandleScope scope;
+      int version = msGetVersionInt();
+
+      Local<Number> result = Integer::New(version);
+      return scope.Close(result);
+    }
+    
+    
+    class ErrorObj : public EventEmitter {
+    public:
+      static Persistent<FunctionTemplate> constructor_template;
+      
+      static void Init(v8::Handle<Object> target) {
+        HandleScope scope;
+        
+        Local<FunctionTemplate> t = FunctionTemplate::New(New);
+        constructor_template = Persistent<FunctionTemplate>::New(t);
+        
+        t->Inherit(EventEmitter::constructor_template);
+        t->InstanceTemplate()->SetInternalFieldCount(1);
+
+        t->PrototypeTemplate()->SetAccessor(String::NewSymbol("code"), CodeGetter, NULL, Handle<Value>(), PROHIBITS_OVERWRITING, ReadOnly);
+        t->PrototypeTemplate()->SetAccessor(String::NewSymbol("codeStr"), CodeStrGetter, NULL, Handle<Value>(), PROHIBITS_OVERWRITING, ReadOnly);
+        t->PrototypeTemplate()->SetAccessor(String::NewSymbol("routine"), RoutineGetter, NULL, Handle<Value>(), PROHIBITS_OVERWRITING, ReadOnly);
+        t->PrototypeTemplate()->SetAccessor(String::NewSymbol("message"), MessageGetter, NULL, Handle<Value>(), PROHIBITS_OVERWRITING, ReadOnly);
+      
+        target->Set(String::NewSymbol("ErrorObj"), t->GetFunction());
+      }
+      
+      static Handle<Value> New(const Arguments& args) {
+        HandleScope scope;
+        REQ_EXT_ARG(0, err);
+        (new ErrorObj((errorObj *)err->Value()))->Wrap(args.This());
+        return args.This();
+      }
+    protected:
+      ErrorObj(errorObj *err) : _err(err) { }
+      
+      ~ErrorObj() { }
+      
+      errorObj * _err;
+      
+      operator errorObj* () const { return _err; }
+      
+      static Handle<Value> CodeGetter (Local<String> property, const AccessorInfo& info) {
+        HandleScope scope;
+        ErrorObj *err = ObjectWrap::Unwrap<ErrorObj>(info.This());
+
+        Local<Number> result = Integer::New(err->_err->code);
+        return scope.Close(result);
+      }
+      
+      static Handle<Value> CodeStrGetter (Local<String> property, const AccessorInfo& info) {
+        HandleScope scope;
+        ErrorObj *err = ObjectWrap::Unwrap<ErrorObj>(info.This());
+        
+        Local<String> result = String::New(msGetErrorCodeString(err->_err->code));
+        return scope.Close(result);
+      }
+
+      static Handle<Value> MessageGetter (Local<String> property, const AccessorInfo& info) {
+        HandleScope scope;
+        ErrorObj *err = ObjectWrap::Unwrap<ErrorObj>(info.This());
+
+        Local<String> result = String::New(err->_err->message);
+        return scope.Close(result);
+      }
+      
+      static Handle<Value> RoutineGetter (Local<String> property, const AccessorInfo& info) {
+        HandleScope scope;
+        ErrorObj *err = ObjectWrap::Unwrap<ErrorObj>(info.This());
+
+        Local<String> result = String::New(err->_err->routine);
+        return scope.Close(result);
+      }
+      
+    };
   
     class Map : public EventEmitter {
       public:
@@ -218,6 +320,7 @@ class Mapserver {
 };
 
 Persistent<FunctionTemplate> Mapserver::Map::constructor_template;
+Persistent<FunctionTemplate> Mapserver::ErrorObj::constructor_template;
 
 extern "C"
 void init (Handle<Object> target)
