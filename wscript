@@ -12,15 +12,20 @@ def set_options(opt):
 def configure(conf):
   conf.check_tool("compiler_cxx")
   conf.check_tool("node_addon")
+  # to build on linux comment following line
   conf.check_tool('osx')
+
 
 def build(bld):
   obj = bld.new_task_gen("cxx", "shlib", "node_addon")
   obj.target = "mapserver_bindings"
   obj.source = "mapserver_bindings.cc"
+  # to build on linux, comment following 2 lines
   obj.includes = ['/Users/pspencer/Projects/mapserver-5.6/mapserver']
   obj.env["FRAMEWORK"] = "MapServer"
- 
+  # to build on linux uncomment following line
+  # obj.lib = ["mapserver"]
+
 def shutdown():
   if Options.commands['clean']:
     if exists('mapserver_binding.node'): unlink('mapserver_binding.node')

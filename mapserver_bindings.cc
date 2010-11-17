@@ -133,11 +133,10 @@ class Mapserver {
           t->Inherit(EventEmitter::constructor_template);
           t->InstanceTemplate()->SetInternalFieldCount(1);
         
-          NODE_SET_PROTOTYPE_METHOD(t, "drawMapRaw", DrawMapRaw);
-          NODE_SET_PROTOTYPE_METHOD(t, "drawMapBuffer", DrawMapBuffer);
+          NODE_SET_PROTOTYPE_METHOD(t, "drawMap", DrawMap);
         
-          t->PrototypeTemplate()->SetAccessor(String::NewSymbol("width"), WidthGetter, NULL, Handle<Value>(), PROHIBITS_OVERWRITING, ReadOnly);
-          t->PrototypeTemplate()->SetAccessor(String::NewSymbol("height"), HeightGetter, NULL, Handle<Value>(), PROHIBITS_OVERWRITING, ReadOnly);
+          t->PrototypeTemplate()->SetAccessor(String::NewSymbol("width"), WidthGetter, WidthSetter);
+          t->PrototypeTemplate()->SetAccessor(String::NewSymbol("height"), HeightGetter, HeightSetter);
         
           target->Set(String::NewSymbol("Map"), t->GetFunction());
         }
@@ -176,6 +175,13 @@ class Mapserver {
           return scope.Close(result);
         }
   
+        static void WidthSetter (Local<String> property, Local<Value> value, const AccessorInfo& info) {
+          HandleScope scope;
+          Map *map = ObjectWrap::Unwrap<Map>(info.This());
+          
+          map->_map->width = value->Int32Value();
+        }
+  
         static Handle<Value> HeightGetter (Local<String> property, const AccessorInfo& info) {
           HandleScope scope;
           Map *map = ObjectWrap::Unwrap<Map>(info.This());
@@ -183,27 +189,29 @@ class Mapserver {
           Local<Number> result = Integer::New(map->_map->height);
           return scope.Close(result);
         }
+
+        static void HeightSetter (Local<String> property, Local<Value> value, const AccessorInfo& info) {
+          HandleScope scope;
+          Map *map = ObjectWrap::Unwrap<Map>(info.This());
+          
+          map->_map->height = value->Int32Value();
+        }
+        
+        static void FreeImageBuffer(char *data, void *hint) {
+          msFree(data);
+        }
   
-        static Handle<Value> DrawMapBuffer (const Arguments& args) {
+        static Handle<Value> DrawMap (const Arguments& args) {
           HandleScope scope;
           Map *map = ObjectWrap::Unwrap<Map>(args.This());
           imageObj * im = msDrawMap(map->_map, MS_FALSE);
           int size;
 
           unsigned char * data = msSaveImageBuffer(im, &size, map->_map->outputformat);
-          Buffer *retbuf = Buffer::New((char *) data, (size_t) size);
-          
-          msFree(data);
+          Buffer *retbuf = Buffer::New((char *) data, size, FreeImageBuffer, NULL);
           msFreeImage(im);
 
           return scope.Close(retbuf->handle_);
-        }
-        static Handle<Value> DrawMapRaw (const Arguments& args) {
-          Map *map = ObjectWrap::Unwrap<Map>(args.This());
-          imageObj * im = msDrawMap(map->_map, MS_FALSE);
-          int size;
-          unsigned char * data = msSaveImageBuffer(im, &size, map->_map->outputformat);
-          RETURN_DATA();
         }
     };
 
