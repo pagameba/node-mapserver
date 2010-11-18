@@ -14,10 +14,31 @@ var assert = require('assert'),
 console.log('mapserver version number: ' + mapserver.getVersionInt());
 console.log('mapserver version information: ' + mapserver.getVersion());
 
-// test loadMap
+// quick error test
+err = mapserver.getError();
+assert.equal(err.code, 0, 'should be no errors');
+
+// Test default mapfile pattern (must end in .map)
 assert.throws(function() { 
   mapserver.loadMap(path.join(datadir), nomapfile);  
 }, Error, 'attempting to load a non-existent map should throw an error.');
+
+// check error
+err = mapserver.getError();
+assert.equal(err.code, 5, 'Default mapfile pattern test failed')
+
+// test resetErrorList
+mapserver.resetErrorList();
+err = mapserver.getError();
+assert.equal(err.code, 0, 'should be no errors');
+
+// test loadMap with missing file
+assert.throws(function() { 
+  mapserver.loadMap(path.join(datadir, 'missing.map'), nomapfile);  
+}, Error, 'attempting to load a non-existent map should throw an error.');
+
+err = mapserver.getError();
+assert.equal(err.code, 1, 'Mapserver should complain about a mapfile that does not exist.');
 
 assert.doesNotThrow(function() {
   map = mapserver.loadMap(path.join(datadir, mapfile),datadir);
