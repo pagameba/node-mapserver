@@ -14,9 +14,4 @@ ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 
-var util  = require('util'),
-    bind = require("./build/default/mapserver_bindings");
-
-for(var p in bind) {
-	if (bind[p] !== undefined) exports[p] = bind[p];
-}
+module.exports = require("./build/default/mapserver_bindings");

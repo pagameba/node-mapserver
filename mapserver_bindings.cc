@@ -226,7 +226,7 @@ class Mapserver {
         
           NODE_SET_PROTOTYPE_METHOD(t, "drawMap", DrawMap);
         
-          t->PrototypeTemplate()->SetNamedPropertyHandler(NamedPropertyGetter/*, NamedPropertySetter*/);
+          t->InstanceTemplate()->SetNamedPropertyHandler(NamedPropertyGetter, NamedPropertySetter);
         
           target->Set(String::NewSymbol("Map"), t->GetFunction());
         }
@@ -351,7 +351,7 @@ class Mapserver {
         
           // NODE_SET_PROTOTYPE_METHOD(t, "drawMap", DrawMap);
         
-          t->PrototypeTemplate()->SetNamedPropertyHandler(NamedPropertyGetter/*, NamedPropertySetter*/);
+          t->InstanceTemplate()->SetNamedPropertyHandler(NamedPropertyGetter, NamedPropertySetter);
         
           target->Set(String::NewSymbol("Layer"), t->GetFunction());
         }
