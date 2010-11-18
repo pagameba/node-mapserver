@@ -34,11 +34,9 @@ assert.equal(map.layers.foo, undefined, 'map.layers should not expose arbitrary 
 assert.equal(typeof map.layers.length, 'number', 'map.layers.length should be an integer');
 assert.equal(map.layers.length, 1, 'map.layers.length should be 1');
 
-var layer = map.layers[0];
-
-// for (var i=0; i< map.layers.length; i++) {
-//   console.log('layer ' + i + ' name: ' + map.layers[i].name);
-// }
+for (var i=0; i< map.layers.length; i++) {
+  console.log('layer ' + i + ' name: ' + map.layers[i].name);
+}
 
 var buffer = map.drawMap();
 buffer = buffer.slice(0,buffer.length);

@@ -111,8 +111,9 @@ class Mapserver {
       NODE_SET_METHOD(target, "resetErrorList", ResetErrorList);
       NODE_SET_METHOD(target, "getError", GetError);
       
-      Map::Init(target);
       ErrorObj::Init(target);
+      Map::Init(target);
+      Layer::Init(target);
     }
 
   protected:
@@ -159,7 +160,7 @@ class Mapserver {
     }
     
     
-    class ErrorObj : public EventEmitter {
+    class ErrorObj : public ObjectWrap {
     public:
       static Persistent<FunctionTemplate> constructor_template;
       
@@ -169,7 +170,6 @@ class Mapserver {
         Local<FunctionTemplate> t = FunctionTemplate::New(New);
         constructor_template = Persistent<FunctionTemplate>::New(t);
         
-        t->Inherit(EventEmitter::constructor_template);
         t->InstanceTemplate()->SetInternalFieldCount(1);
 
         t->PrototypeTemplate()->SetAccessor(String::NewSymbol("code"), CodeGetter, NULL, Handle<Value>(), PROHIBITS_OVERWRITING, ReadOnly);
@@ -230,7 +230,7 @@ class Mapserver {
     };
   
   
-    class Map : public EventEmitter {
+    class Map : public ObjectWrap {
       public:
         static Persistent<FunctionTemplate> constructor_template;
       
@@ -240,7 +240,6 @@ class Mapserver {
           Local<FunctionTemplate> t = FunctionTemplate::New(New);
           constructor_template = Persistent<FunctionTemplate>::New(t);
         
-          t->Inherit(EventEmitter::constructor_template);
           t->InstanceTemplate()->SetInternalFieldCount(1);
         
           NODE_SET_PROTOTYPE_METHOD(t, "drawMap", DrawMap);
@@ -381,7 +380,7 @@ class Mapserver {
     };
     
     
-    class Layer : public EventEmitter {
+    class Layer : public ObjectWrap {
       public:
         static Persistent<FunctionTemplate> constructor_template;
       
@@ -391,7 +390,6 @@ class Mapserver {
           Local<FunctionTemplate> t = FunctionTemplate::New(New);
           constructor_template = Persistent<FunctionTemplate>::New(t);
         
-          t->Inherit(EventEmitter::constructor_template);
           t->InstanceTemplate()->SetInternalFieldCount(1);
         
           // NODE_SET_PROTOTYPE_METHOD(t, "drawMap", DrawMap);
