@@ -87,7 +87,17 @@ Properties:
 
  * *width* - read/write integer, the width in pixels of the image to generate for this map when it is drawn
  * *height* - read/write integer, the height in pixels of the image to generate for this map when it is drawn
+ * *layers* - read-only array, an array of layers in the map.
  
 Methods:
 
 **drawMap** renders an image based on the Map's current state and returns a Buffer object.
+
+Layer
+-----
+
+A layer object represents a LAYER block in a map file and has the following methods and properties for manipulating it:
+
+Properties:
+
+ * *name* - read/write string, the name of the layer.
