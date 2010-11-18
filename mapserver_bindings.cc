@@ -70,6 +70,13 @@ using namespace node;
               String::New("Argument " #I " must be an integer"))); \
   }
 
+#define RETURN_LAYER(LAYER)                                               \
+  if (!LAYER) return Null();                                            \
+  HandleScope scope;                                                  \
+  Local<Value> _arg_ = External::New(LAYER);                            \
+  Persistent<Object> _layer_(Layer::constructor_template->GetFunction()->NewInstance(1, &_arg_)); \
+  return scope.Close(_layer_);
+
 #define RETURN_MAP(MAP)                                               \
   if (!MAP) return Null();                                            \
   HandleScope scope;                                                  \
@@ -222,6 +229,7 @@ class Mapserver {
       
     };
   
+  
     class Map : public EventEmitter {
       public:
         static Persistent<FunctionTemplate> constructor_template;
@@ -239,6 +247,7 @@ class Mapserver {
         
           t->PrototypeTemplate()->SetAccessor(String::NewSymbol("width"), WidthGetter, WidthSetter);
           t->PrototypeTemplate()->SetAccessor(String::NewSymbol("height"), HeightGetter, HeightSetter);
+          t->PrototypeTemplate()->SetAccessor(String::NewSymbol("layers"), LayersGetter);
         
           target->Set(String::NewSymbol("Map"), t->GetFunction());
         }
@@ -251,7 +260,8 @@ class Mapserver {
         }
 
       protected:  
-        Map(mapObj * map) : _map(map) { }
+        Map(mapObj * map) : _map(map) { 
+        }
 
         ~Map() { 
           if (_map) {
@@ -260,8 +270,10 @@ class Mapserver {
         }
 
         mapObj * _map;
-
+        
         operator mapObj* () const { return _map; }
+        
+        static Persistent<ObjectTemplate> layers_template_;
         
         static Handle<Value> Destroy (const Arguments &args) {
           Map *map = ObjectWrap::Unwrap<Map>(args.This());
@@ -299,6 +311,47 @@ class Mapserver {
           map->_map->height = value->Int32Value();
         }
         
+        static Handle<Value> LayersGetter (Local<String> property, const AccessorInfo& info) {
+          HandleScope scope;
+          Map *map = ObjectWrap::Unwrap<Map>(info.This());
+          
+          if (layers_template_.IsEmpty()) {
+            Handle<ObjectTemplate> raw_template = ObjectTemplate::New();
+            raw_template->SetInternalFieldCount(1);
+            raw_template->SetIndexedPropertyHandler(LayersIndexedGetter, NULL, NULL, NULL, NULL);
+            raw_template->SetNamedPropertyHandler(LayersNamedGetter, NULL, NULL, NULL, NULL);
+            layers_template_ = Persistent<ObjectTemplate>::New(raw_template);
+            
+          }
+          Handle<ObjectTemplate> templ = layers_template_;
+          Handle<Object> result = templ->NewInstance();
+          Handle<External> map_ptr = External::New(map);
+          result->SetInternalField(0,map_ptr);
+          return scope.Close(result);
+        }
+        
+        static Handle<Value> LayersIndexedGetter (uint32_t index, const AccessorInfo& info) {
+          Map *map = ObjectWrap::Unwrap<Map>(info.This());
+          if (index >=0 && index < map->_map->numlayers) {
+            RETURN_LAYER(map->_map->layers[index]);
+          }
+          return Undefined();
+        }
+        
+        static Handle<Value> LayersNamedGetter(Local<String> name, const AccessorInfo& info) {
+          Map *map = ObjectWrap::Unwrap<Map>(info.This());
+          String::AsciiValue n(name);
+          if (strcmp(*n, "length") == 0) {
+            return Integer::New(map->_map->numlayers);
+          }
+          return Undefined();
+        }
+        
+        
+        /**
+         * callback for buffer creation to free the memory assocatiated with the
+         * image after its been copied into the buffer
+         */
         static void FreeImageBuffer(char *data, void *hint) {
           msFree(data);
         }
@@ -315,12 +368,88 @@ class Mapserver {
 
           return scope.Close(retbuf->handle_);
         }
+        
+        // static v8::Handle<Value> IndexedPropertySetter(uint32_t index,
+        //                                                Local<Value> value,
+        //                                                const AccessorInfo& info) {
+        //   if (index == 39) {
+        //     return value;
+        //   }
+        //   return v8::Handle<Value>();
+        // }
+        
     };
+    
+    
+    class Layer : public EventEmitter {
+      public:
+        static Persistent<FunctionTemplate> constructor_template;
+      
+        static void Init(v8::Handle<Object> target) {
+          HandleScope scope;
+        
+          Local<FunctionTemplate> t = FunctionTemplate::New(New);
+          constructor_template = Persistent<FunctionTemplate>::New(t);
+        
+          t->Inherit(EventEmitter::constructor_template);
+          t->InstanceTemplate()->SetInternalFieldCount(1);
+        
+          // NODE_SET_PROTOTYPE_METHOD(t, "drawMap", DrawMap);
+        
+          t->PrototypeTemplate()->SetAccessor(String::NewSymbol("name"), NameGetter, NameSetter);
+        
+          target->Set(String::NewSymbol("Layer"), t->GetFunction());
+        }
+      
+        static Handle<Value> New(const Arguments& args) {
+          HandleScope scope;
+          REQ_EXT_ARG(0, layer);
+          (new Layer((layerObj *)layer->Value()))->Wrap(args.This());
+          return args.This();
+        }
+
+      protected:  
+        Layer(layerObj * layer) : _layer(layer) { }
+
+        ~Layer() { 
+          if (_layer) {
+            // msFreeLayer(_layer);
+          }
+        }
+
+        layerObj * _layer;
+
+        operator layerObj* () const { return _layer; }
+        
+        static Handle<Value> Destroy (const Arguments &args) {
+          Layer *layer = ObjectWrap::Unwrap<Layer>(args.This());
+          // msFreeLayer(layer->_layer);
+          return Undefined();
+        }
+        
+        static Handle<Value> NameGetter (Local<String> property, const AccessorInfo& info) {
+          HandleScope scope;
+          Layer *layer = ObjectWrap::Unwrap<Layer>(info.This());
+
+          Local<String> result = String::New(layer->_layer->name);
+          return scope.Close(result);
+        }
+
+        static void NameSetter (Local<String> property, Local<Value> value, const AccessorInfo& info) {
+          HandleScope scope;
+          Layer *layer = ObjectWrap::Unwrap<Layer>(info.This());
+          String::Utf8Value name(value->ToString());
+          layer->_layer->name = *name;;
+        }
+        
+      };
 
 };
 
-Persistent<FunctionTemplate> Mapserver::Map::constructor_template;
 Persistent<FunctionTemplate> Mapserver::ErrorObj::constructor_template;
+Persistent<FunctionTemplate> Mapserver::Map::constructor_template;
+Persistent<ObjectTemplate>   Mapserver::Map::layers_template_;
+Persistent<FunctionTemplate> Mapserver::Layer::constructor_template;
 
 extern "C"
 void init (Handle<Object> target)
