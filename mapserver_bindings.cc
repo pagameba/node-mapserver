@@ -91,10 +91,14 @@ using namespace node;
   Persistent<Object> _err_(ErrorObj::constructor_template->GetFunction()->NewInstance(1, &_arg_)); \
   return scope.Close(_err_);
 
-#define RETURN_DATA()                                                   \
+#define RETURN_STRING(STR)                                              \
   HandleScope scope;                                                    \
-  Local<Value> result = Encode(data, size);                             \
-  delete[] data;                                                        \
+  Local<String> result = String::New(STR);                              \
+  return scope.Close(result);
+
+#define RETURN_NUMBER(NUM)                                                   \
+  HandleScope scope;                                                    \
+  Local<Number> result = Integer::New(NUM);                             \
   return scope.Close(result);
 
 class Mapserver {
@@ -171,11 +175,7 @@ class Mapserver {
         constructor_template = Persistent<FunctionTemplate>::New(t);
         
         t->InstanceTemplate()->SetInternalFieldCount(1);
-
-        t->PrototypeTemplate()->SetAccessor(String::NewSymbol("code"), CodeGetter, NULL, Handle<Value>(), PROHIBITS_OVERWRITING, ReadOnly);
-        t->PrototypeTemplate()->SetAccessor(String::NewSymbol("codeStr"), CodeStrGetter, NULL, Handle<Value>(), PROHIBITS_OVERWRITING, ReadOnly);
-        t->PrototypeTemplate()->SetAccessor(String::NewSymbol("routine"), RoutineGetter, NULL, Handle<Value>(), PROHIBITS_OVERWRITING, ReadOnly);
-        t->PrototypeTemplate()->SetAccessor(String::NewSymbol("message"), MessageGetter, NULL, Handle<Value>(), PROHIBITS_OVERWRITING, ReadOnly);
+        t->PrototypeTemplate()->SetNamedPropertyHandler(NamedPropertyGetter);
       
         target->Set(String::NewSymbol("ErrorObj"), t->GetFunction());
       }
@@ -195,38 +195,20 @@ class Mapserver {
       
       operator errorObj* () const { return _err; }
       
-      static Handle<Value> CodeGetter (Local<String> property, const AccessorInfo& info) {
-        HandleScope scope;
+      static Handle<Value> NamedPropertyGetter (Local<String> property, const AccessorInfo& info) {
         ErrorObj *err = ObjectWrap::Unwrap<ErrorObj>(info.This());
-
-        Local<Number> result = Integer::New(err->_err->code);
-        return scope.Close(result);
+        v8::String::AsciiValue n(property);
+        if (strcmp(*n, "code") == 0) {
+          RETURN_NUMBER(err->_err->code);
+        } else if (strcmp(*n, "codeStr") == 0) {
+          RETURN_STRING(msGetErrorCodeString(err->_err->code));
+        } else if (strcmp(*n, "message") == 0) {
+          RETURN_STRING(err->_err->message);
+        } else if (strcmp(*n, "routine") == 0) {
+          RETURN_STRING(err->_err->routine);
+        }
+        return Undefined();
       }
-      
-      static Handle<Value> CodeStrGetter (Local<String> property, const AccessorInfo& info) {
-        HandleScope scope;
-        ErrorObj *err = ObjectWrap::Unwrap<ErrorObj>(info.This());
-        
-        Local<String> result = String::New(msGetErrorCodeString(err->_err->code));
-        return scope.Close(result);
-      }
-
-      static Handle<Value> MessageGetter (Local<String> property, const AccessorInfo& info) {
-        HandleScope scope;
-        ErrorObj *err = ObjectWrap::Unwrap<ErrorObj>(info.This());
-
-        Local<String> result = String::New(err->_err->message);
-        return scope.Close(result);
-      }
-      
-      static Handle<Value> RoutineGetter (Local<String> property, const AccessorInfo& info) {
-        HandleScope scope;
-        ErrorObj *err = ObjectWrap::Unwrap<ErrorObj>(info.This());
-
-        Local<String> result = String::New(err->_err->routine);
-        return scope.Close(result);
-      }
-      
     };
   
   
@@ -244,14 +226,13 @@ class Mapserver {
         
           NODE_SET_PROTOTYPE_METHOD(t, "drawMap", DrawMap);
         
-          t->PrototypeTemplate()->SetAccessor(String::NewSymbol("width"), WidthGetter, WidthSetter);
-          t->PrototypeTemplate()->SetAccessor(String::NewSymbol("height"), HeightGetter, HeightSetter);
-          t->PrototypeTemplate()->SetAccessor(String::NewSymbol("layers"), LayersGetter);
+          t->PrototypeTemplate()->SetNamedPropertyHandler(NamedPropertyGetter/*, NamedPropertySetter*/);
         
           target->Set(String::NewSymbol("Map"), t->GetFunction());
         }
       
         static Handle<Value> New(const Arguments& args) {
+          assert(args.IsConstructCall());
           HandleScope scope;
           REQ_EXT_ARG(0, map);
           (new Map((mapObj *)map->Value()))->Wrap(args.This());
@@ -280,55 +261,41 @@ class Mapserver {
           return Undefined();
         }
 
-        static Handle<Value> WidthGetter (Local<String> property, const AccessorInfo& info) {
-          HandleScope scope;
+        static Handle<Value> NamedPropertyGetter (Local<String> property, const AccessorInfo& info) {
           Map *map = ObjectWrap::Unwrap<Map>(info.This());
-
-          Local<Number> result = Integer::New(map->_map->width);
-          return scope.Close(result);
-        }
-  
-        static void WidthSetter (Local<String> property, Local<Value> value, const AccessorInfo& info) {
-          HandleScope scope;
-          Map *map = ObjectWrap::Unwrap<Map>(info.This());
-          
-          map->_map->width = value->Int32Value();
-        }
-  
-        static Handle<Value> HeightGetter (Local<String> property, const AccessorInfo& info) {
-          HandleScope scope;
-          Map *map = ObjectWrap::Unwrap<Map>(info.This());
-
-          Local<Number> result = Integer::New(map->_map->height);
-          return scope.Close(result);
-        }
-
-        static void HeightSetter (Local<String> property, Local<Value> value, const AccessorInfo& info) {
-          HandleScope scope;
-          Map *map = ObjectWrap::Unwrap<Map>(info.This());
-          
-          map->_map->height = value->Int32Value();
-        }
-        
-        static Handle<Value> LayersGetter (Local<String> property, const AccessorInfo& info) {
-          HandleScope scope;
-          Map *map = ObjectWrap::Unwrap<Map>(info.This());
-          
-          if (layers_template_.IsEmpty()) {
-            Handle<ObjectTemplate> raw_template = ObjectTemplate::New();
-            raw_template->SetInternalFieldCount(1);
-            raw_template->SetIndexedPropertyHandler(LayersIndexedGetter, NULL, NULL, NULL, NULL);
-            raw_template->SetNamedPropertyHandler(LayersNamedGetter, NULL, NULL, NULL, NULL);
-            layers_template_ = Persistent<ObjectTemplate>::New(raw_template);
-            
+          v8::String::AsciiValue n(property);
+          if (strcmp(*n, "width") == 0) {
+            RETURN_NUMBER(map->_map->width);
+          } else if (strcmp(*n, "height") == 0) {
+            RETURN_NUMBER(map->_map->height);
+          } else if (strcmp(*n, "layers") == 0) {
+            if (layers_template_.IsEmpty()) {
+              Handle<ObjectTemplate> raw_template = ObjectTemplate::New();
+              raw_template->SetInternalFieldCount(1);
+              raw_template->SetIndexedPropertyHandler(LayersIndexedGetter, NULL, NULL, NULL, NULL);
+              raw_template->SetNamedPropertyHandler(LayersNamedGetter, NULL, NULL, NULL, NULL);
+              layers_template_ = Persistent<ObjectTemplate>::New(raw_template);
+            }
+            Handle<ObjectTemplate> templ = layers_template_;
+            Handle<Object> result = templ->NewInstance();
+            Handle<External> map_ptr = External::New(map);
+            result->SetInternalField(0,map_ptr);
+            HandleScope scope;
+            return scope.Close(result);
           }
-          Handle<ObjectTemplate> templ = layers_template_;
-          Handle<Object> result = templ->NewInstance();
-          Handle<External> map_ptr = External::New(map);
-          result->SetInternalField(0,map_ptr);
-          return scope.Close(result);
+          return Undefined();
         }
         
+        static Handle<Value> NamedPropertySetter (Local<String> property, Local<Value> value, const AccessorInfo& info) {
+          Map *map = ObjectWrap::Unwrap<Map>(info.Holder());
+          v8::String::AsciiValue n(property);
+          if (strcmp(*n, "width") == 0) {
+            map->_map->width = value->Int32Value();
+          } else if (strcmp(*n, "height") == 0) {
+            map->_map->height = value->Int32Value();
+          }
+        }
+                
         static Handle<Value> LayersIndexedGetter (uint32_t index, const AccessorInfo& info) {
           Map *map = ObjectWrap::Unwrap<Map>(info.This());
           if (index >=0 && index < map->_map->numlayers) {
@@ -367,16 +334,6 @@ class Mapserver {
 
           return scope.Close(retbuf->handle_);
         }
-        
-        // static v8::Handle<Value> IndexedPropertySetter(uint32_t index,
-        //                                                Local<Value> value,
-        //                                                const AccessorInfo& info) {
-        //   if (index == 39) {
-        //     return value;
-        //   }
-        //   return v8::Handle<Value>();
-        // }
-        
     };
     
     
@@ -394,7 +351,7 @@ class Mapserver {
         
           // NODE_SET_PROTOTYPE_METHOD(t, "drawMap", DrawMap);
         
-          t->PrototypeTemplate()->SetAccessor(String::NewSymbol("name"), NameGetter, NameSetter);
+          t->PrototypeTemplate()->SetNamedPropertyHandler(NamedPropertyGetter/*, NamedPropertySetter*/);
         
           target->Set(String::NewSymbol("Layer"), t->GetFunction());
         }
@@ -425,23 +382,24 @@ class Mapserver {
           return Undefined();
         }
         
-        static Handle<Value> NameGetter (Local<String> property, const AccessorInfo& info) {
-          HandleScope scope;
+        static Handle<Value> NamedPropertyGetter (Local<String> property, const AccessorInfo& info) {
           Layer *layer = ObjectWrap::Unwrap<Layer>(info.This());
-
-          Local<String> result = String::New(layer->_layer->name);
-          return scope.Close(result);
-        }
-
-        static void NameSetter (Local<String> property, Local<Value> value, const AccessorInfo& info) {
-          HandleScope scope;
-          Layer *layer = ObjectWrap::Unwrap<Layer>(info.This());
-          String::Utf8Value name(value->ToString());
-          layer->_layer->name = *name;;
+          v8::String::AsciiValue n(property);
+          if (strcmp(*n, "name") == 0) {
+            RETURN_STRING(layer->_layer->name);
+          }
+          return Undefined();
         }
         
+        static Handle<Value> NamedPropertySetter (Local<String> property, Local<Value> value, const AccessorInfo& info) {
+          Layer *layer = ObjectWrap::Unwrap<Layer>(info.Holder());
+          v8::String::AsciiValue n(property);
+          if (strcmp(*n, "name") == 0) {
+            String::Utf8Value name(value->ToString());
+            layer->_layer->name = *name;
+          }
+        }
       };
-
 };
 
 Persistent<FunctionTemplate> Mapserver::ErrorObj::constructor_template;
