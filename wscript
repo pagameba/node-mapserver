@@ -18,7 +18,7 @@ def configure(conf):
 def build(bld):
   obj = bld.new_task_gen("cxx", "shlib", "node_addon")
   obj.target = "mapserver_bindings"
-  obj.source = "mapserver_bindings.cc"
+  obj.source = "src/mapserver_bindings.cc"
 
 def shutdown():
   if Options.commands['clean']:

@@ -1,6 +1,6 @@
 # Overview
 
-node-mapserver is a node.js extension to the [mapserver](http://mapserver.org/ "MapServer") open source web mapping engine.  It allows you to access all the mapserver goodness for rendering map images in a node.js environment, allowing you to build high-performance, low-latency map servers.
+node-mapserver is an MIT-licensed node.js extension to the [mapserver](http://mapserver.org/ "MapServer") open source web mapping engine.  It allows you to access all the mapserver goodness for rendering map images in a node.js environment, allowing you to build high-performance, low-latency map servers.
 
 ## Getting node-mapserver
 
@@ -29,6 +29,12 @@ CXX="g++ -I/<path-to-mapserver-source>" -framework MapServer" node-waf configure
 ```
 
 Building on another system?  Find a problem building on your system?  Submit an issue and let me know what the problem is or how you solved it so we can make this more awesome for everyone.
+
+### Step 3 - Test, Test, Test
+
+```bash
+node tests/tests.js
+```
 
 ## Using node-mapserver
 
