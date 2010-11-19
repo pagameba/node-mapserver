@@ -25,6 +25,13 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 using namespace v8;
 using namespace node;
 
+#define RW_PROPERTY(TEMPL, SYM, GETTER, SETTER) \
+  TEMPL->InstanceTemplate()->SetAccessor(String::NewSymbol(SYM), GETTER, SETTER);
+
+#define RO_PROPERTY(TEMPL, SYM, GETTER) \
+  TEMPL->InstanceTemplate()->SetAccessor(String::NewSymbol(SYM), GETTER, NULL, Handle<Value>(), PROHIBITS_OVERWRITING, ReadOnly);
+
+
 #define THROW_ERROR(TYPE, STR)                                          \
   return ThrowException(Exception::TYPE(String::New(STR)));
 
@@ -98,8 +105,15 @@ using namespace node;
 
 #define RETURN_NUMBER(NUM)                                                   \
   HandleScope scope;                                                    \
-  Local<Number> result = Integer::New(NUM);                             \
+  Local<Number> result = Number::New(NUM);                             \
   return scope.Close(result);
+  
+#define REPLACE_STRING(TARGET, VALUE)                                   \
+  if (VALUE->IsString()) {                                              \
+    v8::String::AsciiValue _v_(VALUE->ToString());                      \
+    msFree(TARGET);                                                     \
+    TARGET = strdup(*_v_);                                              \
+  }
 
 class Mapserver {
 
@@ -107,6 +121,131 @@ class Mapserver {
     static void Init(Handle<Object> target) 
     {
       HandleScope scope;
+      
+      NODE_DEFINE_CONSTANT(target, MS_ALIGN_CENTER);
+      NODE_DEFINE_CONSTANT(target, MS_ALIGN_LEFT);
+      NODE_DEFINE_CONSTANT(target, MS_ALIGN_RIGHT);
+      NODE_DEFINE_CONSTANT(target, MS_AUTO);
+      NODE_DEFINE_CONSTANT(target, MS_BITMAP);
+      NODE_DEFINE_CONSTANT(target, MS_BLUE);
+      NODE_DEFINE_CONSTANT(target, MS_CC);
+      NODE_DEFINE_CONSTANT(target, MS_CJC_BEVEL);
+      NODE_DEFINE_CONSTANT(target, MS_CJC_BUTT);
+      NODE_DEFINE_CONSTANT(target, MS_CJC_MITER);
+      NODE_DEFINE_CONSTANT(target, MS_CJC_NONE);
+      NODE_DEFINE_CONSTANT(target, MS_CJC_ROUND);
+      NODE_DEFINE_CONSTANT(target, MS_CJC_SQUARE);
+      NODE_DEFINE_CONSTANT(target, MS_CJC_TRIANGLE);
+      NODE_DEFINE_CONSTANT(target, MS_CL);
+      NODE_DEFINE_CONSTANT(target, MS_CR);
+      NODE_DEFINE_CONSTANT(target, MS_DB_CSV);
+      NODE_DEFINE_CONSTANT(target, MS_DB_MYSQL);
+      NODE_DEFINE_CONSTANT(target, MS_DB_ORACLE);
+      NODE_DEFINE_CONSTANT(target, MS_DB_POSTGRES);
+      NODE_DEFINE_CONSTANT(target, MS_DB_XBASE);
+      NODE_DEFINE_CONSTANT(target, MS_DD);
+      NODE_DEFINE_CONSTANT(target, MS_DEFAULT);
+      NODE_DEFINE_CONSTANT(target, MS_DELETE);
+      NODE_DEFINE_CONSTANT(target, MS_DONE);
+      NODE_DEFINE_CONSTANT(target, MS_EMBED);
+      NODE_DEFINE_CONSTANT(target, MS_FAILURE);
+      NODE_DEFINE_CONSTANT(target, MS_FALSE);
+      NODE_DEFINE_CONSTANT(target, MS_FEET);
+      NODE_DEFINE_CONSTANT(target, MS_FILE);
+      NODE_DEFINE_CONSTANT(target, MS_FILE_MAP);
+      NODE_DEFINE_CONSTANT(target, MS_FILE_SYMBOL);
+      NODE_DEFINE_CONSTANT(target, MS_FOLLOW);
+      NODE_DEFINE_CONSTANT(target, MS_GEOS_BEYOND);
+      NODE_DEFINE_CONSTANT(target, MS_GEOS_CONTAINS);
+      NODE_DEFINE_CONSTANT(target, MS_GEOS_CROSSES);
+      NODE_DEFINE_CONSTANT(target, MS_GEOS_DISJOINT);
+      NODE_DEFINE_CONSTANT(target, MS_GEOS_DWITHIN);
+      NODE_DEFINE_CONSTANT(target, MS_GEOS_EQUALS);
+      NODE_DEFINE_CONSTANT(target, MS_GEOS_INTERSECTS);
+      NODE_DEFINE_CONSTANT(target, MS_GEOS_OVERLAPS);
+      NODE_DEFINE_CONSTANT(target, MS_GEOS_TOUCHES);
+      NODE_DEFINE_CONSTANT(target, MS_GEOS_WITHIN);
+      NODE_DEFINE_CONSTANT(target, MS_GIANT);
+      NODE_DEFINE_CONSTANT(target, MS_GRATICULE);
+      NODE_DEFINE_CONSTANT(target, MS_GREEN);
+      NODE_DEFINE_CONSTANT(target, MS_HILITE);
+      NODE_DEFINE_CONSTANT(target, MS_IMAGEMODE_BYTE);
+      NODE_DEFINE_CONSTANT(target, MS_IMAGEMODE_FLOAT32);
+      NODE_DEFINE_CONSTANT(target, MS_IMAGEMODE_INT16);
+      NODE_DEFINE_CONSTANT(target, MS_IMAGEMODE_NULL);
+      NODE_DEFINE_CONSTANT(target, MS_IMAGEMODE_PC256);
+      NODE_DEFINE_CONSTANT(target, MS_IMAGEMODE_RGB);
+      NODE_DEFINE_CONSTANT(target, MS_IMAGEMODE_RGBA);
+      NODE_DEFINE_CONSTANT(target, MS_INCHES);
+      NODE_DEFINE_CONSTANT(target, MS_INLINE);
+      NODE_DEFINE_CONSTANT(target, MS_JOIN_ONE_TO_MANY);
+      NODE_DEFINE_CONSTANT(target, MS_JOIN_ONE_TO_ONE);
+      NODE_DEFINE_CONSTANT(target, MS_KILOMETERS);
+      NODE_DEFINE_CONSTANT(target, MS_LARGE);
+      NODE_DEFINE_CONSTANT(target, MS_LAYER_ANNOTATION);
+      NODE_DEFINE_CONSTANT(target, MS_LAYER_CHART);
+      NODE_DEFINE_CONSTANT(target, MS_LAYER_CIRCLE);
+      NODE_DEFINE_CONSTANT(target, MS_LAYER_LINE);
+      NODE_DEFINE_CONSTANT(target, MS_LAYER_POINT);
+      NODE_DEFINE_CONSTANT(target, MS_LAYER_POLYGON);
+      NODE_DEFINE_CONSTANT(target, MS_LAYER_QUERY);
+      NODE_DEFINE_CONSTANT(target, MS_LAYER_RASTER);
+      NODE_DEFINE_CONSTANT(target, MS_LAYER_TILEINDEX);
+      NODE_DEFINE_CONSTANT(target, MS_LC);
+      NODE_DEFINE_CONSTANT(target, MS_LL);
+      NODE_DEFINE_CONSTANT(target, MS_LR);
+      NODE_DEFINE_CONSTANT(target, MS_MAXCOLORS);
+      NODE_DEFINE_CONSTANT(target, MS_MEDIUM);
+      NODE_DEFINE_CONSTANT(target, MS_METERS);
+      NODE_DEFINE_CONSTANT(target, MS_MILES);
+      NODE_DEFINE_CONSTANT(target, MS_MULTIPLE);
+      NODE_DEFINE_CONSTANT(target, MS_MYGIS);
+      NODE_DEFINE_CONSTANT(target, MS_NAUTICALMILES);
+      NODE_DEFINE_CONSTANT(target, MS_NO);
+      NODE_DEFINE_CONSTANT(target, MS_NORMAL);
+      NODE_DEFINE_CONSTANT(target, MS_OFF);
+      NODE_DEFINE_CONSTANT(target, MS_OGR);
+      NODE_DEFINE_CONSTANT(target, MS_ON);
+      NODE_DEFINE_CONSTANT(target, MS_ORACLESPATIAL);
+      NODE_DEFINE_CONSTANT(target, MS_PERCENTAGES);
+      NODE_DEFINE_CONSTANT(target, MS_PIXELS);
+      NODE_DEFINE_CONSTANT(target, MS_PLUGIN);
+      NODE_DEFINE_CONSTANT(target, MS_POSTGIS);
+      NODE_DEFINE_CONSTANT(target, MS_QUERY_BY_ATTRIBUTE);
+      NODE_DEFINE_CONSTANT(target, MS_QUERY_BY_INDEX);
+      NODE_DEFINE_CONSTANT(target, MS_QUERY_BY_OPERATOR);
+      NODE_DEFINE_CONSTANT(target, MS_QUERY_BY_POINT);
+      NODE_DEFINE_CONSTANT(target, MS_QUERY_BY_RECT);
+      NODE_DEFINE_CONSTANT(target, MS_QUERY_BY_SHAPE);
+      NODE_DEFINE_CONSTANT(target, MS_QUERY_IS_NULL);
+      NODE_DEFINE_CONSTANT(target, MS_QUERY_MULTIPLE);
+      NODE_DEFINE_CONSTANT(target, MS_QUERY_SINGLE);
+      NODE_DEFINE_CONSTANT(target, MS_RASTER);
+      NODE_DEFINE_CONSTANT(target, MS_RED);
+      NODE_DEFINE_CONSTANT(target, MS_SDE);
+      NODE_DEFINE_CONSTANT(target, MS_SELECTED);
+      NODE_DEFINE_CONSTANT(target, MS_SHAPEFILE);
+      NODE_DEFINE_CONSTANT(target, MS_SHAPE_LINE);
+      NODE_DEFINE_CONSTANT(target, MS_SHAPE_NULL);
+      NODE_DEFINE_CONSTANT(target, MS_SHAPE_POINT);
+      NODE_DEFINE_CONSTANT(target, MS_SHAPE_POLYGON);
+      NODE_DEFINE_CONSTANT(target, MS_SINGLE);
+      NODE_DEFINE_CONSTANT(target, MS_SMALL);
+      NODE_DEFINE_CONSTANT(target, MS_SUCCESS);
+      NODE_DEFINE_CONSTANT(target, MS_TILED_SHAPEFILE);
+      NODE_DEFINE_CONSTANT(target, MS_TINY );
+      NODE_DEFINE_CONSTANT(target, MS_TRUE);
+      NODE_DEFINE_CONSTANT(target, MS_TRUETYPE);
+      NODE_DEFINE_CONSTANT(target, MS_UC);
+      NODE_DEFINE_CONSTANT(target, MS_UL);
+      NODE_DEFINE_CONSTANT(target, MS_UNKNOWN);
+      NODE_DEFINE_CONSTANT(target, MS_UNUSED_1);
+      NODE_DEFINE_CONSTANT(target, MS_UR);
+      NODE_DEFINE_CONSTANT(target, MS_URL);
+      NODE_DEFINE_CONSTANT(target, MS_WFS);
+      NODE_DEFINE_CONSTANT(target, MS_WMS);
+      NODE_DEFINE_CONSTANT(target, MS_XY);
+      NODE_DEFINE_CONSTANT(target, MS_YES);
       
       NODE_SET_METHOD(target, "loadMap", LoadMap);
       NODE_SET_METHOD(target, "getVersion", GetVersion);
@@ -175,7 +314,7 @@ class Mapserver {
         constructor_template = Persistent<FunctionTemplate>::New(t);
         
         t->InstanceTemplate()->SetInternalFieldCount(1);
-        t->PrototypeTemplate()->SetNamedPropertyHandler(NamedPropertyGetter);
+        t->InstanceTemplate()->SetNamedPropertyHandler(NamedPropertyGetter);
       
         target->Set(String::NewSymbol("ErrorObj"), t->GetFunction());
       }
@@ -223,10 +362,26 @@ class Mapserver {
           constructor_template = Persistent<FunctionTemplate>::New(t);
         
           t->InstanceTemplate()->SetInternalFieldCount(1);
-        
+          
+          /* Read-Write Properties */
+          RW_PROPERTY(t, "name", NamedPropertyGetter, NamedPropertySetter);
+          RW_PROPERTY(t, "status", NamedPropertyGetter, NamedPropertySetter);
+          RW_PROPERTY(t, "width", NamedPropertyGetter, NamedPropertySetter);
+          RW_PROPERTY(t, "height", NamedPropertyGetter, NamedPropertySetter);
+          RW_PROPERTY(t, "maxsize", NamedPropertyGetter, NamedPropertySetter);
+          RW_PROPERTY(t, "units", NamedPropertyGetter, NamedPropertySetter);
+          RW_PROPERTY(t, "resolution", NamedPropertyGetter, NamedPropertySetter);
+          RW_PROPERTY(t, "defresolution", NamedPropertyGetter, NamedPropertySetter);
+          RW_PROPERTY(t, "shapepath", NamedPropertyGetter, NamedPropertySetter);
+          RW_PROPERTY(t, "mappath", NamedPropertyGetter, NamedPropertySetter);
+
+          /* Read-Only Properties */
+          RO_PROPERTY(t, "cellsize", NamedPropertyGetter);
+          RO_PROPERTY(t, "scaledenom", NamedPropertyGetter);
+          RO_PROPERTY(t, "layers", NamedPropertyGetter);
+          
+          /* Methods */
           NODE_SET_PROTOTYPE_METHOD(t, "drawMap", DrawMap);
-        
-          t->InstanceTemplate()->SetNamedPropertyHandler(NamedPropertyGetter, NamedPropertySetter);
         
           target->Set(String::NewSymbol("Map"), t->GetFunction());
         }
@@ -268,6 +423,26 @@ class Mapserver {
             RETURN_NUMBER(map->_map->width);
           } else if (strcmp(*n, "height") == 0) {
             RETURN_NUMBER(map->_map->height);
+          } else if (strcmp(*n, "status") == 0) {
+            RETURN_NUMBER(map->_map->status);
+          } else if (strcmp(*n, "maxsize") == 0) {
+            RETURN_NUMBER(map->_map->maxsize);
+          } else if (strcmp(*n, "cellsize") == 0) {
+            RETURN_NUMBER(map->_map->cellsize);
+          } else if (strcmp(*n, "units") == 0) {
+            RETURN_NUMBER(map->_map->units);
+          } else if (strcmp(*n, "scaledenom") == 0) {
+            RETURN_NUMBER(map->_map->scaledenom);
+          } else if (strcmp(*n, "resolution") == 0) {
+            RETURN_NUMBER(map->_map->resolution);
+          } else if (strcmp(*n, "defresolution") == 0) {
+            RETURN_NUMBER(map->_map->defresolution);
+          } else if (strcmp(*n, "shapepath") == 0) {
+            RETURN_STRING(map->_map->shapepath);
+          } else if (strcmp(*n, "mappath") == 0) {
+            RETURN_STRING(map->_map->mappath);
+          } else if (strcmp(*n, "name") == 0) {
+            RETURN_STRING(map->_map->name);
           } else if (strcmp(*n, "layers") == 0) {
             if (layers_template_.IsEmpty()) {
               Handle<ObjectTemplate> raw_template = ObjectTemplate::New();
@@ -286,13 +461,30 @@ class Mapserver {
           return Undefined();
         }
         
-        static Handle<Value> NamedPropertySetter (Local<String> property, Local<Value> value, const AccessorInfo& info) {
+        static void NamedPropertySetter (Local<String> property, Local<Value> value, const AccessorInfo& info) {
           Map *map = ObjectWrap::Unwrap<Map>(info.Holder());
           v8::String::AsciiValue n(property);
           if (strcmp(*n, "width") == 0) {
             map->_map->width = value->Int32Value();
           } else if (strcmp(*n, "height") == 0) {
             map->_map->height = value->Int32Value();
+          } else if (strcmp(*n, "maxsize") == 0) {
+            map->_map->maxsize = value->Int32Value();
+          } else if (strcmp(*n, "units") == 0) {
+            int32_t units = value->Int32Value();
+            if (units >= MS_INCHES && units <= MS_NAUTICALMILES) {
+              map->_map->units = (MS_UNITS) units;
+            }
+          } else if (strcmp(*n, "resolution") == 0) {
+            map->_map->resolution = value->NumberValue();
+          } else if (strcmp(*n, "defresolution") == 0) {
+            map->_map->defresolution = value->NumberValue();
+          } else if (strcmp(*n, "name") == 0) {
+            REPLACE_STRING(map->_map->name, value);
+          } else if (strcmp(*n, "shapepath") == 0) {
+            REPLACE_STRING(map->_map->shapepath, value);
+          } else if (strcmp(*n, "mappath") == 0) {
+            REPLACE_STRING(map->_map->mappath, value);
           }
         }
                 
@@ -351,8 +543,8 @@ class Mapserver {
         
           // NODE_SET_PROTOTYPE_METHOD(t, "drawMap", DrawMap);
         
-          t->InstanceTemplate()->SetNamedPropertyHandler(NamedPropertyGetter, NamedPropertySetter);
-        
+          RW_PROPERTY(t, "name", NamedPropertyGetter, NamedPropertySetter);
+          
           target->Set(String::NewSymbol("Layer"), t->GetFunction());
         }
       
@@ -391,12 +583,14 @@ class Mapserver {
           return Undefined();
         }
         
-        static Handle<Value> NamedPropertySetter (Local<String> property, Local<Value> value, const AccessorInfo& info) {
-          Layer *layer = ObjectWrap::Unwrap<Layer>(info.Holder());
+        static void NamedPropertySetter (Local<String> property, Local<Value> value, const AccessorInfo& info) {
+          Layer *layer = ObjectWrap::Unwrap<Layer>(info.This());
           v8::String::AsciiValue n(property);
           if (strcmp(*n, "name") == 0) {
-            String::Utf8Value name(value->ToString());
-            layer->_layer->name = *name;
+            v8::String::AsciiValue v(value->ToString());
+            char * prev = layer->_layer->name;
+            layer->_layer->name = strdup(*v);
+            msFree(prev);
           }
         }
       };
