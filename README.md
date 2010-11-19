@@ -10,9 +10,10 @@ See the (MapServer)[http://mapserver.org] website for more details.
 
 ### Step 1 - Use The Source, Luke
 
-```
+```bash
 git clone git://github.com/pagameba/node-mapserver.git
 cd node-mapserver
+```
 
 ### Step 2 - Make It So, #1
 
