@@ -10,7 +10,7 @@ See the (MapServer)[http://mapserver.org] website for more details.
 
 ### Step 1 - Use The Source, Luke
 
-```bash
+```
 git clone git://github.com/pagameba/node-mapserver.git
 cd node-mapserver
 ```
@@ -19,13 +19,13 @@ cd node-mapserver
 
 on linux, you will need to have installed mapserver package (and possibly the -devel package too) using your package management system, or have built it yourself.  If you've installed in, find out where it is installed (perhaps /usr/local/) and use those paths.  If you've built it yourself, you can probably figure out how you need to change this to work for you.
 
-```bash
+```
 CXX="g++ -I/<path-to-install-dir>/include -L/<path-to-install-dir>/lib" node-waf configure build
 ```
 
 on osx with [kyngchaos](http://kyngchaos.com) frameworks you will still need a copy of the mapserver source from a tarball or svn appropriate to the version you have installed because the framework doesn't (as of the last time I checked) include headers:
 
-```bash
+```
 CXX="g++ -I/<path-to-mapserver-source>" -framework MapServer" node-waf configure build
 ```
 
@@ -33,7 +33,7 @@ Building on another system?  Find a problem building on your system?  Submit an 
 
 ### Step 3 - Test, Test, Test
 
-```bash
+```
 node tests/tests.js
 ```
 
