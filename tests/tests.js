@@ -19,7 +19,7 @@ var assert = require('assert'),
     mapserver = require('../mapserver'),
     fs = require('fs'),
     path = require('path'),
-    datadir = './data',
+    datadir = path.normalize(path.join(path.dirname(__filename), '../data')),
     mapfile = 'test.map',
     nomapfile = 'missing.map',
     errormapfile = 'error.map',
@@ -39,7 +39,7 @@ err = mapserver.getError();
 assert.equal(err.code, 0, 'should be no errors');
 
 // Test default mapfile pattern (must end in .map)
-assert.throws(function() { 
+assert['throws'](function() { 
   mapserver.loadMap(path.join(datadir), nomapfile);  
 }, Error, 'attempting to load a non-existent map should throw an error.');
 
@@ -53,7 +53,7 @@ err = mapserver.getError();
 assert.equal(err.code, 0, 'should be no errors');
 
 // test loadMap with missing file
-assert.throws(function() { 
+assert['throws'](function() { 
   mapserver.loadMap(path.join(datadir, 'missing.map'), nomapfile);  
 }, Error, 'attempting to load a non-existent map should throw an error.');
 
@@ -77,17 +77,15 @@ assert.equal(map.resolution, 72, 'getting map resolution failed');
 assert.equal(map.defresolution, 72, 'getting map defresolution failed');
 assert.equal(map.shapepath, './', 'getting map defresolution failed');
 assert.equal(path.normalize(map.mappath), path.normalize(path.join(process.cwd(), 'data')), 'getting map defresolution failed');
+assert.equal(map.extent.minx, -1500000, 'getting map extent minx failed');
+assert.equal(map.extent.miny, -502631, 'getting map extent miny failed');
+assert.equal(map.extent.maxx, 2072800, 'getting map extent maxx failed');
+assert.equal(map.extent.maxy ,3140000, 'getting map extent maxy failed');
 
 // test effect of recompute on cellsize and scaledenom
-// todo 
-// console.log(map.cellsize);
-// 
-// map.recompute();
-// assert.equal(map.cellsize, 12182.712374581939, 'recomputing map cellsize failed');
-// todo
-// 
-// map.recompute();
-// assert.equal(map.scaledenom, 34533691.52101404, 'recomputing map scaledenom failed');
+map.recompute();
+assert.equal(map.cellsize, 12182.712374581939, 'recomputing map cellsize failed');
+assert.equal(map.scaledenom, 34533691.52101404, 'recomputing map scaledenom failed');
 
 // test setting map properties
 map.name = "test_set";
@@ -111,6 +109,14 @@ assert.equal(map.resolution, 96, 'setting map defresolution failed');
 map.defresolution = 96;
 assert.equal(map.defresolution, 96, 'setting map defresolution failed');
 
+// test map.setExtent()
+map.setExtent(-2500000, -402631, 1872800,3130000);
+assert.equal(map.extent.minx, -2500000, 'setting map extent minx failed');
+assert.equal(map.extent.miny, -402631, 'setting map extent miny failed');
+assert.equal(map.extent.maxx, 1872800, 'setting map extent maxx failed');
+assert.equal(map.extent.maxy, 3130000, 'setting map extent maxy failed');
+
+
 // test indexed accessor to map.layers
 assert.equal(map.layers.foo, undefined, 'map.layers should not expose arbitrary properties');
 assert.equal(typeof map.layers.length, 'number', 'map.layers.length should be an integer');
@@ -120,6 +126,8 @@ assert.equal(map.layers.length, 1, 'map.layers.length should be 1');
 assert.notEqual(map.layers[0].name,'test', 'layer name should not be test before we change it');
 map.layers[0].name = 'test';
 assert.equal(map.layers[0].name, 'test', 'layer name should have changed.');
+// layers should be accessible by name too
+assert.equal(map.layers['test'].name, 'test', 'layer should be accessible by name');
 
 var buffer = map.drawMap();
 buffer = buffer.slice(0,buffer.length);

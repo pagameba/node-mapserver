@@ -378,10 +378,15 @@ class Mapserver {
           /* Read-Only Properties */
           RO_PROPERTY(t, "cellsize", NamedPropertyGetter);
           RO_PROPERTY(t, "scaledenom", NamedPropertyGetter);
+          
+          /* psuedo object properties */
           RO_PROPERTY(t, "layers", NamedPropertyGetter);
+          RO_PROPERTY(t, "extent", NamedPropertyGetter);
           
           /* Methods */
+          NODE_SET_PROTOTYPE_METHOD(t, "recompute", Recompute);
           NODE_SET_PROTOTYPE_METHOD(t, "drawMap", DrawMap);
+          NODE_SET_PROTOTYPE_METHOD(t, "setExtent", SetExtent);
         
           target->Set(String::NewSymbol("Map"), t->GetFunction());
         }
@@ -409,6 +414,7 @@ class Mapserver {
         operator mapObj* () const { return _map; }
         
         static Persistent<ObjectTemplate> layers_template_;
+        static Persistent<ObjectTemplate> extent_template_;
         
         static Handle<Value> Destroy (const Arguments &args) {
           Map *map = ObjectWrap::Unwrap<Map>(args.This());
@@ -457,6 +463,19 @@ class Mapserver {
             result->SetInternalField(0,map_ptr);
             HandleScope scope;
             return scope.Close(result);
+          } else if (strcmp(*n, "extent") == 0) {
+            if (extent_template_.IsEmpty()) {
+              Handle<ObjectTemplate> raw_template = ObjectTemplate::New();
+              raw_template->SetInternalFieldCount(1);
+              raw_template->SetNamedPropertyHandler(ExtentNamedGetter, NULL, NULL, NULL, NULL);
+              extent_template_ = Persistent<ObjectTemplate>::New(raw_template);
+            }
+            Handle<ObjectTemplate> templ = extent_template_;
+            Handle<Object> result = templ->NewInstance();
+            Handle<External> map_ptr = External::New(map);
+            result->SetInternalField(0,map_ptr);
+            HandleScope scope;
+            return scope.Close(result);
           }
           return Undefined();
         }
@@ -491,7 +510,7 @@ class Mapserver {
         static Handle<Value> LayersIndexedGetter (uint32_t index, const AccessorInfo& info) {
           Map *map = ObjectWrap::Unwrap<Map>(info.This());
           if (index >=0 && index < map->_map->numlayers) {
-            RETURN_LAYER(map->_map->layers[index]);
+            RETURN_LAYER(GET_LAYER(map->_map, index));
           }
           return Undefined();
         }
@@ -501,10 +520,47 @@ class Mapserver {
           String::AsciiValue n(name);
           if (strcmp(*n, "length") == 0) {
             return Integer::New(map->_map->numlayers);
+          } else {
+            int i;
+            for (i=0; i<map->_map->numlayers; i++) {
+              if (strcmp(*n, GET_LAYER(map->_map, i)->name) == 0) {
+                RETURN_LAYER(GET_LAYER(map->_map, i));
+              }
+            }
           }
           return Undefined();
         }
         
+        static Handle<Value> ExtentNamedGetter(Local<String> name, const AccessorInfo& info) {
+          Map *map = ObjectWrap::Unwrap<Map>(info.This());
+          String::AsciiValue n(name);
+          if (strcmp(*n, "minx") == 0) {
+            return Integer::New(map->_map->extent.minx);
+          } else if (strcmp(*n, "miny") == 0) {
+            return Integer::New(map->_map->extent.miny);
+          } else if (strcmp(*n, "maxx") == 0) {
+            return Integer::New(map->_map->extent.maxx);
+          } else if (strcmp(*n, "maxy") == 0) {
+            return Integer::New(map->_map->extent.maxy);
+          }
+          return Undefined();
+        }
+        
+        static Handle<Value> Recompute (const Arguments& args) {
+          HandleScope scope;
+          Map *map = ObjectWrap::Unwrap<Map>(args.This());
+          mapObj * _map = map->_map;
+         _map->cellsize = msAdjustExtent(&(_map->extent),
+                                           _map->width,
+                                           _map->height);
+          msCalculateScale(_map->extent,
+                           _map->units,
+                           _map->width,
+                           _map->height,
+                           _map->resolution,
+                           &_map->scaledenom);
+          return scope.Close(Boolean::New(true));
+        }
         
         /**
          * callback for buffer creation to free the memory assocatiated with the
@@ -525,6 +581,20 @@ class Mapserver {
           msFreeImage(im);
 
           return scope.Close(retbuf->handle_);
+        }
+        
+        static Handle<Value> SetExtent (const Arguments& args) {
+          HandleScope scope;
+          Map *map = ObjectWrap::Unwrap<Map>(args.This());
+          REQ_DOUBLE_ARG(0, minx);
+          REQ_DOUBLE_ARG(1, miny);
+          REQ_DOUBLE_ARG(2, maxx);
+          REQ_DOUBLE_ARG(3, maxy);
+          map->_map->extent.minx = minx;
+          map->_map->extent.miny = miny;
+          map->_map->extent.maxx = maxx;
+          map->_map->extent.maxy = maxy;
+          return scope.Close(Boolean::New(true));
         }
     };
     
@@ -599,6 +669,7 @@ class Mapserver {
 Persistent<FunctionTemplate> Mapserver::ErrorObj::constructor_template;
 Persistent<FunctionTemplate> Mapserver::Map::constructor_template;
 Persistent<ObjectTemplate>   Mapserver::Map::layers_template_;
+Persistent<ObjectTemplate>   Mapserver::Map::extent_template_;
 Persistent<FunctionTemplate> Mapserver::Layer::constructor_template;
 
 extern "C"
