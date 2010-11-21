@@ -45,6 +45,36 @@ http.createServer(function(request, response) {
       map.width = mapsize[0];
       map.height = mapsize[1];
     }
+    if (parsed.query.extent) {
+      var extent = parsed.query.extent.split(' ');
+      if (extent.length == 4) {
+        map.setExtent(parseInt(extent[0]),
+          parseInt(extent[1]),
+          parseInt(extent[2]),
+          parseInt(extent[3])
+        );
+      }
+    }
+    if (parsed.query.layers) {
+      var layers = parsed.query.layers.split(' ');
+      if (layers.length == 1 && layers[0] == 'all') {
+        for (var i=0; i<map.layers.length; i++) {
+          if (map.layers[i].status != mapserver.MS_DELETE) {
+            map.layers[i].status = mapserver.MS_ON
+          }
+        }
+      } else {
+        for (var i=0; i<map.layers.length; i++) {
+          var layer = map.layers[i];
+          if (layers.indexOf(layer.name) != -1 && layer.status != mapserver.MS_DELETE) {
+            layer.status = mapserver.MS_ON;
+          } else if (layer.status != mapserver.MS_DELETE && layer.status != mapserver.MS_DEFAULT) {
+            layer.status = mapserver.MS_OFF;
+          }
+        }
+      }
+    }
+    
     response.writeHead(200, {
       'Content-Type':'image/gif'
     });

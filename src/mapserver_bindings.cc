@@ -614,6 +614,7 @@ class Mapserver {
           // NODE_SET_PROTOTYPE_METHOD(t, "drawMap", DrawMap);
         
           RW_PROPERTY(t, "name", NamedPropertyGetter, NamedPropertySetter);
+          RW_PROPERTY(t, "status", NamedPropertyGetter, NamedPropertySetter);
           
           target->Set(String::NewSymbol("Layer"), t->GetFunction());
         }
@@ -649,6 +650,8 @@ class Mapserver {
           v8::String::AsciiValue n(property);
           if (strcmp(*n, "name") == 0) {
             RETURN_STRING(layer->_layer->name);
+          } else if (strcmp(*n, "status") == 0) {
+            RETURN_NUMBER(layer->_layer->status);
           }
           return Undefined();
         }
@@ -661,6 +664,11 @@ class Mapserver {
             char * prev = layer->_layer->name;
             layer->_layer->name = strdup(*v);
             msFree(prev);
+          } else if (strcmp(*n, "status") == 0) {
+            int32_t status = value->Int32Value();
+            if (status >= MS_OFF && status <= MS_DELETE) {
+              layer->_layer->status = status;
+            }
           }
         }
       };
