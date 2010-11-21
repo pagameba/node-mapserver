@@ -13,7 +13,8 @@ var util = require('util'),
     http = require("http"),  
     url = require("url"),  
     mapserver = require("../mapserver"),
-    path = require("path");
+    path = require("path"),
+    fs = require('fs');
 
 var port = 8080;
 
@@ -25,7 +26,10 @@ var map_config = {
 
 for (var key in map_config) {
   var mappath = map_config[key];
-  maps[key] = mapserver.loadMap(mappath, path.dirname(mappath));
+  maps[key] = {
+    mappath: path.dirname(mappath),
+    mapstring: fs.readFileSync(mappath, 'ascii')
+  };
 }
 
 http.createServer(function(request, response) {
@@ -39,7 +43,8 @@ http.createServer(function(request, response) {
     });
     response.end('ok');
   } else if (components.length == 1 && maps[components[0]] != undefined) {
-    var map = maps[components[0]];
+    var mapconfig = maps[components[0]];
+    var map = mapserver.loadMapFromString(mapconfig.mapstring, mapconfig.mappath);
     if (parsed.query.mapsize) {
       var mapsize = parsed.query.mapsize.split(' ');
       map.width = mapsize[0];
@@ -60,7 +65,7 @@ http.createServer(function(request, response) {
       if (layers.length == 1 && layers[0] == 'all') {
         for (var i=0; i<map.layers.length; i++) {
           if (map.layers[i].status != mapserver.MS_DELETE) {
-            map.layers[i].status = mapserver.MS_ON
+            map.layers[i].status = mapserver.MS_ON;
           }
         }
       } else {

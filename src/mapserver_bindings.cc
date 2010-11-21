@@ -248,6 +248,7 @@ class Mapserver {
       NODE_DEFINE_CONSTANT(target, MS_YES);
       
       NODE_SET_METHOD(target, "loadMap", LoadMap);
+      NODE_SET_METHOD(target, "loadMapFromString", LoadMapFromString);
       NODE_SET_METHOD(target, "getVersion", GetVersion);
       NODE_SET_METHOD(target, "getVersionInt", GetVersionInt);
 
@@ -266,6 +267,16 @@ class Mapserver {
       REQ_STR_ARG(1, path);
       
       mapObj * map = msLoadMap(*filename, *path);
+      if (map == NULL) {
+        THROW_ERROR(Error, "Ugh");
+      }
+      RETURN_MAP(map);
+    }
+
+    static Handle<Value> LoadMapFromString (const Arguments& args) {
+      REQ_STR_ARG(0, buffer);
+      REQ_STR_ARG(1, path);
+      mapObj * map = msLoadMapFromString(*buffer, *path);
       if (map == NULL) {
         THROW_ERROR(Error, "Ugh");
       }
