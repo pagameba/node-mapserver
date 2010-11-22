@@ -354,7 +354,8 @@ class Mapserver {
         constructor_template = Persistent<FunctionTemplate>::New(t);
         
         t->InstanceTemplate()->SetInternalFieldCount(1);
-        t->InstanceTemplate()->SetNamedPropertyHandler(NamedPropertyGetter);
+        // t->InstanceTemplate()->SetNamedPropertyHandler(NamedPropertyGetter, NULL, NamedPropertyQuery, NULL, NULL);
+        t->InstanceTemplate()->SetNamedPropertyHandler(NamedPropertyGetter, NULL, NamedPropertyQuery, NULL, NamedPropertyEnumerator);
       
         target->Set(String::NewSymbol("ErrorObj"), t->GetFunction());
       }
@@ -388,6 +389,37 @@ class Mapserver {
         }
         return Undefined();
       }
+      
+      static Handle<Integer> NamedPropertyQuery(Local<String> property,
+                                         const AccessorInfo& info) {
+        HandleScope scope;
+        ErrorObj *err = ObjectWrap::Unwrap<ErrorObj>(info.This());
+        v8::String::AsciiValue n(property);
+        if (strcmp(*n, "code") == 0) {
+          return scope.Close(Integer::New(None));
+        } else if (strcmp(*n, "codeStr") == 0) {
+          return scope.Close(Integer::New(None));
+        } else if (strcmp(*n, "message") == 0) {
+          return scope.Close(Integer::New(None));
+        } else if (strcmp(*n, "routine") == 0) {
+          return scope.Close(Integer::New(None));
+        }
+        return Handle<Integer>();
+      }
+      
+      static Handle<Array> NamedPropertyEnumerator(const AccessorInfo& info) {
+        HandleScope scope;
+
+        Local<Array> env = Array::New(4);
+        env->Set(0, String::New("code"));
+        env->Set(1, String::New("codeStr"));
+        env->Set(2, String::New("message"));
+        env->Set(3, String::New("routine"));
+
+        return scope.Close(env);
+      }
+      
+      
     };
   
   

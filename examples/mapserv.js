@@ -83,7 +83,6 @@ http.createServer(function(request, response) {
         response.writeHead(200, {
           'Content-Type':'text/plain'
         });
-        var err = mapserver.getError();
         response.end("MapServer Error: " + err.code + " ("+err.codeStr+"): " + err.message + ' in ' + err.routine);
       } else {
         response.writeHead(200, {
