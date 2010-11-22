@@ -132,7 +132,8 @@ assert.equal(map.layers['test'].name, 'test', 'layer should be accessible by nam
 
 map.drawMap(function(drawError, buffer) {
   if (drawError) {
-    printError(drawError);
+    console.log(drawError);
+    assert.ok(false, 'Error drawing map.');
   } else {
     buffer = buffer.slice(0,buffer.length);
     fs.writeFile('test_buffer.gif', buffer, function(err) {

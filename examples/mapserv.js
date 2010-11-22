@@ -40,6 +40,7 @@ http.createServer(function(request, response) {
     });
     response.end('ok');
   } else if (components.length == 1 && maps[components[0]] != undefined) {
+    console.log(maps[components[0]].imagetype);
     var map = maps[components[0]].copy();
     if (parsed.query.mapsize) {
       var mapsize = parsed.query.mapsize.split(' ');
@@ -76,23 +77,29 @@ http.createServer(function(request, response) {
       }
     }
     
+    if (parsed.query.map_imagetype) {
+      try {
+        map.selectOutputFormat(parsed.query.map_imagetype);
+        map.imagetype = parsed.query.map_imagetype;
+      } catch(e) {
+        console.log('Error selecting output format ' + parsed.query.map_imagetype + ' ' + e);
+      }
+    }
+    
     map.drawMap(function(err, buffer) {
       if (err) {
         console.log(err);
-        console.log(util.inspect(err));
         response.writeHead(200, {
           'Content-Type':'text/plain'
         });
         response.end("MapServer Error: " + err.code + " ("+err.codeStr+"): " + err.message + ' in ' + err.routine);
       } else {
         response.writeHead(200, {
-          'Content-Type':'image/gif'
+          'Content-Type': map.mimetype
         });
         response.end(buffer);
       }
     });
-    // var buffer = map.drawMap();
-    // response.end(buffer);
   } else {
     response.writeHead(404, {});
     response.end('File not found.');

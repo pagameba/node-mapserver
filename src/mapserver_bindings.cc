@@ -446,10 +446,12 @@ class Mapserver {
           RW_PROPERTY(t, "defresolution", NamedPropertyGetter, NamedPropertySetter);
           RW_PROPERTY(t, "shapepath", NamedPropertyGetter, NamedPropertySetter);
           RW_PROPERTY(t, "mappath", NamedPropertyGetter, NamedPropertySetter);
+          RW_PROPERTY(t, "imagetype", NamedPropertyGetter, NamedPropertySetter);
 
           /* Read-Only Properties */
           RO_PROPERTY(t, "cellsize", NamedPropertyGetter);
           RO_PROPERTY(t, "scaledenom", NamedPropertyGetter);
+          RO_PROPERTY(t, "mimetype", NamedPropertyGetter);
           
           /* psuedo object properties */
           RO_PROPERTY(t, "layers", NamedPropertyGetter);
@@ -460,6 +462,7 @@ class Mapserver {
           NODE_SET_PROTOTYPE_METHOD(t, "recompute", Recompute);
           NODE_SET_PROTOTYPE_METHOD(t, "drawMap", DrawMap);
           NODE_SET_PROTOTYPE_METHOD(t, "setExtent", SetExtent);
+          NODE_SET_PROTOTYPE_METHOD(t, "selectOutputFormat", SelectOutputFormat);
         
           target->Set(String::NewSymbol("Map"), t->GetFunction());
         }
@@ -516,6 +519,10 @@ class Mapserver {
             RETURN_NUMBER(map->_map->resolution);
           } else if (strcmp(*n, "defresolution") == 0) {
             RETURN_NUMBER(map->_map->defresolution);
+          } else if (strcmp(*n, "imagetype") == 0) {
+            RETURN_STRING(map->_map->imagetype);
+          } else if (strcmp(*n, "mimetype") == 0) {
+            RETURN_STRING(map->_map->outputformat->mimetype);
           } else if (strcmp(*n, "shapepath") == 0) {
             RETURN_STRING(map->_map->shapepath);
           } else if (strcmp(*n, "mappath") == 0) {
@@ -573,6 +580,8 @@ class Mapserver {
             map->_map->defresolution = value->NumberValue();
           } else if (strcmp(*n, "name") == 0) {
             REPLACE_STRING(map->_map->name, value);
+          } else if (strcmp(*n, "imagetype") == 0) {
+            REPLACE_STRING(map->_map->imagetype, value);
           } else if (strcmp(*n, "shapepath") == 0) {
             REPLACE_STRING(map->_map->shapepath, value);
           } else if (strcmp(*n, "mappath") == 0) {
@@ -761,6 +770,19 @@ class Mapserver {
           map->_map->extent.maxy = maxy;
           return scope.Close(Boolean::New(true));
         }
+
+        static Handle<Value> SelectOutputFormat (const Arguments& args) {
+          HandleScope scope;
+          Map *map = ObjectWrap::Unwrap<Map>(args.This());
+          REQ_STR_ARG(0, imagetype);
+          outputFormatObj * format = msSelectOutputFormat(map->_map, *imagetype);
+          if ( format == NULL) {
+            THROW_ERROR(Error, "Output format not supported.");
+          }
+          msApplyOutputFormat(&(map->_map->outputformat), format, MS_NOOVERRIDE, 
+              MS_NOOVERRIDE, MS_NOOVERRIDE );
+          return Undefined();
+        }
     };
     
     
@@ -775,8 +797,6 @@ class Mapserver {
           constructor_template = Persistent<FunctionTemplate>::New(t);
         
           t->InstanceTemplate()->SetInternalFieldCount(1);
-        
-          // NODE_SET_PROTOTYPE_METHOD(t, "drawMap", DrawMap);
         
           RW_PROPERTY(t, "name", NamedPropertyGetter, NamedPropertySetter);
           RW_PROPERTY(t, "status", NamedPropertyGetter, NamedPropertySetter);
