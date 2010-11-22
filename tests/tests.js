@@ -129,10 +129,11 @@ assert.equal(map.layers[0].name, 'test', 'layer name should have changed.');
 // layers should be accessible by name too
 assert.equal(map.layers['test'].name, 'test', 'layer should be accessible by name');
 
-var buffer = map.drawMap();
-buffer = buffer.slice(0,buffer.length);
-fs.writeFile('test_buffer.gif', buffer, function(err) {
-  if (err) throw err;
+map.drawMap(function(buffer) {
+  buffer = buffer.slice(0,buffer.length);
+  fs.writeFile('test_buffer.gif', buffer, function(err) {
+    if (err) throw err;
+  });
 });
 
 function printError(err) {

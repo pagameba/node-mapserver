@@ -79,8 +79,11 @@ http.createServer(function(request, response) {
     response.writeHead(200, {
       'Content-Type':'image/gif'
     });
-    var buffer = map.drawMap();
-    response.end(buffer);
+    map.drawMap(function(buffer) {
+      response.end(buffer);
+    });
+    // var buffer = map.drawMap();
+    // response.end(buffer);
   } else {
     response.writeHead(404, {});
     response.end('File not found.');

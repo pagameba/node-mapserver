@@ -66,6 +66,12 @@ using namespace node;
                   String::New("Argument " #I " invalid")));             \
   Local<External> VAR = Local<External>::Cast(args[I]);
 
+#define REQ_FUN_ARG(I, VAR)                                             \
+  if (args.Length() <= (I) || !args[I]->IsFunction())                   \
+    return ThrowException(Exception::TypeError(                         \
+                  String::New("Argument " #I " must be a function")));  \
+  Local<Function> VAR = Local<Function>::Cast(args[I]);
+
 #define OPT_INT_ARG(I, VAR, DEFAULT)                                    \
   int VAR;                                                              \
   if (args.Length() <= (I)) {                                           \
@@ -586,6 +592,39 @@ class Mapserver {
           return scope.Close(Boolean::New(true));
         }
         
+        static int EIO_DrawMap(eio_req *req) {
+          drawmap_request *drawmap_req = (drawmap_request*)req->data;
+          
+          imageObj * im = msDrawMap(drawmap_req->map->_map, MS_FALSE);
+          drawmap_req->data = (char *)msSaveImageBuffer(im, &drawmap_req->size, drawmap_req->map->_map->outputformat);
+          msFreeImage(im);
+          return 0;
+        }
+        
+        static int EIO_AfterDrawMap(eio_req *req) {
+          HandleScope scope;
+          drawmap_request *drawmap_req =(drawmap_request *)req->data;
+          ev_unref(EV_DEFAULT_UC);
+          drawmap_req->map->Unref();
+
+          Local<Value> argv[1];
+          Buffer * buffer = Buffer::New(drawmap_req->data, drawmap_req->size, FreeImageBuffer, NULL);
+          
+          argv[0] = scope.Close(buffer->handle_);
+
+          TryCatch try_catch;
+
+          baton->cb->Call(Context::GetCurrent()->Global(), 1, argv);
+
+          if (try_catch.HasCaught()) {
+            FatalException(try_catch);
+          }
+
+          drawmap_req->cb.Dispose();
+          delete drawmap_req;
+          return 0;
+        }
+        
         /**
          * callback for buffer creation to free the memory assocatiated with the
          * image after its been copied into the buffer
@@ -593,18 +632,28 @@ class Mapserver {
         static void FreeImageBuffer(char *data, void *hint) {
           msFree(data);
         }
+        
+        struct drawmap_request {
+          Map *map;
+          int size;
+          char * data;
+          Persistent<Function> cb;
+        };
   
         static Handle<Value> DrawMap (const Arguments& args) {
           HandleScope scope;
+          
+          REQ_FUN_ARG(0, cb);
           Map *map = ObjectWrap::Unwrap<Map>(args.This());
-          imageObj * im = msDrawMap(map->_map, MS_FALSE);
-          int size;
-
-          unsigned char * data = msSaveImageBuffer(im, &size, map->_map->outputformat);
-          Buffer *retbuf = Buffer::New((char *) data, size, FreeImageBuffer, NULL);
-          msFreeImage(im);
-
-          return scope.Close(retbuf->handle_);
+          
+          drawmap_request * req = new drawmap_request();
+          req->map = map;
+          req->cb = Persistent<Function>::New(cb);
+          
+          map->Ref();
+          eio_custom(EIO_DrawMap, EIO_PRI_DEFAULT, EIO_AfterDrawMap, req);
+          ev_ref(EV_DEFAULT_UC);
+          return Undefined();
         }
         
         static Handle<Value> SetExtent (const Arguments& args) {
