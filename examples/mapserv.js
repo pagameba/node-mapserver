@@ -26,10 +26,7 @@ var map_config = {
 
 for (var key in map_config) {
   var mappath = map_config[key];
-  maps[key] = {
-    mappath: path.dirname(mappath),
-    mapstring: fs.readFileSync(mappath, 'ascii')
-  };
+  maps[key] = mapserver.loadMap(mappath, path.dirname(mappath));
 }
 
 http.createServer(function(request, response) {
@@ -43,8 +40,7 @@ http.createServer(function(request, response) {
     });
     response.end('ok');
   } else if (components.length == 1 && maps[components[0]] != undefined) {
-    var mapconfig = maps[components[0]];
-    var map = mapserver.loadMapFromString(mapconfig.mapstring, mapconfig.mappath);
+    var map = maps[components[0]].copy();
     if (parsed.query.mapsize) {
       var mapsize = parsed.query.mapsize.split(' ');
       map.width = mapsize[0];

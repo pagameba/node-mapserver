@@ -395,6 +395,7 @@ class Mapserver {
           RO_PROPERTY(t, "extent", NamedPropertyGetter);
           
           /* Methods */
+          NODE_SET_PROTOTYPE_METHOD(t, "copy", Copy);
           NODE_SET_PROTOTYPE_METHOD(t, "recompute", Recompute);
           NODE_SET_PROTOTYPE_METHOD(t, "drawMap", DrawMap);
           NODE_SET_PROTOTYPE_METHOD(t, "setExtent", SetExtent);
@@ -557,6 +558,18 @@ class Mapserver {
           return Undefined();
         }
         
+        static Handle<Value> Copy (const Arguments& args) {
+          HandleScope scope;
+          Map *map = ObjectWrap::Unwrap<Map>(args.This());
+          mapObj * _map = map->_map;
+          mapObj * _copy = msNewMapObj();
+          if (msCopyMap(_copy, _map) == MS_SUCCESS) {
+            RETURN_MAP(_copy);
+          }
+          return Undefined();
+          
+        }
+
         static Handle<Value> Recompute (const Arguments& args) {
           HandleScope scope;
           Map *map = ObjectWrap::Unwrap<Map>(args.This());
