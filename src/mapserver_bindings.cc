@@ -416,7 +416,7 @@ class Mapserver {
           (new Map((mapObj *)map->Value()))->Wrap(args.This());
           return args.This();
         }
-
+        
       protected:  
         Map(mapObj * map) : _map(map) { 
         }
@@ -614,7 +614,7 @@ class Mapserver {
 
           TryCatch try_catch;
 
-          baton->cb->Call(Context::GetCurrent()->Global(), 1, argv);
+          drawmap_req->cb->Call(Context::GetCurrent()->Global(), 1, argv);
 
           if (try_catch.HasCaught()) {
             FatalException(try_catch);
