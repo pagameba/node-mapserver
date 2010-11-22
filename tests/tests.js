@@ -33,6 +33,7 @@ assert.equal(mapserver.MS_ON, 1, 'MS_ON not defined');
 // test accessing basic info about the mapserver build
 console.log('mapserver version number: ' + mapserver.getVersionInt());
 console.log('mapserver version information: ' + mapserver.getVersion());
+console.log('Threading support: ' + (parseInt(mapserver.supportsThreads()) == 1 ? 'ON' : 'OFF'));
 
 // quick error test
 err = mapserver.getError();
@@ -129,11 +130,15 @@ assert.equal(map.layers[0].name, 'test', 'layer name should have changed.');
 // layers should be accessible by name too
 assert.equal(map.layers['test'].name, 'test', 'layer should be accessible by name');
 
-map.drawMap(function(buffer) {
-  buffer = buffer.slice(0,buffer.length);
-  fs.writeFile('test_buffer.gif', buffer, function(err) {
-    if (err) throw err;
-  });
+map.drawMap(function(drawError, buffer) {
+  if (drawError) {
+    printError(drawError);
+  } else {
+    buffer = buffer.slice(0,buffer.length);
+    fs.writeFile('test_buffer.gif', buffer, function(err) {
+      if (err) throw err;
+    });
+  }
 });
 
 function printError(err) {

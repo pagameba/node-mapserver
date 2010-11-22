@@ -76,11 +76,21 @@ http.createServer(function(request, response) {
       }
     }
     
-    response.writeHead(200, {
-      'Content-Type':'image/gif'
-    });
-    map.drawMap(function(buffer) {
-      response.end(buffer);
+    map.drawMap(function(err, buffer) {
+      if (err) {
+        console.log(err);
+        console.log(util.inspect(err));
+        response.writeHead(200, {
+          'Content-Type':'text/plain'
+        });
+        var err = mapserver.getError();
+        response.end("MapServer Error: " + err.code + " ("+err.codeStr+"): " + err.message + ' in ' + err.routine);
+      } else {
+        response.writeHead(200, {
+          'Content-Type':'image/gif'
+        });
+        response.end(buffer);
+      }
     });
     // var buffer = map.drawMap();
     // response.end(buffer);

@@ -124,6 +124,9 @@ using namespace node;
 class Mapserver {
 
   public:
+    
+    static int supportsThreads;
+    
     static void Init(Handle<Object> target) 
     {
       HandleScope scope;
@@ -257,6 +260,7 @@ class Mapserver {
       NODE_SET_METHOD(target, "loadMapFromString", LoadMapFromString);
       NODE_SET_METHOD(target, "getVersion", GetVersion);
       NODE_SET_METHOD(target, "getVersionInt", GetVersionInt);
+      NODE_SET_METHOD(target, "supportsThreads", SupportsThreads);
 
       NODE_SET_METHOD(target, "resetErrorList", ResetErrorList);
       NODE_SET_METHOD(target, "getError", GetError);
@@ -264,6 +268,18 @@ class Mapserver {
       ErrorObj::Init(target);
       Map::Init(target);
       Layer::Init(target);
+      
+      char * version = msGetVersion();
+      char * regex = "SUPPORTS\\=THREADS";
+      int match;
+      match = 0;
+      if (msEvalRegex(regex, version) == MS_TRUE) {
+        match = 1;
+      } else {
+        // discard the error reported by msEvalRegex saying that it failed
+        msResetErrorList();
+      }
+      Mapserver::supportsThreads = match;
     }
 
   protected:
@@ -316,6 +332,13 @@ class Mapserver {
       int version = msGetVersionInt();
 
       Local<Number> result = Integer::New(version);
+      return scope.Close(result);
+    }
+
+    static Handle<Value> SupportsThreads (const Arguments& args) {
+      HandleScope scope;
+      Local<Number> result = Integer::New(Mapserver::supportsThreads);
+      
       return scope.Close(result);
     }
     
@@ -596,8 +619,14 @@ class Mapserver {
           drawmap_request *drawmap_req = (drawmap_request*)req->data;
           
           imageObj * im = msDrawMap(drawmap_req->map->_map, MS_FALSE);
-          drawmap_req->data = (char *)msSaveImageBuffer(im, &drawmap_req->size, drawmap_req->map->_map->outputformat);
-          msFreeImage(im);
+          if (im != NULL) {
+            drawmap_req->error = NULL;
+            drawmap_req->data = (char *)msSaveImageBuffer(im, &drawmap_req->size, drawmap_req->map->_map->outputformat);
+            msFreeImage(im);
+          } else {
+            drawmap_req->error = msGetErrorObj();
+            drawmap_req->data = NULL;
+          }
           return 0;
         }
         
@@ -607,14 +636,23 @@ class Mapserver {
           ev_unref(EV_DEFAULT_UC);
           drawmap_req->map->Unref();
 
-          Local<Value> argv[1];
-          Buffer * buffer = Buffer::New(drawmap_req->data, drawmap_req->size, FreeImageBuffer, NULL);
-          
-          argv[0] = scope.Close(buffer->handle_);
-
           TryCatch try_catch;
 
-          drawmap_req->cb->Call(Context::GetCurrent()->Global(), 1, argv);
+          Local<Value> argv[2];
+          if (drawmap_req->data != NULL) {
+            Buffer * buffer = Buffer::New(drawmap_req->data, drawmap_req->size, FreeImageBuffer, NULL);
+
+            argv[0] = Local<Value>::New(Null());
+            argv[1] = Local<Value>::New(buffer->handle_);
+          } else {
+            Local<Value> _arg_ = External::New(drawmap_req->error);
+
+            argv[0] = Local<Value>::New(ErrorObj::constructor_template->GetFunction()->NewInstance(1, &_arg_));
+            argv[1] = Local<Value>::New(Null());
+          }
+
+
+          drawmap_req->cb->Call(Context::GetCurrent()->Global(), 2, argv);
 
           if (try_catch.HasCaught()) {
             FatalException(try_catch);
@@ -635,6 +673,7 @@ class Mapserver {
         
         struct drawmap_request {
           Map *map;
+          errorObj * error;
           int size;
           char * data;
           Persistent<Function> cb;
@@ -646,13 +685,34 @@ class Mapserver {
           REQ_FUN_ARG(0, cb);
           Map *map = ObjectWrap::Unwrap<Map>(args.This());
           
-          drawmap_request * req = new drawmap_request();
-          req->map = map;
-          req->cb = Persistent<Function>::New(cb);
+          if (Mapserver::supportsThreads) {
+            drawmap_request * req = new drawmap_request();
+            req->map = map;
+            req->cb = Persistent<Function>::New(cb);
           
-          map->Ref();
-          eio_custom(EIO_DrawMap, EIO_PRI_DEFAULT, EIO_AfterDrawMap, req);
-          ev_ref(EV_DEFAULT_UC);
+            map->Ref();
+            eio_custom(EIO_DrawMap, EIO_PRI_DEFAULT, EIO_AfterDrawMap, req);
+            ev_ref(EV_DEFAULT_UC);
+          } else {
+            Local<Value> argv[2];
+            argv[0] = Local<Value>::New(Null());
+            imageObj * im = msDrawMap(map->_map, MS_FALSE);
+            if (im != NULL) {
+              int size;
+              char * data = (char *)msSaveImageBuffer(im, &size, map->_map->outputformat);
+              msFreeImage(im);
+              Buffer * buffer = Buffer::New(data, size, FreeImageBuffer, NULL);
+              
+              argv[1] = Local<Value>::New(buffer->handle_);
+            } else {
+              errorObj * err = msGetErrorObj();
+              Local<Value> _arg_ = External::New(err);
+
+              argv[0] = Local<Value>::New(ErrorObj::constructor_template->GetFunction()->NewInstance(1, &_arg_));
+              argv[1] = Local<Value>::New(Null());
+            }
+            cb->Call(Context::GetCurrent()->Global(), 2, argv);
+          }
           return Undefined();
         }
         
@@ -752,6 +812,7 @@ Persistent<FunctionTemplate> Mapserver::Map::constructor_template;
 Persistent<ObjectTemplate>   Mapserver::Map::layers_template_;
 Persistent<ObjectTemplate>   Mapserver::Map::extent_template_;
 Persistent<FunctionTemplate> Mapserver::Layer::constructor_template;
+int Mapserver::supportsThreads;
 
 extern "C"
 void init (Handle<Object> target)
