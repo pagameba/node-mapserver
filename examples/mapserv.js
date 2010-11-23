@@ -31,24 +31,52 @@ for (var key in map_config) {
 
 http.createServer(function(request, response) {
   var parsed = url.parse(request.url, true);
+  console.log(parsed.pathname);
   var components = parsed.pathname.split('/').splice(1);
-  console.log(util.inspect(components));
-  if (components.length == 0) {
-    // root
-    response.writeHead(200, {
-      'Content-Type':'text/plain'
+  var page = components[0];
+  if (page == '') {
+    // root, serve HTML up
+    var html = path.normalize(path.join(__dirname,'mapserv.html'));
+    fs.readFile(html, function(err, buffer) {
+      if (!err) {
+        response.writeHead(200, {
+          'Content-Type':'text/html'
+        });
+        response.end(buffer);
+      } else {
+        response.writeHead(400, {
+          'Content-type':'text/html'
+        });
+        response.end('File not found');
+      }
     });
-    response.end('ok');
-  } else if (components.length == 1 && maps[components[0]] != undefined) {
-    console.log(maps[components[0]].imagetype);
-    var map = maps[components[0]].copy();
-    if (parsed.query.mapsize) {
-      var mapsize = parsed.query.mapsize.split(' ');
+  } else if (page == 'favicon.ico') {
+    console.log('serving up mapserv.ico');
+    var html = path.normalize(path.join(__dirname,'mapserv.ico'));
+    fs.readFile(html, function(err, buffer) {
+      if (!err) {
+        response.writeHead(200, {
+          'Content-Type':'image/x-icon'
+        });
+        response.end(buffer);
+      } else {
+        response.writeHead(400, {
+          'Content-type':'text/html'
+        });
+        response.end('File not found');
+      }
+    });
+    
+  } else if (maps[page] != undefined) {
+    console.log(maps[page].imagetype);
+    var map = maps[page].copy();
+    if (parsed.query.map_size) {
+      var mapsize = parsed.query.map_size.split(' ');
       map.width = mapsize[0];
       map.height = mapsize[1];
     }
-    if (parsed.query.extent) {
-      var extent = parsed.query.extent.split(' ');
+    if (parsed.query.mapext) {
+      var extent = parsed.query.mapext.split(' ');
       if (extent.length == 4) {
         map.setExtent(parseInt(extent[0]),
           parseInt(extent[1]),

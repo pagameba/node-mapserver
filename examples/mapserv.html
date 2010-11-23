@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-type" content="text/html; charset=utf-8">
+  <title>mapserv</title>
+  <script src="http://openlayers.org/api/OpenLayers.js" type="text/javascript" charset="utf-8"></script>
+  <script type="text/javascript" charset="utf-8">
+    var map;
+    function onload() {
+      map = new OpenLayers.Map('Map', {
+        maxResolution: 7680,
+        units: 'meters',
+        maxExtent: new OpenLayers.Bounds(-2200000,-712631,3072800,3840000)
+      });
+      var layer = new OpenLayers.Layer.MapServer("NodeJS MapServer", "/gmap",{
+        // mapserver options
+      },{
+        // layer options
+      });
+      map.addLayer(layer);
+      map.setCenter(new OpenLayers.LonLat(436400,1563684.5), 0);
+    }
+  </script>
+</head>
+<body onload="onload();">
+  <div id="Map" style="border:1px solid black; width: 600px; height: 600px"></div>
+</body>
+</html>
