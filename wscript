@@ -1,4 +1,5 @@
 import Options
+import sys
 from os import unlink, symlink, popen
 from os.path import exists 
 
@@ -12,7 +13,8 @@ def set_options(opt):
 def configure(conf):
   conf.check_tool("compiler_cxx")
   conf.check_tool("node_addon")
-  conf.check_tool('osx')
+  if sys.platform == 'darwin':
+    conf.check_tool('osx')
 
 
 def build(bld):
