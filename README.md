@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/pagameba/node-mapserver.png?branch=master)](https://travis-ci.org/pagameba/node-mapserver)
+
 # Overview
 
 node-mapserver is an MIT-licensed node.js extension to the [mapserver](http://mapserver.org/ "MapServer") open source web mapping engine.  It allows you to access all the mapserver goodness for rendering map images in a node.js environment, allowing you to build high-performance, low-latency map servers.
