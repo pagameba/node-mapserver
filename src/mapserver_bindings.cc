@@ -453,6 +453,7 @@ class Mapserver {
           /* psuedo object properties */
           RO_PROPERTY(t, "layers", NamedPropertyGetter);
           RO_PROPERTY(t, "extent", NamedPropertyGetter);
+          RO_PROPERTY(t, "outputformat", NamedPropertyGetter);
           
           /* Methods */
           NODE_SET_PROTOTYPE_METHOD(t, "copy", Copy);
@@ -488,6 +489,7 @@ class Mapserver {
         
         static Persistent<ObjectTemplate> layers_template_;
         static Persistent<ObjectTemplate> extent_template_;
+        static Persistent<ObjectTemplate> outputformat_template_;
         
         static Handle<Value> Destroy (const Arguments &args) {
           Map *map = ObjectWrap::Unwrap<Map>(args.This());
@@ -526,6 +528,19 @@ class Mapserver {
             RETURN_STRING(map->_map->mappath);
           } else if (strcmp(*n, "name") == 0) {
             RETURN_STRING(map->_map->name);
+          } else if (strcmp(*n, "outputformat") == 0) {
+            if (outputformat_template_.IsEmpty()) {
+              Handle<ObjectTemplate> raw_template = ObjectTemplate::New();
+              raw_template->SetInternalFieldCount(1);
+              raw_template->SetNamedPropertyHandler(OutputFormatNamedGetter, NULL, NULL, NULL, NULL);
+              outputformat_template_ = Persistent<ObjectTemplate>::New(raw_template);
+            }
+            Handle<ObjectTemplate> templ = outputformat_template_;
+            Handle<Object> result = templ->NewInstance();
+            Handle<External> map_ptr = External::New(map);
+            result->SetInternalField(0,map_ptr);
+            HandleScope scope;
+            return scope.Close(result);
           } else if (strcmp(*n, "layers") == 0) {
             if (layers_template_.IsEmpty()) {
               Handle<ObjectTemplate> raw_template = ObjectTemplate::New();
@@ -584,6 +599,17 @@ class Mapserver {
           } else if (strcmp(*n, "mappath") == 0) {
             REPLACE_STRING(map->_map->mappath, value);
           }
+        }
+
+        static Handle<Value> OutputFormatNamedGetter(Local<String> name, const AccessorInfo& info) {
+          Map *map = ObjectWrap::Unwrap<Map>(info.This());
+          String::AsciiValue n(name);
+          if (strcmp(*n, "name") == 0) {
+            return String::New(map->_map->outputformat->name);
+          } else if (strcmp(*n, "mimetype") == 0) {
+            return String::New(map->_map->outputformat->mimetype);
+          }
+          return Undefined();
         }
                 
         static Handle<Value> LayersIndexedGetter (uint32_t index, const AccessorInfo& info) {
@@ -931,6 +957,7 @@ Persistent<FunctionTemplate> Mapserver::ErrorObj::constructor_template;
 Persistent<FunctionTemplate> Mapserver::Map::constructor_template;
 Persistent<ObjectTemplate>   Mapserver::Map::layers_template_;
 Persistent<ObjectTemplate>   Mapserver::Map::extent_template_;
+Persistent<ObjectTemplate>   Mapserver::Map::outputformat_template_;
 Persistent<FunctionTemplate> Mapserver::Layer::constructor_template;
 int Mapserver::supportsThreads;
 

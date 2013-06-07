@@ -19,16 +19,42 @@ LAYER
   CLASS
     NAME "Graticule"
     COLOR 0 0 0
-    #LABEL
-    #  COLOR  255 0 0
-    #  FONT "sans"
-    #  TYPE truetype
-    #  SIZE 8
-    #  POSITION AUTO
-    #  PARTIALS FALSE
-    #  BUFFER 2
-    #  OUTLINECOLOR 255 255 255
-    #END
+    LABEL
+      COLOR  255 0 0
+      TYPE BITMAP
+      SIZE TINY
+      POSITION AUTO
+      PARTIALS FALSE
+      BUFFER 2
+      OUTLINECOLOR 255 255 255
+    END
+  END
+  PROJECTION
+    "init=epsg:4326"
+  END
+  GRID
+    LABELFORMAT "DD"
+  END
+END # Layer
+LAYER
+  NAME "grid2"
+  METADATA
+    "DESCRIPTION" "Grid"
+  END
+  TYPE LINE
+  STATUS ON
+  CLASS
+    NAME "Graticule"
+    COLOR 0 0 0
+    LABEL
+      COLOR  255 0 0
+      TYPE BITMAP
+      SIZE TINY
+      POSITION AUTO
+      PARTIALS FALSE
+      BUFFER 2
+      OUTLINECOLOR 255 255 255
+    END
   END
   PROJECTION
     "init=epsg:4326"

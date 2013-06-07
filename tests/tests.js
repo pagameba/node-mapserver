@@ -124,7 +124,7 @@ map.setExtent(-180, -90, 180, 90);
 // test indexed accessor to map.layers
 assert.equal(map.layers.foo, undefined, 'map.layers should not expose arbitrary properties');
 assert.equal(typeof map.layers.length, 'number', 'map.layers.length should be an integer');
-assert.equal(map.layers.length, 2, 'map.layers.length should be 2');
+assert.equal(map.layers.length, 3, 'map.layers.length should be 2');
 
 // test accessor for layer name
 assert.notEqual(map.layers[1].name,'test', 'layer name should not be test before we change it');
@@ -137,13 +137,15 @@ console.log('is ' + map.layers['grid'].connectiontype + ' = ' + mapserver.MS_GRA
 
 console.log('intersection coordinates: ' + util.inspect(map.layers['grid'].getGridIntersectionCoordinates(), false, null, true));
 
+console.log(map.outputformat.name + ':' + map.outputformat.mimetype);
+
 map.drawMap(function(drawError, buffer) {
   if (drawError) {
     console.log(drawError);
     assert.ok(false, 'Error drawing map.');
   } else {
     buffer = buffer.slice(0,buffer.length);
-    fs.writeFile(path.join(__dirname, 'test_buffer.gif'), buffer, function(err) {
+    fs.writeFile(path.join(__dirname, 'test_buffer.png'), buffer, function(err) {
       if (err) throw err;
     });
   }
