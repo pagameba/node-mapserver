@@ -733,7 +733,6 @@ class Mapserver {
               &req->request,
               DrawMapWork,
               (uv_after_work_cb) DrawMapAfter);
-
           } else {
             Local<Value> argv[2];
             argv[0] = Local<Value>::New(Null());
