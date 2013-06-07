@@ -654,49 +654,51 @@ class Mapserver {
         }
         
         static void DrawMapWork(uv_work_t *req) {
-          drawmap_request *drawmap_req = (drawmap_request*)req->data;
+          // drawmap_baton *drawmap_req = (drawmap_baton*)req->data;
+          drawmap_baton *baton = static_cast<drawmap_baton*>(req->data);
           
-          imageObj * im = msDrawMap(drawmap_req->map->_map, MS_FALSE);
+          imageObj * im = msDrawMap(baton->map->_map, MS_FALSE);
           if (im != NULL) {
-            drawmap_req->error = NULL;
-            drawmap_req->data = (char *)msSaveImageBuffer(im, &drawmap_req->size, drawmap_req->map->_map->outputformat);
+            baton->error = NULL;
+            baton->data = (char *)msSaveImageBuffer(im, &baton->size, baton->map->_map->outputformat);
             msFreeImage(im);
           } else {
-            drawmap_req->error = msGetErrorObj();
-            drawmap_req->data = NULL;
+            baton->error = msGetErrorObj();
+            baton->data = NULL;
           }
           return;
         }
         
         static void DrawMapAfter(uv_work_t *req) {
           HandleScope scope;
-          drawmap_request *drawmap_req =(drawmap_request *)req->data;
-          drawmap_req->map->Unref();
+          // drawmap_baton *drawmap_req =(drawmap_baton *)req->data;
+          drawmap_baton *baton = static_cast<drawmap_baton *>(req->data);
+          baton->map->Unref();
 
           TryCatch try_catch;
 
           Local<Value> argv[2];
-          if (drawmap_req->data != NULL) {
-            Buffer * buffer = Buffer::New(drawmap_req->data, drawmap_req->size, FreeImageBuffer, NULL);
+          if (baton->data != NULL) {
+            Buffer * buffer = Buffer::New(baton->data, baton->size, FreeImageBuffer, NULL);
 
             argv[0] = Local<Value>::New(Null());
             argv[1] = Local<Value>::New(buffer->handle_);
           } else {
-            Local<Value> _arg_ = External::New(drawmap_req->error);
+            Local<Value> _arg_ = External::New(baton->error);
 
             argv[0] = Local<Value>::New(ErrorObj::constructor_template->GetFunction()->NewInstance(1, &_arg_));
             argv[1] = Local<Value>::New(Null());
           }
 
 
-          drawmap_req->cb->Call(Context::GetCurrent()->Global(), 2, argv);
+          baton->cb->Call(Context::GetCurrent()->Global(), 2, argv);
 
           if (try_catch.HasCaught()) {
             FatalException(try_catch);
           }
 
-          drawmap_req->cb.Dispose();
-          delete drawmap_req;
+          baton->cb.Dispose();
+          delete baton;
           return;
         }
   
@@ -708,7 +710,7 @@ class Mapserver {
           msFree(data);
         }
         
-        struct drawmap_request {
+        struct drawmap_baton {
       		uv_work_t request;
         	Map *map;
           errorObj * error;
@@ -724,13 +726,14 @@ class Mapserver {
           Map *map = ObjectWrap::Unwrap<Map>(args.This());
           
           if (Mapserver::supportsThreads) {
-            drawmap_request * req = new drawmap_request();
-            req->map = map;
-            req->cb = Persistent<Function>::New(cb);
+            drawmap_baton * baton = new drawmap_baton();
+            baton->request.data = (void*) baton;
+            baton->map = map;
+            baton->cb = Persistent<Function>::New(cb);
           
             map->Ref();
             uv_queue_work(uv_default_loop(),
-              &req->request,
+              &baton->request,
               DrawMapWork,
               (uv_after_work_cb) DrawMapAfter);
           } else {
@@ -871,3 +874,31 @@ void init (Handle<Object> target)
   HandleScope scope;
   Mapserver::Init(target);
 }
+
+
+/*
+
+#if NODE_VERSION_AT_LEAST(0, 9, 0)
+#define NODE_MAPNIK_MODULE(modname, regfunc)                          \
+  extern "C" {                                                        \
+    MAPNIK_EXP node::node_module_struct modname ## _module =         \
+    {                                                                 \
+      NODE_STANDARD_MODULE_STUFF,                                     \
+      (node::addon_register_func)regfunc,                             \
+      NODE_STRINGIFY(modname)                                         \
+    };                                                                \
+  }
+
+#else
+
+#define NODE_MAPNIK_MODULE(modname, regfunc)                          \
+  extern "C" {                                                        \
+    MAPNIK_EXP node::node_module_struct modname ## _module =         \
+    {                                                                 \
+      NODE_STANDARD_MODULE_STUFF,                                     \
+      regfunc,                             \
+      NODE_STRINGIFY(modname)                                         \
+    };                                                                \
+  }
+
+*/
