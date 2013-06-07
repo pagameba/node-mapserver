@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2010, Paul Spencer <pagameba@gmail.com>
+Copyright (c) 2010, Paul Spencer <paul@pagameba.com>
 
 Permission to use, copy, modify, and/or distribute this software for any
 purpose with or without fee is hereby granted, provided that the above
@@ -14,4 +14,4 @@ ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 
-module.exports = require("./build/default/mapserver_bindings");
+module.exports = require("./build/Release/mapserver.node");

@@ -14,19 +14,20 @@ ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 
-var assert = require('assert'),
-    util = require('util'),
-    mapserver = require('../mapserver'),
-    fs = require('fs'),
-    path = require('path'),
-    datadir = path.normalize(path.join(path.dirname(__filename), '../data')),
-    mapfile = 'test.map',
-    nomapfile = 'missing.map',
-    errormapfile = 'error.map',
-    map,
-    err;
+var assert = require('assert')
+  , util = require('util')
+  , mapserver = require('../mapserver')
+  , fs = require('fs')
+  , path = require('path')
+  , datadir = path.normalize(path.join(path.dirname(__filename), '../data'))
+  , mapfile = 'test.map'
+  , nomapfile = 'missing.map'
+  , errormapfile = 'error.map'
+  , map
+  , err
+  ;
 
-// test constants
+  // test constants
 assert.equal(mapserver.MS_OFF, 0, 'MS_OFF not defined');
 assert.equal(mapserver.MS_ON, 1, 'MS_ON not defined');
 

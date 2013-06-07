@@ -17,7 +17,6 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <mapserver.h>
 #include <v8.h>
 #include <node.h>
-#include <node_events.h>
 #include <node_buffer.h>
 #include <string.h>
 #include <assert.h>
@@ -208,7 +207,6 @@ class Mapserver {
       NODE_DEFINE_CONSTANT(target, MS_METERS);
       NODE_DEFINE_CONSTANT(target, MS_MILES);
       NODE_DEFINE_CONSTANT(target, MS_MULTIPLE);
-      NODE_DEFINE_CONSTANT(target, MS_MYGIS);
       NODE_DEFINE_CONSTANT(target, MS_NAUTICALMILES);
       NODE_DEFINE_CONSTANT(target, MS_NO);
       NODE_DEFINE_CONSTANT(target, MS_NORMAL);
@@ -222,7 +220,6 @@ class Mapserver {
       NODE_DEFINE_CONSTANT(target, MS_POSTGIS);
       NODE_DEFINE_CONSTANT(target, MS_QUERY_BY_ATTRIBUTE);
       NODE_DEFINE_CONSTANT(target, MS_QUERY_BY_INDEX);
-      NODE_DEFINE_CONSTANT(target, MS_QUERY_BY_OPERATOR);
       NODE_DEFINE_CONSTANT(target, MS_QUERY_BY_POINT);
       NODE_DEFINE_CONSTANT(target, MS_QUERY_BY_RECT);
       NODE_DEFINE_CONSTANT(target, MS_QUERY_BY_SHAPE);
@@ -656,7 +653,7 @@ class Mapserver {
           return scope.Close(Boolean::New(true));
         }
         
-        static int EIO_DrawMap(eio_req *req) {
+/*        static int EIO_DrawMap(eio_req *req) {
           drawmap_request *drawmap_req = (drawmap_request*)req->data;
           
           imageObj * im = msDrawMap(drawmap_req->map->_map, MS_FALSE);
@@ -703,7 +700,7 @@ class Mapserver {
           delete drawmap_req;
           return 0;
         }
-        
+*/        
         /**
          * callback for buffer creation to free the memory assocatiated with the
          * image after its been copied into the buffer
@@ -726,6 +723,7 @@ class Mapserver {
           REQ_FUN_ARG(0, cb);
           Map *map = ObjectWrap::Unwrap<Map>(args.This());
           
+/*
           if (Mapserver::supportsThreads) {
             drawmap_request * req = new drawmap_request();
             req->map = map;
@@ -735,6 +733,7 @@ class Mapserver {
             eio_custom(EIO_DrawMap, EIO_PRI_DEFAULT, EIO_AfterDrawMap, req);
             ev_ref(EV_DEFAULT_UC);
           } else {
+*/
             Local<Value> argv[2];
             argv[0] = Local<Value>::New(Null());
             imageObj * im = msDrawMap(map->_map, MS_FALSE);
@@ -753,10 +752,11 @@ class Mapserver {
               argv[1] = Local<Value>::New(Null());
             }
             cb->Call(Context::GetCurrent()->Global(), 2, argv);
+/*
           }
+*/        
           return Undefined();
         }
-        
         static Handle<Value> SetExtent (const Arguments& args) {
           HandleScope scope;
           Map *map = ObjectWrap::Unwrap<Map>(args.This());
