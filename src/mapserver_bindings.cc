@@ -653,7 +653,7 @@ class Mapserver {
           return scope.Close(Boolean::New(true));
         }
         
-/*        static int EIO_DrawMap(eio_req *req) {
+        static int DrawMapWork(uv_work_t *req) {
           drawmap_request *drawmap_req = (drawmap_request*)req->data;
           
           imageObj * im = msDrawMap(drawmap_req->map->_map, MS_FALSE);
@@ -668,10 +668,9 @@ class Mapserver {
           return 0;
         }
         
-        static int EIO_AfterDrawMap(eio_req *req) {
+        static int DrawMapAfter(uv_work_t *req) {
           HandleScope scope;
           drawmap_request *drawmap_req =(drawmap_request *)req->data;
-          ev_unref(EV_DEFAULT_UC);
           drawmap_req->map->Unref();
 
           TryCatch try_catch;
@@ -700,7 +699,7 @@ class Mapserver {
           delete drawmap_req;
           return 0;
         }
-*/        
+  
         /**
          * callback for buffer creation to free the memory assocatiated with the
          * image after its been copied into the buffer
@@ -710,7 +709,8 @@ class Mapserver {
         }
         
         struct drawmap_request {
-          Map *map;
+      		uv_work_t request;
+        	Map *map;
           errorObj * error;
           int size;
           char * data;
@@ -723,17 +723,18 @@ class Mapserver {
           REQ_FUN_ARG(0, cb);
           Map *map = ObjectWrap::Unwrap<Map>(args.This());
           
-/*
           if (Mapserver::supportsThreads) {
             drawmap_request * req = new drawmap_request();
             req->map = map;
             req->cb = Persistent<Function>::New(cb);
           
             map->Ref();
-            eio_custom(EIO_DrawMap, EIO_PRI_DEFAULT, EIO_AfterDrawMap, req);
-            ev_ref(EV_DEFAULT_UC);
+              uv_queue_work(uv_default_loop(),
+                &drawmap_request->request,
+                DrawMapWork,
+                (uv_after_work_cb) DrawMapAfter);
+
           } else {
-*/
             Local<Value> argv[2];
             argv[0] = Local<Value>::New(Null());
             imageObj * im = msDrawMap(map->_map, MS_FALSE);
@@ -752,9 +753,9 @@ class Mapserver {
               argv[1] = Local<Value>::New(Null());
             }
             cb->Call(Context::GetCurrent()->Global(), 2, argv);
-/*
+
           }
-*/        
+        
           return Undefined();
         }
         static Handle<Value> SetExtent (const Arguments& args) {
