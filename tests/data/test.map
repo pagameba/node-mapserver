@@ -1,17 +1,50 @@
 MAP
 NAME GMAP_DEMO
 STATUS ON
-SIZE 400 300
-EXTENT -1500000 -502631 2072800 3140000
-UNITS METERS
+SIZE 600 300
+EXTENT -180 -90 180 90
+UNITS DD
 SHAPEPATH "./"
 IMAGECOLOR 255 255 255
-
+PROJECTION
+  "init=epsg:4326"
+END
 LAYER
+  NAME "grid"
+  METADATA
+    "DESCRIPTION" "Grid"
+  END
+  TYPE LINE
+  STATUS ON
+  CLASS
+    NAME "Graticule"
+    COLOR 0 0 0
+    #LABEL
+    #  COLOR  255 0 0
+    #  FONT "sans"
+    #  TYPE truetype
+    #  SIZE 8
+    #  POSITION AUTO
+    #  PARTIALS FALSE
+    #  BUFFER 2
+    #  OUTLINECOLOR 255 255 255
+    #END
+  END
+  PROJECTION
+    "init=epsg:4326"
+  END
+  GRID
+    LABELFORMAT "DD"
+  END
+END # Layer
+LAYER
+  PROJECTION
+    "init=epsg:4326"
+  END
   NAME prov_bound
   TYPE POLYGON
   STATUS ON
-  DATA province
+  DATA wgs_province
   CLASS
     NAME "Province"
     STYLE

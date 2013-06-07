@@ -803,6 +803,8 @@ class Mapserver {
           RW_PROPERTY(t, "name", NamedPropertyGetter, NamedPropertySetter);
           RW_PROPERTY(t, "status", NamedPropertyGetter, NamedPropertySetter);
           
+          RO_PROPERTY(t, "connectiontype", NamedPropertyGetter);
+          
           target->Set(String::NewSymbol("Layer"), t->GetFunction());
         }
       
@@ -839,6 +841,8 @@ class Mapserver {
             RETURN_STRING(layer->_layer->name);
           } else if (strcmp(*n, "status") == 0) {
             RETURN_NUMBER(layer->_layer->status);
+          } else if (strcmp(*n, "connectiontype") == 0) {
+            RETURN_NUMBER(layer->_layer->connectiontype);
           }
           return Undefined();
         }
