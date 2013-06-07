@@ -653,7 +653,7 @@ class Mapserver {
           return scope.Close(Boolean::New(true));
         }
         
-        static int DrawMapWork(uv_work_t *req) {
+        static void DrawMapWork(uv_work_t *req) {
           drawmap_request *drawmap_req = (drawmap_request*)req->data;
           
           imageObj * im = msDrawMap(drawmap_req->map->_map, MS_FALSE);
@@ -665,10 +665,10 @@ class Mapserver {
             drawmap_req->error = msGetErrorObj();
             drawmap_req->data = NULL;
           }
-          return 0;
+          return;
         }
         
-        static int DrawMapAfter(uv_work_t *req) {
+        static void DrawMapAfter(uv_work_t *req) {
           HandleScope scope;
           drawmap_request *drawmap_req =(drawmap_request *)req->data;
           drawmap_req->map->Unref();
@@ -697,7 +697,7 @@ class Mapserver {
 
           drawmap_req->cb.Dispose();
           delete drawmap_req;
-          return 0;
+          return;
         }
   
         /**
@@ -729,10 +729,10 @@ class Mapserver {
             req->cb = Persistent<Function>::New(cb);
           
             map->Ref();
-              uv_queue_work(uv_default_loop(),
-                &drawmap_request->request,
-                DrawMapWork,
-                (uv_after_work_cb) DrawMapAfter);
+            uv_queue_work(uv_default_loop(),
+              &req->request,
+              DrawMapWork,
+              (uv_after_work_cb) DrawMapAfter);
 
           } else {
             Local<Value> argv[2];
@@ -753,11 +753,10 @@ class Mapserver {
               argv[1] = Local<Value>::New(Null());
             }
             cb->Call(Context::GetCurrent()->Global(), 2, argv);
-
           }
-        
           return Undefined();
         }
+
         static Handle<Value> SetExtent (const Arguments& args) {
           HandleScope scope;
           Map *map = ObjectWrap::Unwrap<Map>(args.This());

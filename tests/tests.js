@@ -77,8 +77,8 @@ assert.equal(map.maxsize, 2048, 'getting map maxsize failed');
 assert.equal(map.units, mapserver.MS_METERS, 'getting map units failed');
 assert.equal(map.resolution, 72, 'getting map resolution failed');
 assert.equal(map.defresolution, 72, 'getting map defresolution failed');
-assert.equal(map.shapepath, './', 'getting map defresolution failed');
-assert.equal(path.normalize(map.mappath), path.normalize(path.join(process.cwd(), 'data')), 'getting map defresolution failed');
+assert.equal(map.shapepath, './', 'getting shapepath failed');
+assert.equal(path.normalize(map.mappath), path.normalize(path.join(__dirname, 'data')), 'getting mappath failed');
 assert.equal(map.extent.minx, -1500000, 'getting map extent minx failed');
 assert.equal(map.extent.miny, -502631, 'getting map extent miny failed');
 assert.equal(map.extent.maxx, 2072800, 'getting map extent maxx failed');
@@ -137,7 +137,7 @@ map.drawMap(function(drawError, buffer) {
     assert.ok(false, 'Error drawing map.');
   } else {
     buffer = buffer.slice(0,buffer.length);
-    fs.writeFile('test_buffer.gif', buffer, function(err) {
+    fs.writeFile(path.join(__dirname, 'test_buffer.gif'), buffer, function(err) {
       if (err) throw err;
     });
   }
