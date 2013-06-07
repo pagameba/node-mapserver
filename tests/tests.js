@@ -133,7 +133,9 @@ assert.equal(map.layers[1].name, 'test', 'layer name should have changed.');
 // layers should be accessible by name too
 assert.equal(map.layers['test'].name, 'test', 'layer should be accessible by name');
 
-console.log(map.layers['grid'].connectiontype);
+console.log('is ' + map.layers['grid'].connectiontype + ' = ' + mapserver.MS_GRATICULE);
+
+console.log('intersection coordinates: ' + util.inspect(map.layers['grid'].getGridIntersectionCoordinates(), false, null, true));
 
 map.drawMap(function(drawError, buffer) {
   if (drawError) {

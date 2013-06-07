@@ -805,6 +805,8 @@ class Mapserver {
           
           RO_PROPERTY(t, "connectiontype", NamedPropertyGetter);
           
+          NODE_SET_PROTOTYPE_METHOD(t, "getGridIntersectionCoordinates", GetGridIntersectionCoordinates);
+          
           target->Set(String::NewSymbol("Layer"), t->GetFunction());
         }
       
@@ -815,6 +817,9 @@ class Mapserver {
           return args.This();
         }
 
+        layerObj * _layer;
+
+        operator layerObj* () const { return _layer; }
       protected:  
         Layer(layerObj * layer) : _layer(layer) { }
 
@@ -824,9 +829,6 @@ class Mapserver {
           }
         }
 
-        layerObj * _layer;
-
-        operator layerObj* () const { return _layer; }
         
         static Handle<Value> Destroy (const Arguments &args) {
           Layer *layer = ObjectWrap::Unwrap<Layer>(args.This());
@@ -863,7 +865,67 @@ class Mapserver {
           }
         }
       };
-};
+      
+      static Handle<Value> GetGridIntersectionCoordinates (const Arguments& args) {
+        HandleScope scope;
+        Layer *layer = ObjectWrap::Unwrap<Layer>(args.This());
+        
+        int i = 0;
+        
+        graticuleIntersectionObj *values = msGraticuleLayerGetIntersectionPoints(layer->_layer->map, layer->_layer);
+        
+        Handle<ObjectTemplate> objTempl = ObjectTemplate::New();
+        objTempl->SetInternalFieldCount(1);
+
+        Handle<Array> left = Array::New(values->nLeft);
+        Handle<Array> top = Array::New(values->nTop);
+        Handle<Array> right = Array::New(values->nRight);
+        Handle<Array> bottom = Array::New(values->nBottom);
+        
+        for (i=0; i<values->nLeft; i++) {
+          Local<Object> val = objTempl->NewInstance();
+          val->Set(String::New("x"), Number::New(values->pasLeft[i].x));
+          val->Set(String::New("y"), Number::New(values->pasLeft[i].y));
+          val->Set(String::New("label"), String::New(values->papszLeftLabels[i]));
+          left->Set(i, val);
+        }
+        for (i=0; i<values->nTop; i++) {
+          Local<Object> val = objTempl->NewInstance();
+          val->Set(String::New("x"), Number::New(values->pasTop[i].x));
+          val->Set(String::New("y"), Number::New(values->pasTop[i].y));
+          val->Set(String::New("label"), String::New(values->papszTopLabels[i]));
+          top->Set(i, val);
+        }
+        for (i=0; i<values->nRight; i++) {
+          Local<Object> val = objTempl->NewInstance();
+          val->Set(String::New("x"), Number::New(values->pasRight[i].x));
+          val->Set(String::New("y"), Number::New(values->pasRight[i].y));
+          val->Set(String::New("label"), String::New(values->papszRightLabels[i]));
+          right->Set(i, val);
+        }
+        for (i=0; i<values->nBottom; i++) {
+          Local<Object> val = objTempl->NewInstance();
+          val->Set(String::New("x"), Number::New(values->pasBottom[i].x));
+          val->Set(String::New("y"), Number::New(values->pasBottom[i].y));
+          val->Set(String::New("label"), String::New(values->papszBottomLabels[i]));
+          bottom->Set(i, val); 
+        }
+        
+        // return object like this:
+        // {
+        //   left: [{position: 0, label: '123.00'}],
+        //   top: [{position: 0, label: '123.00'}],
+        //   right: [{position: 0, label: '123.00'}],
+        //   bottom: [{position: 0, label: '123.00'}],
+        // }
+        Local<Object> result = objTempl->NewInstance();
+        result->Set(String::New("left"), left);
+        result->Set(String::New("top"), top);
+        result->Set(String::New("right"), right);
+        result->Set(String::New("bottom"), bottom);
+        return scope.Close(result);
+      }
+    };
 
 Persistent<FunctionTemplate> Mapserver::ErrorObj::constructor_template;
 Persistent<FunctionTemplate> Mapserver::Map::constructor_template;
