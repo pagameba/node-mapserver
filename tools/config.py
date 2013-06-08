@@ -38,7 +38,7 @@ from optparse import OptionParser
 import os
 
 def get_lib_dir():
-    return os.environ.get('npm_config_mapserv_lib_dir', '')
+    return os.environ.get('npm_config_mapserver_lib_dir', '')
 
 parser = OptionParser()
 parser.add_option("--include",
@@ -52,7 +52,7 @@ parser.add_option("--ldflags",
 (options, args) = parser.parse_args()
 
 if options.include:
-    print os.environ.get('npm_config_mapserv_include_dir', '')
+    print os.environ.get('npm_config_mapserver_include_dir', '')
 
 if options.ldflags:
     # write the library path into the resulting binary

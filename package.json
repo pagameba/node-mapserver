@@ -11,7 +11,7 @@
     "include_dir": "",
     "lib_dir": ""
   },
-    "scripts": {
+  "scripts": {
     "test": "node_modules/.bin/mocha tests/tests.js",
     "install": "node-gyp configure build"
   },
