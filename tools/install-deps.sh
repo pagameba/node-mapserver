@@ -36,5 +36,3 @@ make install || die "make install failed"
 # point `npm` at the build
 npm config set mapserver:lib_dir ${PREFIX}/mapserver-install/lib
 npm config set mapserver:include_dir ${PREFIX}/mapserver
-
-export CXX="g++ -I${PREFX}/mapserver -L${PREFIX}/mapserver -lmapserver"
