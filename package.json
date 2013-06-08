@@ -1,0 +1,29 @@
+{
+  "name": "node-mapserver",
+  "version": "0.0.1",
+  "description": "node bindings for libmapserver",
+  "main": "mapserver.js",
+  "directories": {
+    "example": "examples",
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "node_modules/.bin/mocha tests/tests.js",
+    "install": "node-gyp rebuild"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/pagameba/node-mapserver.git"
+  },
+  "keywords": [
+    "mapserver"
+  ],
+  "author": "Paul Spencer",
+  "license": "MIT",
+  "gypfile": true,
+  "readmeFilename": "README.md",
+  "gitHead": "32f694866ad22c3a033c4d907f20e4802bf728c5",
+  "devDependencies": {
+    "mocha": "~1.10.0"
+  }
+}
