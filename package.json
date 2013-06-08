@@ -7,9 +7,13 @@
     "example": "examples",
     "test": "tests"
   },
-  "scripts": {
+  "config": {
+    "include_dir": "",
+    "lib_dir": ""
+  },
+    "scripts": {
     "test": "node_modules/.bin/mocha tests/tests.js",
-    "install": "node-gyp rebuild"
+    "install": "node-gyp configure build"
   },
   "repository": {
     "type": "git",
