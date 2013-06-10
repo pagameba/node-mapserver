@@ -9,14 +9,14 @@
  * - mapsize=<width> <height> - the size of the map image to draw
  */
 
-var util = require('util'),
-    http = require("http"),  
-    url = require("url"),  
-    mapserver = require("../mapserver"),
-    path = require("path"),
-    fs = require('fs'),
-    Cache = require('./cache').Cache,
-    md5 = require('../deps/hashlib/build/default/hashlib').md5;
+var util = require('util')
+  , http = require("http")
+  , url = require("url")
+  , mapserver = require("../mapserver")
+  , path = require("path")
+  , fs = require('fs')
+  , Cache = require('./cache').Cache
+  ;
 
 var port = 8080;
 
@@ -76,7 +76,8 @@ http.createServer(function(request, response) {
     });
     
   } else if (maps[page] != undefined) {
-    var key = md5(parsed.search);
+    var key = require('crypto').createHash('md5').update(parsed.search).digest('hex');
+
     console.log(parsed.search+' : '+key);
     var o = cache.get(key);
     if (o) {

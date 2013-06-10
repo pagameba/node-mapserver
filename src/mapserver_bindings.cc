@@ -14,6 +14,7 @@ ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 
+#define BUILDING_NODE_EXTENSION
 #include <mapserver.h>
 #include <v8.h>
 #include <node.h>
@@ -968,30 +969,4 @@ void init (Handle<Object> target)
   Mapserver::Init(target);
 }
 
-
-/*
-
-#if NODE_VERSION_AT_LEAST(0, 9, 0)
-#define NODE_MAPNIK_MODULE(modname, regfunc)                          \
-  extern "C" {                                                        \
-    MAPNIK_EXP node::node_module_struct modname ## _module =         \
-    {                                                                 \
-      NODE_STANDARD_MODULE_STUFF,                                     \
-      (node::addon_register_func)regfunc,                             \
-      NODE_STRINGIFY(modname)                                         \
-    };                                                                \
-  }
-
-#else
-
-#define NODE_MAPNIK_MODULE(modname, regfunc)                          \
-  extern "C" {                                                        \
-    MAPNIK_EXP node::node_module_struct modname ## _module =         \
-    {                                                                 \
-      NODE_STANDARD_MODULE_STUFF,                                     \
-      regfunc,                             \
-      NODE_STRINGIFY(modname)                                         \
-    };                                                                \
-  }
-
-*/
+NODE_MODULE(mapserver, init)

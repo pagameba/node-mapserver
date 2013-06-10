@@ -1,7 +1,7 @@
 language: node_js
 node_js:
   - "0.8"
-#  - "0.10"
+  - "0.10"
 env:
   - MAPSERVER_COMMIT=rel-6-2-1  # v6.2.1
 before_install:
