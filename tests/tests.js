@@ -19,10 +19,10 @@ var assert = require('assert')
   , mapserver = require('../mapserver')
   , fs = require('fs')
   , path = require('path')
-  , datadir = path.normalize(path.join(path.dirname(__filename), './data'))
-  , mapfile = 'test.map'
-  , nomapfile = 'missing.map'
-  , errormapfile = 'error.map'
+  , datadir = path.join(__dirname, 'data'))
+  , mapfile = path.join(datadir, 'test.map')
+  , nomapfile = path.join(datadir, 'missing.map')
+  , errormapfile = path.join(datadir, 'error.map')
   , map
   , err
   ;
@@ -53,7 +53,7 @@ describe('mapserver', function() {
   it('missing mapfile should throw an error', function() {
     // Test default mapfile pattern (must end in .map)
     assert['throws'](function() { 
-      mapserver.loadMap(path.join(datadir), nomapfile);  
+      mapserver.loadMap(nomapfile);  
     }, Error, 'attempting to load a non-existent map should throw an error.');
 
     // check error
@@ -68,13 +68,13 @@ describe('mapserver', function() {
   
   it('should load a valid map file', function() {
     assert.doesNotThrow(function() {
-      map = mapserver.loadMap(path.join(datadir, mapfile),datadir);
+      map = mapserver.loadMap(mapfile, datadir);
     }, Error, 'loading a valid map file should not throw an error.');
   });
   
   it('should get basic information from the map object', function() {
     assert.doesNotThrow(function() {
-      map = mapserver.loadMap(path.join(datadir, mapfile),datadir);
+      map = mapserver.loadMap(mapfile, datadir);
     }, Error, 'loading a valid map file should not throw an error.');
 
     assert.equal(map.name, "GMAP_DEMO", 'map name is incorrect');
@@ -93,7 +93,7 @@ describe('mapserver', function() {
   
   it('should set map properties', function() {
     assert.doesNotThrow(function() {
-      map = mapserver.loadMap(path.join(datadir, mapfile),datadir);
+      map = mapserver.loadMap(mapfile, datadir);
     }, Error, 'loading a valid map file should not throw an error.');
 
     // test setting map properties
@@ -123,7 +123,7 @@ describe('mapserver', function() {
 
   it('should get the map extent', function() {
     assert.doesNotThrow(function() {
-      map = mapserver.loadMap(path.join(datadir, mapfile),datadir);
+      map = mapserver.loadMap(mapfile, datadir);
     }, Error, 'loading a valid map file should not throw an error.');
     assert.equal(map.extent.minx, -180, 'getting map extent minx failed');
     assert.equal(map.extent.miny, -90, 'getting map extent miny failed');
@@ -133,7 +133,7 @@ describe('mapserver', function() {
 
   it('should set the map extent', function() {
     assert.doesNotThrow(function() {
-      map = mapserver.loadMap(path.join(datadir, mapfile),datadir);
+      map = mapserver.loadMap(mapfile, datadir);
     }, Error, 'loading a valid map file should not throw an error.');
     map.setExtent(-90, -45, 90, 45);
     assert.equal(map.extent.minx, -90, 'setting map extent minx failed');
@@ -144,7 +144,7 @@ describe('mapserver', function() {
 
   it('should compute cell size and scaledenom', function() {
     assert.doesNotThrow(function() {
-      map = mapserver.loadMap(path.join(datadir, mapfile),datadir);
+      map = mapserver.loadMap(mapfile, datadir);
     }, Error, 'loading a valid map file should not throw an error.');
     // test effect of recompute on cellsize and scaledenom
     map.recompute();
@@ -154,7 +154,7 @@ describe('mapserver', function() {
 
   it('should have access to map layers', function() {
     assert.doesNotThrow(function() {
-      map = mapserver.loadMap(path.join(datadir, mapfile),datadir);
+      map = mapserver.loadMap(mapfile, datadir);
     }, Error, 'loading a valid map file should not throw an error.');
 
     // test indexed accessor to map.layers
@@ -174,7 +174,7 @@ describe('mapserver', function() {
 
   it('should get grid intersection coordinates', function() {
     assert.doesNotThrow(function() {
-      map = mapserver.loadMap(path.join(datadir, mapfile),datadir);
+      map = mapserver.loadMap(mapfile, datadir);
     }, Error, 'loading a valid map file should not throw an error.');
 
     var values = map.layers['grid'].getGridIntersectionCoordinates();
@@ -195,7 +195,7 @@ describe('mapserver', function() {
   
   it('should have an output format', function() {
     assert.doesNotThrow(function() {
-      map = mapserver.loadMap(path.join(datadir, mapfile),datadir);
+      map = mapserver.loadMap(mapfile, datadir);
     }, Error, 'loading a valid map file should not throw an error.');
     
     assert.equal(map.outputformat.name, 'png', 'output format name is incorrect');
@@ -204,7 +204,7 @@ describe('mapserver', function() {
   
   it('should draw a map', function() {
     assert.doesNotThrow(function() {
-      map = mapserver.loadMap(path.join(datadir, mapfile),datadir);
+      map = mapserver.loadMap(mapfile, datadir);
     }, Error, 'loading a valid map file should not throw an error.');
     fs.readFile(path.join(__dirname, 'data', 'test_buffer.png'), function(err, data) {
       if (err) {
