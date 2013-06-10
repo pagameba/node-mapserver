@@ -7,4 +7,6 @@ env:
 before_install:
   - sudo apt-get install libgif-dev                   # mapserver dependencies
   - sh ./tools/install-deps.sh /tmp $MAPSERVER_COMMIT # install the dependencies
+  - export CXX="g++ -I/tmp/mapserver -L/tmp/mapserver-install/lib -lmapserver"
+  - export LD_LIBRARY_PATH=/tmp/mapserver-install/lib:${LD_LIBRARY_PATH}
   - export PATH=/tmp/mapserver-install/bin:${PATH} # ensure `node-gyp` can find `mapserver-config`

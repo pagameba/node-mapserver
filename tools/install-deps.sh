@@ -34,5 +34,5 @@ make || die "make failed"
 make install || die "make install failed"
 
 # point `npm` at the build
-npm config set mapserv:lib_dir ${PREFIX}/mapserver-install/lib
-npm config set mapserv:include_dir ${PREFIX}/mapserver
+npm config set mapserver:lib_dir ${PREFIX}/mapserver-install/lib
+npm config set mapserver:include_dir ${PREFIX}/mapserver
