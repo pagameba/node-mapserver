@@ -20,6 +20,12 @@ if [ -z "${PREFIX}" ]; then
     die "usage: install-deps.sh PREFIX [ MAPSERVER_COMMIT ]"
 fi
 
+svn co http://svn.osgeo.org/metacrs/proj/branches/4.8/proj/ $PREFIX/proj
+cd ${PREFIX}/proj || die "svn checkout of proj failed"
+./configure --prefix=/tmp/proj-install || die "proj configure failed"
+make || die "proj make failed"
+make install || die "proj make install failed"
+
 # clone the mapserver repository
 git clone https://github.com/mapserver/mapserver.git $PREFIX/mapserver || die "Git clone failed"
 cd ${PREFIX}/mapserver || die "Cannot cd to ${PREFIX}/mapserver"
@@ -29,7 +35,7 @@ fi
 
 # build and install mapserver
 autoconf || die "autoconf failed"
-./configure --prefix=${PREFIX}/mapserver-install --with-threads || die "configure failed"
+./configure --prefix=${PREFIX}/mapserver-install --with-threads --with-proj=${PREFIX}/proj-install || die "configure failed"
 make || die "make failed"
 make install || die "make install failed"
 
