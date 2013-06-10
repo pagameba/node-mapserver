@@ -68,9 +68,14 @@ describe('mapserver', function() {
   });
   
   it('should load a valid map file', function() {
+    mapserver.resetErrorList();
+    console.log('mapfile path ' + mapfile + ' in dir ' + datadir);
     assert.doesNotThrow(function() {
       map = mapserver.loadMap(mapfile, datadir);
-    }, Error, 'loading a valid map file should not throw an error.');
+    }, function() {
+      err = mapserver.getError();
+      console.log(util.inspect(err));
+    }, 'loading a valid map file should not throw an error.');
   });
   
   it('should get basic information from the map object', function() {
