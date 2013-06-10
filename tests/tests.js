@@ -21,7 +21,7 @@ var assert = require('assert')
   , path = require('path')
   , datadir = path.join(__dirname, 'data')
   , mapfile = path.join(datadir, 'test.map')
-  , nomapfile = path.join(datadir, 'missing.map')
+  , nomapfile = 'missing.map'
   , errormapfile = path.join(datadir, 'error.map')
   , map
   , err
@@ -42,6 +42,7 @@ describe('mapserver', function() {
     assert.ok(mapserver.getVersionInt());
     assert.ok(mapserver.getVersion());
     assert.ok(mapserver.supportsThreads());
+    console.log('testing ' + mapserver.getVersion());
   });
   
   it('should have no errors yet', function() {
@@ -53,12 +54,12 @@ describe('mapserver', function() {
   it('missing mapfile should throw an error', function() {
     // Test default mapfile pattern (must end in .map)
     assert['throws'](function() { 
-      mapserver.loadMap(nomapfile);  
+      mapserver.loadMap(nomapfile, datadir);  
     }, Error, 'attempting to load a non-existent map should throw an error.');
 
     // check error
     err = mapserver.getError();
-    assert.equal(err.code, 5, 'Default mapfile pattern test failed');
+    assert.equal(err.code, 1, 'Missing map file error failed.');
 
     // test resetErrorList
     mapserver.resetErrorList();
