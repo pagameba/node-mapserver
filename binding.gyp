@@ -2,7 +2,8 @@
   "targets": [
     {
       "target_name": "mapserver",
-      "sources": [ "src/mapserver_bindings.cc" ]
+      "sources": [ "src/mapserver_bindings.cc" ],
+      "libraries":["-lmapserver"]
     }
   ]
 }
