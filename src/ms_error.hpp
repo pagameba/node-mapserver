@@ -23,10 +23,10 @@ class MSError: public ObjectWrap {
     inline errorObj *get() { return this_; }
     errorObj *this_;
     
-  // protected:
-  //   static Handle<Value> NamedPropertyGetter (Local<String> property, const AccessorInfo& info);
-  //   static Handle<Integer> NamedPropertyQuery(Local<String> property, const AccessorInfo& info);
-  //   static Handle<Array> NamedPropertyEnumerator(const AccessorInfo& info);
+  protected:
+    static Handle<Value> NamedPropertyGetter (Local<String> property, const AccessorInfo& info);
+    static Handle<Integer> NamedPropertyQuery(Local<String> property, const AccessorInfo& info);
+    static Handle<Array> NamedPropertyEnumerator(const AccessorInfo& info);
     
   private:
     ~MSError();

@@ -10,6 +10,8 @@
 #include <assert.h>
 
 #include "mapserver.hpp"
+#include "ms_error.hpp"
+#include "ms_map.hpp"
 
 namespace node_mapserver {
   
@@ -26,6 +28,9 @@ namespace node_mapserver {
       NODE_SET_METHOD(target, "resetErrorList", node_mapserver::resetErrorList);
       NODE_SET_METHOD(target, "getError", node_mapserver::getError);
       NODE_SET_METHOD(target, "loadMap", node_mapserver::loadMap);
+      
+      MSError::Initialize(target);
+      MSMap::Initialize(target);
       
       NODE_DEFINE_CONSTANT(target, MS_ALIGN_CENTER);
       NODE_DEFINE_CONSTANT(target, MS_ALIGN_LEFT);
