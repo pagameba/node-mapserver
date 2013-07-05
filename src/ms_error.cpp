@@ -40,22 +40,7 @@ Handle<Value> MSError::New(const Arguments& args)
 }
 
 Handle<Value> MSError::New(errorObj *err) {
-  HandleScope scope;
-  Handle<Object> obj;
-  Handle<Value> ext;
-  MSError *wrapped;
-  
-  wrapped = new MSError(err);
-  
-  ext = External::New(wrapped);
-  // assert(ext.IsEmpty() == false);
-  // assert(ext->IsObject() == true);
-  
-  obj = MSError::constructor->GetFunction()->NewInstance(1, &ext);
-  // assert(obj.IsEmpty() == false);
-  // assert(obj->IsObject() == true);
-
-  return scope.Close(obj);
+  return ClosedPtr<MSError, errorObj>::Closed(err);
 }
 
 Handle<Value> MSError::NamedPropertyGetter (Local<String> property, const AccessorInfo& info) {
