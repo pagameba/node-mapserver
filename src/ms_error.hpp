@@ -1,10 +1,8 @@
 #ifndef __NODE_MS_ERROR_H__
 #define __NODE_MS_ERROR_H__
 
-// v8
 #include <v8.h>
 
-// node
 #include <node.h>
 #include <node_object_wrap.h>
 
@@ -13,7 +11,7 @@
 using namespace v8;
 using namespace node;
 
-class MSError: public node::ObjectWrap {
+class MSError: public ObjectWrap {
   public:
     static Persistent<FunctionTemplate> constructor;
     static void Initialize(Handle<Object> target);
@@ -23,6 +21,7 @@ class MSError: public node::ObjectWrap {
     MSError();
     MSError(errorObj *err);
     inline errorObj *get() { return this_; }
+    errorObj *this_;
     
   // protected:
   //   static Handle<Value> NamedPropertyGetter (Local<String> property, const AccessorInfo& info);
@@ -31,7 +30,6 @@ class MSError: public node::ObjectWrap {
     
   private:
     ~MSError();
-    errorObj *this_;
 };
 
 #endif

@@ -5,6 +5,16 @@
 
 #define TOSTR(obj) (*String::Utf8Value((obj)->ToString()))
 
+#define REQ_STR_ARG(I, VAR)                                             \
+  if (args.Length() <= (I) || !args[I]->IsString())                     \
+    return ThrowException(Exception::TypeError(                         \
+                  String::New("Argument " #I " must be a string")));    \
+  String::Utf8Value VAR(args[I]->ToString());
+
+#define THROW_ERROR(TYPE, STR)                                          \
+  return ThrowException(Exception::TYPE(String::New(STR)));
+
+
 template <typename T, typename K>
 class ClosedPtr {
 public:

@@ -12,23 +12,14 @@ void MSError::Initialize(Handle<Object> target) {
   
   // constructor->InstanceTemplate()->SetNamedPropertyHandler(MSError::NamedPropertyGetter, NULL, MSError::NamedPropertyQuery, NULL, MSError::NamedPropertyEnumerator);
 
-  target->Set(String::NewSymbol("MSError"), constructor->GetFunction());
+  // target->Set(String::NewSymbol("MSError"), constructor->GetFunction());
 }
 
-MSError::MSError(errorObj *err)
-: ObjectWrap(),
-  this_(err)
-{}
+MSError::MSError(errorObj *err) : ObjectWrap(), this_(err) { }
 
-MSError::MSError()
-: ObjectWrap(),
-  this_(0)
-{
-}
+MSError::MSError() : ObjectWrap(), this_(0) { }
 
-MSError::~MSError()
-{
-}
+MSError::~MSError() { }
 
 Handle<Value> MSError::New(const Arguments& args)
 {
@@ -49,17 +40,8 @@ Handle<Value> MSError::New(const Arguments& args)
 }
 
 Handle<Value> MSError::New(errorObj *err) {
-  // sleep(30);
-  // if (err == NULL) {
-  //   return Null();
-  // }
-  // return ClosedPtr<MSError, errorObj>::Closed(err);
-  
   HandleScope scope;
   MSError *wrapped = new MSError(err);
-  if (wrapped == NULL) {
-    return Null();
-  }
   Handle<Value> ext = External::New(wrapped);
   Handle<Object> obj = MSError::constructor->GetFunction()->NewInstance(1, &ext);
   return scope.Close(obj);

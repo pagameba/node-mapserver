@@ -8,6 +8,8 @@
 #include <assert.h>
 
 #include "ms_error.hpp"
+#include "ms_map.hpp"
+#include "ms_common.hpp"
 
 using namespace v8;
 using namespace node;
@@ -59,6 +61,18 @@ namespace node_mapserver {
     return scope.Close(MSError::New(err));
   }
   
+  static Handle<Value> loadMap (const Arguments& args) {
+    HandleScope scope;
+    
+    REQ_STR_ARG(0, filename);
+    REQ_STR_ARG(1, path);
+    
+    mapObj *map = msLoadMap(*filename, *path);
+    if (map == NULL) {
+      THROW_ERROR(Error, "msLoadMap returned NULL.");
+    }
+    return scope.Close(MSMap::New(map));
+  }
   
 
 }
