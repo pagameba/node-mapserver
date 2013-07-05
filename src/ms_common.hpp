@@ -11,6 +11,12 @@
                   String::New("Argument " #I " must be a string")));    \
   String::Utf8Value VAR(args[I]->ToString());
 
+#define RW_PROPERTY(TEMPL, SYM, GETTER, SETTER) \
+  TEMPL->InstanceTemplate()->SetAccessor(String::NewSymbol(SYM), GETTER, SETTER);
+
+#define RO_PROPERTY(TEMPL, SYM, GETTER) \
+  TEMPL->InstanceTemplate()->SetAccessor(String::NewSymbol(SYM), GETTER, NULL, Handle<Value>(), PROHIBITS_OVERWRITING, ReadOnly);
+
 #define THROW_ERROR(TYPE, STR)                                          \
   return ThrowException(Exception::TYPE(String::New(STR)));
 

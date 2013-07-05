@@ -51,6 +51,16 @@ describe('mapserver', function() {
     assert.equal(err.code, 0, 'should be no errors');
   });
   
+  it('should create a projection', function() {
+    // quick error test
+    var proj = new mapserver.MSProjection("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs");
+    console.log('proj type ' + util.inspect(proj));
+    err = mapserver.getError();
+    console.log('proj'+ proj.units);
+    assert.equal(proj.units, mapserver.MS_DD, 'projection units should be MS_DD');
+    assert.equal(err.code, 0, 'should be no errors');
+  });
+  
   it('missing mapfile should throw an error', function() {
     // Test default mapfile pattern (must end in .map)
     assert['throws'](function() { 

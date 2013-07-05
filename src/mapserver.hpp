@@ -9,6 +9,7 @@
 
 #include "ms_error.hpp"
 #include "ms_map.hpp"
+#include "ms_projection.hpp"
 #include "ms_common.hpp"
 
 using namespace v8;
@@ -73,6 +74,30 @@ namespace node_mapserver {
     }
     return scope.Close(MSMap::New(map));
   }
+
+  // static Handle<Value> projectPoint (const Arguments& args) {
+  //   HandleScope scope;
+  //   
+  //   REQ_EXT_ARG(0, in);
+  //   REQ_EXT_ARG(1, out);
+  //   REQ_EXT_ARG(2, point);
+  //   
+  //   int result = msProjectPoint(*in, *out, *point);
+  //   if (result == MS_FAILURE) {
+  //     THROW_ERROR(Error, "msProjectPoint failed.");
+  //   }
+  //   Local<Array> coords = Array::New(2); 
+  //   
+  //   //TODO: args?https://groups.google.com/forum/#!topic/v8-users/-hQ5hjNowZs
+  //   Handle<Number> index = Number::New(0); 
+  //   Handle<String> val = Float::New(point->x); 
+  //   coords->Set( index, val); 
+  //   index = Number::New(1); 
+  //   val = Float::New(point->y); 
+  //   coords->Set( index, val); 
+  //   
+  //   return scope.Close(coords);
+  // }
   
 
 }
