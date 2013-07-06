@@ -13,7 +13,7 @@ void MSMap::Initialize(Handle<Object> target) {
   // NODE_SET_PROTOTYPE_METHOD(constructor, "selectOutputFormat", SelectOutputFormat);
   NODE_SET_PROTOTYPE_METHOD(constructor, "setExtent", SetExtent);
   // NODE_SET_PROTOTYPE_METHOD(constructor, "drawMap", DrawMap);
-  // NODE_SET_PROTOTYPE_METHOD(constructor, "recompute", Recompute);
+  NODE_SET_PROTOTYPE_METHOD(constructor, "recompute", Recompute);
   // NODE_SET_PROTOTYPE_METHOD(constructor, "copy", Copy);
   
   /* Read-Write Properties */
@@ -35,6 +35,7 @@ void MSMap::Initialize(Handle<Object> target) {
   RO_PROPERTY(constructor, "mimetype", PropertyGetter);
   
   RO_PROPERTY(constructor, "extent", PropertyGetter);
+  RO_PROPERTY(constructor, "layers", PropertyGetter);
   
   target->Set(String::NewSymbol("Map"), constructor->GetFunction());
 }
@@ -81,6 +82,22 @@ Handle<Value> MSMap::SetExtent(const Arguments &args) {
   map->this_->extent.miny = miny;
   map->this_->extent.maxx = maxx;
   map->this_->extent.maxy = maxy;
+  return scope.Close(Boolean::New(true));
+}
+
+Handle<Value> MSMap::Recompute (const Arguments& args) {
+  HandleScope scope;
+  MSMap *map = ObjectWrap::Unwrap<MSMap>(args.This());
+  mapObj * _map = map->this_;
+ _map->cellsize = msAdjustExtent(&(_map->extent),
+                                   _map->width,
+                                   _map->height);
+  msCalculateScale(_map->extent,
+                   _map->units,
+                   _map->width,
+                   _map->height,
+                   _map->resolution,
+                   &_map->scaledenom);
   return scope.Close(Boolean::New(true));
 }
 

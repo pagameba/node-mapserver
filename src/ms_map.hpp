@@ -23,7 +23,7 @@ public:
   // static Handle<Value> SelectOutputFormat (const Arguments& args);
   static Handle<Value> SetExtent (const Arguments& args);
   // static Handle<Value> DrawMap (const Arguments& args);
-  // static Handle<Value> Recompute (const Arguments& args);
+  static Handle<Value> Recompute (const Arguments& args);
   // static Handle<Value> Copy (const Arguments& args);
   static Handle<Value> PropertyGetter (Local<String> property, const AccessorInfo& info);
   static void PropertySetter (Local<String> property, Local<Value> value, const AccessorInfo& info);

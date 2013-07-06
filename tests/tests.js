@@ -164,73 +164,73 @@ describe('mapserver', function() {
     assert.equal(map.scaledenom, 189621444.28093645, 'recomputing map scaledenom failed, got '+ map.scaledemon);
   });
 
-  it('should have access to map layers', function() {
-    assert.doesNotThrow(function() {
-      map = mapserver.loadMap(mapfile, datadir);
-    }, Error, 'loading a valid map file should not throw an error.');
+  // it('should have access to map layers', function() {
+  //   assert.doesNotThrow(function() {
+  //     map = mapserver.loadMap(mapfile, datadir);
+  //   }, Error, 'loading a valid map file should not throw an error.');
+  // 
+  //   // test indexed accessor to map.layers
+  //   assert.equal(map.layers.foo, undefined, 'map.layers should not expose arbitrary properties');
+  //   assert.equal(typeof map.layers.length, 'number', 'map.layers.length should be an integer');
+  //   assert.equal(map.layers.length, 3, 'map.layers.length should be 3');
+  // 
+  //   // test accessor for layer name
+  //   assert.notEqual(map.layers[1].name,'test', 'layer name should not be test before we change it');
+  //   map.layers[1].name = 'test';
+  //   assert.equal(map.layers[1].name, 'test', 'layer name should have changed.');
+  //   // layers should be accessible by name too
+  //   assert.equal(map.layers['test'].name, 'test', 'layer should be accessible by name');
+  // 
+  //   // console.log('is ' + map.layers['grid'].connectiontype + ' = ' + mapserver.MS_GRATICULE);
+  // });
 
-    // test indexed accessor to map.layers
-    assert.equal(map.layers.foo, undefined, 'map.layers should not expose arbitrary properties');
-    assert.equal(typeof map.layers.length, 'number', 'map.layers.length should be an integer');
-    assert.equal(map.layers.length, 3, 'map.layers.length should be 3');
-
-    // test accessor for layer name
-    assert.notEqual(map.layers[1].name,'test', 'layer name should not be test before we change it');
-    map.layers[1].name = 'test';
-    assert.equal(map.layers[1].name, 'test', 'layer name should have changed.');
-    // layers should be accessible by name too
-    assert.equal(map.layers['test'].name, 'test', 'layer should be accessible by name');
-
-    // console.log('is ' + map.layers['grid'].connectiontype + ' = ' + mapserver.MS_GRATICULE);
-  });
-
-  it('should get grid intersection coordinates', function() {
-    assert.doesNotThrow(function() {
-      map = mapserver.loadMap(mapfile, datadir);
-    }, Error, 'loading a valid map file should not throw an error.');
-
-    var values = map.layers['grid'].getGridIntersectionCoordinates();
-    assert.ok(values, 'grid intersection result is not an object');
-    
-    assert.ok(Array.isArray(values.left), 'left is not an array');
-    assert.ok(Array.isArray(values.top), 'top is not an array');
-    assert.ok(Array.isArray(values.right), 'right is not an array');
-    assert.ok(Array.isArray(values.bottom), 'bottom is not an array');
-    
-    assert.equal(values.left.length, 15, 'does not have 15 values for the left array');
-    assert.equal(values.top.length, 15, 'does not have 15 values for the top array');
-    assert.equal(values.right.length, 15, 'does not have 15 values for the right array');
-    assert.equal(values.bottom.length, 15, 'does not have 15 values for the bottom array');
-    
-    assert.equal(values.left[0].x, 0, 'first left value is not 0');
-  });
+  // it('should get grid intersection coordinates', function() {
+  //   assert.doesNotThrow(function() {
+  //     map = mapserver.loadMap(mapfile, datadir);
+  //   }, Error, 'loading a valid map file should not throw an error.');
+  // 
+  //   var values = map.layers['grid'].getGridIntersectionCoordinates();
+  //   assert.ok(values, 'grid intersection result is not an object');
+  //   
+  //   assert.ok(Array.isArray(values.left), 'left is not an array');
+  //   assert.ok(Array.isArray(values.top), 'top is not an array');
+  //   assert.ok(Array.isArray(values.right), 'right is not an array');
+  //   assert.ok(Array.isArray(values.bottom), 'bottom is not an array');
+  //   
+  //   assert.equal(values.left.length, 15, 'does not have 15 values for the left array');
+  //   assert.equal(values.top.length, 15, 'does not have 15 values for the top array');
+  //   assert.equal(values.right.length, 15, 'does not have 15 values for the right array');
+  //   assert.equal(values.bottom.length, 15, 'does not have 15 values for the bottom array');
+  //   
+  //   assert.equal(values.left[0].x, 0, 'first left value is not 0');
+  // });
   
-  it('should have an output format', function() {
-    assert.doesNotThrow(function() {
-      map = mapserver.loadMap(mapfile, datadir);
-    }, Error, 'loading a valid map file should not throw an error.');
-    
-    assert.equal(map.outputformat.name, 'png', 'output format name is incorrect');
-    assert.equal(map.outputformat.mimetype, 'image/png', 'output format mimetype is incorrect');
-  });
+  // it('should have an output format', function() {
+  //   assert.doesNotThrow(function() {
+  //     map = mapserver.loadMap(mapfile, datadir);
+  //   }, Error, 'loading a valid map file should not throw an error.');
+  //   
+  //   assert.equal(map.outputformat.name, 'png', 'output format name is incorrect');
+  //   assert.equal(map.outputformat.mimetype, 'image/png', 'output format mimetype is incorrect');
+  // });
   
-  it('should draw a map', function() {
-    assert.doesNotThrow(function() {
-      map = mapserver.loadMap(mapfile, datadir);
-    }, Error, 'loading a valid map file should not throw an error.');
-    fs.readFile(path.join(__dirname, 'data', 'test_buffer.png'), function(err, data) {
-      if (err) {
-        throw new Error('failed to load test image');
-      }
-      map.drawMap(function(drawError, buffer) {
-        if (drawError) {
-          util.inspect(drawError, false, 0, true);
-          assert.ok(false, 'Error drawing map.');
-        } else {
-          
-          assert.equal(data.toString('hex'), buffer.toString('hex'), 'map draw differed from sample image');
-        }
-      });
-    });
-  });
+  // it('should draw a map', function() {
+  //   assert.doesNotThrow(function() {
+  //     map = mapserver.loadMap(mapfile, datadir);
+  //   }, Error, 'loading a valid map file should not throw an error.');
+  //   fs.readFile(path.join(__dirname, 'data', 'test_buffer.png'), function(err, data) {
+  //     if (err) {
+  //       throw new Error('failed to load test image');
+  //     }
+  //     map.drawMap(function(drawError, buffer) {
+  //       if (drawError) {
+  //         util.inspect(drawError, false, 0, true);
+  //         assert.ok(false, 'Error drawing map.');
+  //       } else {
+  //         
+  //         assert.equal(data.toString('hex'), buffer.toString('hex'), 'map draw differed from sample image');
+  //       }
+  //     });
+  //   });
+  // });
 });
