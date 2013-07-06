@@ -53,11 +53,9 @@ describe('mapserver', function() {
   
   it('should create a projection', function() {
     // quick error test
-    var proj = new mapserver.MSProjection("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs");
-    console.log('proj type ' + util.inspect(proj));
+    var proj = new mapserver.Projection("+init=epsg:4326");
+    assert.equal(proj.units, mapserver.MS_DD, 'projection units should be decimal degrees');
     err = mapserver.getError();
-    console.log('proj'+ proj.units);
-    assert.equal(proj.units, mapserver.MS_DD, 'projection units should be MS_DD');
     assert.equal(err.code, 0, 'should be no errors');
   });
   

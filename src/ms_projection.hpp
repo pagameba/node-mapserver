@@ -18,15 +18,7 @@ public:
   static Handle<Value> New(const Arguments &args);
   static Handle<Value> New(projectionObj *proj);
   
-  static Handle<Value> ProjectPoint (const Arguments& args);
-  static Handle<Value> GetMapUnits (Local<String> property, const AccessorInfo& info);
-  
-  // static Handle<Value> SetExtent (const Arguments& args);
-  // static Handle<Value> DrawMap (const Arguments& args);
-  // static Handle<Value> Recompute (const Arguments& args);
-  // static Handle<Value> Copy (const Arguments& args);
-  // static Handle<Value> NamedPropertyGetter (Local<String> property, const AccessorInfo& info);
-  // static void NamedPropertySetter (Local<String> property, Local<Value> value, const AccessorInfo& info);
+  static Handle<Value> Units (Local<String> property, const AccessorInfo& info);
   
   MSProjection();
   MSProjection(projectionObj *proj);
