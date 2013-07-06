@@ -13,6 +13,7 @@
 #include "ms_error.hpp"
 #include "ms_map.hpp"
 #include "ms_projection.hpp"
+#include "ms_rect.hpp"
 
 namespace node_mapserver {
   
@@ -34,6 +35,7 @@ namespace node_mapserver {
       MSError::Initialize(target);
       MSMap::Initialize(target);
       MSProjection::Initialize(target);
+      MSRect::Initialize(target);
       
       NODE_DEFINE_CONSTANT(target, MS_ALIGN_CENTER);
       NODE_DEFINE_CONSTANT(target, MS_ALIGN_LEFT);

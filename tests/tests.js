@@ -76,7 +76,6 @@ describe('mapserver', function() {
   });
   
   it('should load a valid map file', function() {
-    console.log('mapfile path ' + mapfile + ' in dir ' + datadir);
     assert.doesNotThrow(function() {
       map = mapserver.loadMap(mapfile, datadir);
     }, function() {

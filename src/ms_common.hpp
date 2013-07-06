@@ -11,7 +11,14 @@
                   String::New("Argument " #I " must be a string")));    \
   String::Utf8Value VAR(args[I]->ToString());
 
-#define RW_PROPERTY(TEMPL, SYM, GETTER, SETTER) \
+#define REQ_DOUBLE_ARG(I, VAR)                                          \
+  double VAR;                                                           \
+  if (args.Length() <= (I) || !args[I]->IsNumber())                     \
+    return ThrowException(Exception::TypeError(                         \
+                  String::New("Argument " #I " must be a number")));    \
+  VAR = args[I]->NumberValue();
+
+#define RW_PROPERTY(TEMPL, SYM, GETTER, SETTER)                         \
   TEMPL->InstanceTemplate()->SetAccessor(String::NewSymbol(SYM), GETTER, SETTER);
 
 #define RO_PROPERTY(TEMPL, SYM, GETTER) \
@@ -19,6 +26,23 @@
 
 #define THROW_ERROR(TYPE, STR)                                          \
   return ThrowException(Exception::TYPE(String::New(STR)));
+
+#define RETURN_STRING(STR)                                              \
+  HandleScope scope;                                                    \
+  Local<String> result = String::New(STR);                              \
+  return scope.Close(result);
+
+#define RETURN_NUMBER(NUM)                                              \
+  HandleScope scope;                                                    \
+  Local<Number> result = Number::New(NUM);                              \
+  return scope.Close(result);
+  
+#define REPLACE_STRING(TARGET, VALUE)                                   \
+  if (VALUE->IsString()) {                                              \
+    v8::String::AsciiValue _v_(VALUE->ToString());                      \
+    msFree(TARGET);                                                     \
+    TARGET = strdup(*_v_);                                              \
+  }
 
 
 template <typename T, typename K>
