@@ -33,6 +33,7 @@ void MSMap::Initialize(Handle<Object> target) {
   RO_PROPERTY(constructor, "cellsize", PropertyGetter);
   RO_PROPERTY(constructor, "scaledenom", PropertyGetter);
   RO_PROPERTY(constructor, "mimetype", PropertyGetter);
+  RO_PROPERTY(constructor, "outputformat", PropertyGetter);
   
   RO_PROPERTY(constructor, "extent", PropertyGetter);
   RO_PROPERTY(constructor, "layers", PropertyGetter);
@@ -133,18 +134,8 @@ Handle<Value> MSMap::PropertyGetter (Local<String> property, const AccessorInfo&
   } else if (strcmp(*n, "name") == 0) {
     RETURN_STRING(map->this_->name);
   } else if (strcmp(*n, "outputformat") == 0) {
-    // if (outputformat_template_.IsEmpty()) {
-    //   Handle<ObjectTemplate> raw_template = ObjectTemplate::New();
-    //   raw_template->SetInternalFieldCount(1);
-    //   raw_template->SetNamedPropertyHandler(OutputFormatNamedGetter, NULL, NULL, NULL, NULL);
-    //   outputformat_template_ = Persistent<ObjectTemplate>::New(raw_template);
-    // }
-    // Handle<ObjectTemplate> templ = outputformat_template_;
-    // Handle<Object> result = templ->NewInstance();
-    // Handle<External> map_ptr = External::New(map);
-    // result->SetInternalField(0,map_ptr);
-    // HandleScope scope;
-    // return scope.Close(result);
+    HandleScope scope;
+    return scope.Close(MSOutputFormat::New(map->this_->outputformat));
   } else if (strcmp(*n, "layers") == 0) {
     // if (layers_template_.IsEmpty()) {
     //   Handle<ObjectTemplate> raw_template = ObjectTemplate::New();
@@ -162,18 +153,6 @@ Handle<Value> MSMap::PropertyGetter (Local<String> property, const AccessorInfo&
   } else if (strcmp(*n, "extent") == 0) {
     HandleScope scope;
     return scope.Close(MSRect::New(&map->this_->extent));
-    // if (extent_template_.IsEmpty()) {
-    //   Handle<ObjectTemplate> raw_template = ObjectTemplate::New();
-    //   raw_template->SetInternalFieldCount(1);
-    //   raw_template->SetNamedPropertyHandler(ExtentNamedGetter, NULL, NULL, NULL, NULL);
-    //   extent_template_ = Persistent<ObjectTemplate>::New(raw_template);
-    // }
-    // Handle<ObjectTemplate> templ = extent_template_;
-    // Handle<Object> result = templ->NewInstance();
-    // Handle<External> map_ptr = External::New(map);
-    // result->SetInternalField(0,map_ptr);
-    // HandleScope scope;
-    // return scope.Close(result);
   }
   return Undefined();
 }

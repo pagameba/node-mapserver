@@ -10,10 +10,6 @@
 #include <assert.h>
 
 #include "mapserver.hpp"
-#include "ms_error.hpp"
-#include "ms_map.hpp"
-#include "ms_projection.hpp"
-#include "ms_rect.hpp"
 
 namespace node_mapserver {
   
@@ -24,6 +20,12 @@ namespace node_mapserver {
     
     static void Init(Handle<Object> target) {
       
+      MSError::Initialize(target);
+      MSMap::Initialize(target);
+      MSProjection::Initialize(target);
+      MSRect::Initialize(target);
+      MSOutputFormat::Initialize(target);
+
       NODE_SET_METHOD(target, "getVersionInt", node_mapserver::getVersionInt);
       NODE_SET_METHOD(target, "getVersion", node_mapserver::getVersion);
       NODE_SET_METHOD(target, "supportsThreads", node_mapserver::supportsThreads);
@@ -31,11 +33,6 @@ namespace node_mapserver {
       NODE_SET_METHOD(target, "getError", node_mapserver::getError);
       NODE_SET_METHOD(target, "loadMap", node_mapserver::loadMap);
       //NODE_SET_METHOD(target, "projectPoint", node_mapserver::projectPoint);
-      
-      MSError::Initialize(target);
-      MSMap::Initialize(target);
-      MSProjection::Initialize(target);
-      MSRect::Initialize(target);
       
       NODE_DEFINE_CONSTANT(target, MS_ALIGN_CENTER);
       NODE_DEFINE_CONSTANT(target, MS_ALIGN_LEFT);

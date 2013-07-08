@@ -7,7 +7,8 @@
           "src/ms_error.cpp",
           "src/ms_map.cpp",
           "src/ms_projection.cpp",
-          "src/ms_rect.cpp"
+          "src/ms_rect.cpp",
+          "src/ms_outputformat.cpp"
      ],
       "libraries":["-lmapserver"]
     }

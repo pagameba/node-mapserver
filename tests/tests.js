@@ -205,14 +205,13 @@ describe('mapserver', function() {
   //   assert.equal(values.left[0].x, 0, 'first left value is not 0');
   // });
   
-  // it('should have an output format', function() {
-  //   assert.doesNotThrow(function() {
-  //     map = mapserver.loadMap(mapfile, datadir);
-  //   }, Error, 'loading a valid map file should not throw an error.');
-  //   
-  //   assert.equal(map.outputformat.name, 'png', 'output format name is incorrect');
-  //   assert.equal(map.outputformat.mimetype, 'image/png', 'output format mimetype is incorrect');
-  // });
+  it('should have an output format', function() {
+    assert.doesNotThrow(function() {
+      map = mapserver.loadMap(mapfile, datadir);
+    }, Error, 'loading a valid map file should not throw an error.');
+    assert.equal(map.outputformat.name, 'png', 'output format name is incorrect');
+    assert.equal(map.outputformat.mimetype, 'image/png', 'output format mimetype is incorrect');
+  });
   
   // it('should draw a map', function() {
   //   assert.doesNotThrow(function() {

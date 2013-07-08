@@ -9,6 +9,7 @@
 #include <mapserver.h>
 
 #include "ms_rect.hpp"
+#include "ms_outputformat.hpp"
 
 using namespace v8;
 using namespace node;
