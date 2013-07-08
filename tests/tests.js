@@ -58,6 +58,27 @@ describe('mapserver', function() {
     assert.equal(err.code, 0, 'should be no errors');
   });
   
+  it('should create a point object', function() {
+    var point = new mapserver.Point();
+    
+    assert.equal(point.x, -1, 'default point x should be -1');
+    assert.equal(point.y, -1, 'default point y should be -1');
+    
+    point = new mapserver.Point(10.5, 20);
+    assert.equal(point.x, 10.5, 'create a point with an x and y value');
+    assert.equal(point.y, 20, 'create a point with an x and y value');
+    
+    var epsg4326 = new mapserver.Projection("+init=epsg:4326");
+    var epsg3857 = new mapserver.Projection("+init=epsg:3857");
+    point.project(epsg4326, epsg3857);
+    assert.equal(point.x, 1168854.6533293733, 'reprojected x was not correct.');
+    assert.equal(point.y, 2273030.926987688, 'reprojected y was not correct.');
+    
+    point = new mapserver.Point(0,0);
+    assert.equal(point.distanceToPoint(new mapserver.Point(1,0)), 1, 'distanceToPoint should be 1');
+    
+  })
+  
   it('missing mapfile should throw an error', function() {
     // Test default mapfile pattern (must end in .map)
     assert['throws'](function() { 

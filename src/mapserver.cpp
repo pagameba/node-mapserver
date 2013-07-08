@@ -25,6 +25,7 @@ namespace node_mapserver {
       MSLayers::Initialize(target);
       MSMap::Initialize(target);
       MSOutputFormat::Initialize(target);
+      MSPoint::Initialize(target);
       MSProjection::Initialize(target);
       MSRect::Initialize(target);
 

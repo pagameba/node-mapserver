@@ -12,6 +12,7 @@
 #include "ms_layers.hpp"
 #include "ms_map.hpp"
 #include "ms_outputformat.hpp"
+#include "ms_point.hpp"
 #include "ms_projection.hpp"
 #include "ms_rect.hpp"
 #include "ms_common.hpp"
