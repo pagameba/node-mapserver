@@ -198,26 +198,26 @@ describe('mapserver', function() {
     assert.equal(map.layers['test'].name, 'test', 'layer should be accessible by name');
   });
 
-  // it('should get grid intersection coordinates', function() {
-  //   assert.doesNotThrow(function() {
-  //     map = new mapserver.Map(mapfile);
-  //   }, Error, 'loading a valid map file should not throw an error.');
-  // 
-  //   var values = map.layers['grid'].getGridIntersectionCoordinates();
-  //   assert.ok(values, 'grid intersection result is not an object');
-  //   
-  //   assert.ok(Array.isArray(values.left), 'left is not an array');
-  //   assert.ok(Array.isArray(values.top), 'top is not an array');
-  //   assert.ok(Array.isArray(values.right), 'right is not an array');
-  //   assert.ok(Array.isArray(values.bottom), 'bottom is not an array');
-  //   
-  //   assert.equal(values.left.length, 15, 'does not have 15 values for the left array');
-  //   assert.equal(values.top.length, 15, 'does not have 15 values for the top array');
-  //   assert.equal(values.right.length, 15, 'does not have 15 values for the right array');
-  //   assert.equal(values.bottom.length, 15, 'does not have 15 values for the bottom array');
-  //   
-  //   assert.equal(values.left[0].x, 0, 'first left value is not 0');
-  // });
+  it('should get grid intersection coordinates', function() {
+    assert.doesNotThrow(function() {
+      map = new mapserver.Map(mapfile);
+    }, Error, 'loading a valid map file should not throw an error.');
+  
+    var values = map.layers['grid'].getGridIntersectionCoordinates();
+    assert.ok(values, 'grid intersection result is not an object');
+    
+    assert.ok(Array.isArray(values.left), 'left is not an array');
+    assert.ok(Array.isArray(values.top), 'top is not an array');
+    assert.ok(Array.isArray(values.right), 'right is not an array');
+    assert.ok(Array.isArray(values.bottom), 'bottom is not an array');
+    
+    assert.equal(values.left.length, 15, 'does not have 15 values for the left array');
+    assert.equal(values.top.length, 15, 'does not have 15 values for the top array');
+    assert.equal(values.right.length, 15, 'does not have 15 values for the right array');
+    assert.equal(values.bottom.length, 15, 'does not have 15 values for the bottom array');
+    
+    assert.equal(values.left[0].x, 0, 'first left value is not 0');
+  });
   
   it('should have an output format', function() {
     assert.doesNotThrow(function() {
