@@ -196,6 +196,12 @@ describe('mapserver', function() {
     assert.equal(map.layers[1].name, 'test', 'layer name should have changed.');
     // layers should be accessible by name too
     assert.equal(map.layers['test'].name, 'test', 'layer should be accessible by name');
+    
+    assert.equal(map.layers['test'].status, mapserver.MS_ON, 'layer status should be ON');
+    
+    map.layers['test'].status = mapserver.MS_OFF;
+    assert.equal(map.layers['test'].status, mapserver.MS_OFF, 'layer status should change to OFF');
+    
   });
 
   it('should get grid intersection coordinates', function() {

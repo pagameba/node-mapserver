@@ -12,6 +12,7 @@ void MSLayer::Initialize(Handle<Object> target) {
   
   NODE_SET_PROTOTYPE_METHOD(constructor, "getGridIntersectionCoordinates", GetGridIntersectionCoordinates);
   RW_PROPERTY(constructor, "name", PropertyGetter, PropertySetter);
+  RW_PROPERTY(constructor, "status", PropertyGetter, PropertySetter);
   
   target->Set(String::NewSymbol("Layer"), constructor->GetFunction());
 }
@@ -50,6 +51,8 @@ Handle<Value> MSLayer::PropertyGetter (Local<String> property, const AccessorInf
   v8::String::AsciiValue n(property);
   if (strcmp(*n, "name") == 0) {
     RETURN_STRING(layer->this_->name);
+  } else if (strcmp(*n, "status") == 0) {
+    RETURN_NUMBER(layer->this_->status);
   }
   return Undefined();
 }
@@ -59,6 +62,8 @@ void MSLayer::PropertySetter (Local<String> property, Local<Value> value, const 
   v8::String::AsciiValue n(property);
   if (strcmp(*n, "name") == 0) {
     REPLACE_STRING(layer->this_->name, value)
+  } else if (strcmp(*n, "status") == 0) {
+    layer->this_->status = value->NumberValue();
   }
 }
   
