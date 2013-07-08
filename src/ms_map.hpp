@@ -5,11 +5,14 @@
 
 #include <node.h>
 #include <node_object_wrap.h>
+#include <node_buffer.h>
 
 #include <mapserver.h>
 
-#include "ms_rect.hpp"
+#include "ms_error.hpp"
+#include "ms_layers.hpp"
 #include "ms_outputformat.hpp"
+#include "ms_rect.hpp"
 
 using namespace v8;
 using namespace node;
@@ -21,9 +24,12 @@ public:
   static Handle<Value> New(const Arguments &args);
   static Handle<Value> New(mapObj *map);
   
-  // static Handle<Value> SelectOutputFormat (const Arguments& args);
+  static Handle<Value> SelectOutputFormat (const Arguments& args);
   static Handle<Value> SetExtent (const Arguments& args);
-  // static Handle<Value> DrawMap (const Arguments& args);
+  static Handle<Value> DrawMap (const Arguments& args);
+  static void DrawMapAfter(uv_work_t *req);
+  static void DrawMapWork(uv_work_t *req);
+  
   static Handle<Value> Recompute (const Arguments& args);
   // static Handle<Value> Copy (const Arguments& args);
   static Handle<Value> PropertyGetter (Local<String> property, const AccessorInfo& info);
@@ -33,9 +39,14 @@ public:
   MSMap(mapObj *map);
   inline mapObj *get() { return this_; }
   mapObj *this_;
+  
+  MSLayers *layers_;
+  MSRect *extent;
+  MSOutputFormat *outputformat;
 
 private:
   ~MSMap();
   
 };
+
 #endif

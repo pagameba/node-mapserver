@@ -21,17 +21,18 @@ namespace node_mapserver {
     static void Init(Handle<Object> target) {
       
       MSError::Initialize(target);
+      MSLayer::Initialize(target);
+      MSLayers::Initialize(target);
       MSMap::Initialize(target);
+      MSOutputFormat::Initialize(target);
       MSProjection::Initialize(target);
       MSRect::Initialize(target);
-      MSOutputFormat::Initialize(target);
 
       NODE_SET_METHOD(target, "getVersionInt", node_mapserver::getVersionInt);
       NODE_SET_METHOD(target, "getVersion", node_mapserver::getVersion);
       NODE_SET_METHOD(target, "supportsThreads", node_mapserver::supportsThreads);
       NODE_SET_METHOD(target, "resetErrorList", node_mapserver::resetErrorList);
       NODE_SET_METHOD(target, "getError", node_mapserver::getError);
-      NODE_SET_METHOD(target, "loadMap", node_mapserver::loadMap);
       //NODE_SET_METHOD(target, "projectPoint", node_mapserver::projectPoint);
       
       NODE_DEFINE_CONSTANT(target, MS_ALIGN_CENTER);

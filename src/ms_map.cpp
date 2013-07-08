@@ -10,9 +10,9 @@ void MSMap::Initialize(Handle<Object> target) {
   constructor->InstanceTemplate()->SetInternalFieldCount(1);
   constructor->SetClassName(String::NewSymbol("Map"));
   
-  // NODE_SET_PROTOTYPE_METHOD(constructor, "selectOutputFormat", SelectOutputFormat);
+  NODE_SET_PROTOTYPE_METHOD(constructor, "selectOutputFormat", SelectOutputFormat);
   NODE_SET_PROTOTYPE_METHOD(constructor, "setExtent", SetExtent);
-  // NODE_SET_PROTOTYPE_METHOD(constructor, "drawMap", DrawMap);
+  NODE_SET_PROTOTYPE_METHOD(constructor, "drawMap", DrawMap);
   NODE_SET_PROTOTYPE_METHOD(constructor, "recompute", Recompute);
   // NODE_SET_PROTOTYPE_METHOD(constructor, "copy", Copy);
   
@@ -41,6 +41,8 @@ void MSMap::Initialize(Handle<Object> target) {
   target->Set(String::NewSymbol("Map"), constructor->GetFunction());
 }
 
+
+
 MSMap::MSMap(mapObj *map) : ObjectWrap(), this_(map) {}
 
 MSMap::MSMap() : ObjectWrap(), this_(0) {}
@@ -53,7 +55,9 @@ MSMap::~MSMap() {
 
 Handle<Value> MSMap::New(const Arguments &args) {
   HandleScope scope;
-
+  mapObj *map;
+  MSMap *obj;
+  
   if (!args.IsConstructCall())
     return ThrowException(String::New("Cannot call constructor as function, you need to use 'new' keyword"));
 
@@ -64,7 +68,24 @@ Handle<Value> MSMap::New(const Arguments &args) {
     f->Wrap(args.This());
     return args.This();
   }
+  
+  if (args.Length() == 2) {
+    REQ_STR_ARG(0, mapfile);
+    REQ_STR_ARG(1, mappath);
+    map = msLoadMap(*mapfile, *mappath);
+  } else if (args.Length() == 1) {
+    REQ_STR_ARG(0, mapfile);
+    map = msLoadMap(*mapfile, NULL);
+  } else {
+    map = msNewMapObj();
+  }
+  
+  if (map == NULL) {
+    THROW_ERROR(Error, "Unable to load requested map.");
+  }
 
+  obj = new MSMap(map);
+  obj->Wrap(args.This());
   return args.This();
 }
 
@@ -102,6 +123,19 @@ Handle<Value> MSMap::Recompute (const Arguments& args) {
   return scope.Close(Boolean::New(true));
 }
 
+Handle<Value> MSMap::SelectOutputFormat (const Arguments& args) {
+  HandleScope scope;
+  MSMap *map = ObjectWrap::Unwrap<MSMap>(args.This());
+  REQ_STR_ARG(0, imagetype);
+  outputFormatObj * format = msSelectOutputFormat(map->this_, *imagetype);
+  if ( format == NULL) {
+    THROW_ERROR(Error, "Output format not supported.");
+  }
+  msApplyOutputFormat(&(map->this_->outputformat), format, MS_NOOVERRIDE, 
+      MS_NOOVERRIDE, MS_NOOVERRIDE );
+  return Undefined();
+}
+
 Handle<Value> MSMap::PropertyGetter (Local<String> property, const AccessorInfo& info) {
   MSMap *map = ObjectWrap::Unwrap<MSMap>(info.This());
   v8::String::AsciiValue n(property);
@@ -134,22 +168,11 @@ Handle<Value> MSMap::PropertyGetter (Local<String> property, const AccessorInfo&
   } else if (strcmp(*n, "name") == 0) {
     RETURN_STRING(map->this_->name);
   } else if (strcmp(*n, "outputformat") == 0) {
-    HandleScope scope;
+    HandleScope scope;  
     return scope.Close(MSOutputFormat::New(map->this_->outputformat));
   } else if (strcmp(*n, "layers") == 0) {
-    // if (layers_template_.IsEmpty()) {
-    //   Handle<ObjectTemplate> raw_template = ObjectTemplate::New();
-    //   raw_template->SetInternalFieldCount(1);
-    //   raw_template->SetIndexedPropertyHandler(LayersIndexedGetter, NULL, NULL, NULL, NULL);
-    //   raw_template->SetNamedPropertyHandler(LayersNamedGetter, NULL, NULL, NULL, NULL);
-    //   layers_template_ = Persistent<ObjectTemplate>::New(raw_template);
-    // }
-    // Handle<ObjectTemplate> templ = layers_template_;
-    // Handle<Object> result = templ->NewInstance();
-    // Handle<External> map_ptr = External::New(map);
-    // result->SetInternalField(0,map_ptr);
-    // HandleScope scope;
-    // return scope.Close(result);
+    HandleScope scope;
+    return scope.Close(MSLayers::New(map->this_));
   } else if (strcmp(*n, "extent") == 0) {
     HandleScope scope;
     return scope.Close(MSRect::New(&map->this_->extent));
@@ -184,4 +207,124 @@ void MSMap::PropertySetter (Local<String> property, Local<Value> value, const Ac
   } else if (strcmp(*n, "mappath") == 0) {
     REPLACE_STRING(map->this_->mappath, value);
   }
+}
+
+struct drawmap_baton {
+	uv_work_t request;
+	MSMap *map;
+  errorObj * error;
+  int size;
+  char * data;
+  Persistent<Function> cb;
+};
+
+void FreeImageBuffer(char *data, void *hint) {
+  msFree(data);
+}
+
+void MSMap::DrawMapWork(uv_work_t *req) {
+  drawmap_baton *baton = static_cast<drawmap_baton*>(req->data);
+  
+  imageObj * im = msDrawMap(baton->map->this_, MS_FALSE);
+  if (im != NULL) {
+    baton->error = NULL;
+    baton->data = (char *)msSaveImageBuffer(im, &baton->size, baton->map->this_->outputformat);
+    msFreeImage(im);
+  } else {
+    baton->error = msGetErrorObj();
+    baton->data = NULL;
+  }
+  return;
+}
+
+void MSMap::DrawMapAfter(uv_work_t *req) {
+  HandleScope scope;
+  // drawmap_baton *drawmap_req =(drawmap_baton *)req->data;
+  drawmap_baton *baton = static_cast<drawmap_baton *>(req->data);
+  baton->map->Unref();
+
+  TryCatch try_catch;
+
+  Local<Value> argv[2];
+  if (baton->data != NULL) {
+    Buffer * buffer = Buffer::New(baton->data, baton->size, FreeImageBuffer, NULL);
+
+    argv[0] = Local<Value>::New(Null());
+    argv[1] = Local<Value>::New(buffer->handle_);
+  } else {
+    Local<Value> _arg_ = External::New(baton->error);
+
+    // argv[0] = Local<Value>::New(ErrorObj::constructor_template->GetFunction()->NewInstance(1, &_arg_));
+    errorObj * err = msGetErrorObj();
+    argv[0] = Local<Value>::New(MSError::New(err));
+    argv[1] = Local<Value>::New(Null());
+  }
+
+
+  baton->cb->Call(Context::GetCurrent()->Global(), 2, argv);
+
+  if (try_catch.HasCaught()) {
+    FatalException(try_catch);
+  }
+
+  baton->cb.Dispose();
+  delete baton;
+  return;
+}
+
+/**
+ * callback for buffer creation to free the memory assocatiated with the
+ * image after its been copied into the buffer
+ */
+
+Handle<Value> MSMap::DrawMap (const Arguments& args) {
+  HandleScope scope;
+  
+  REQ_FUN_ARG(0, cb);
+  MSMap *map = ObjectWrap::Unwrap<MSMap>(args.This());
+  
+  char * version = msGetVersion();
+  char * regex = "SUPPORTS\\=THREADS";
+  int match;
+  match = 0;
+  if (msEvalRegex(regex, version) == MS_TRUE) {
+    match = 1;
+  } else {
+    // discard the error reported by msEvalRegex saying that it failed
+    msResetErrorList();
+  }
+  
+  
+  if (match == 1) {
+    drawmap_baton * baton = new drawmap_baton();
+    baton->request.data = (void*) baton;
+    baton->map = map;
+    baton->cb = Persistent<Function>::New(cb);
+  
+    map->Ref();
+    uv_queue_work(uv_default_loop(),
+      &baton->request,
+      DrawMapWork,
+      (uv_after_work_cb) DrawMapAfter);
+  } else {
+    Local<Value> argv[2];
+    argv[0] = Local<Value>::New(Null());
+    imageObj * im = msDrawMap(map->this_, MS_FALSE);
+    if (im != NULL) {
+      int size;
+      char * data = (char *)msSaveImageBuffer(im, &size, map->this_->outputformat);
+      msFreeImage(im);
+      Buffer * buffer = Buffer::New(data, size, FreeImageBuffer, NULL);
+      
+      argv[1] = Local<Value>::New(buffer->handle_);
+    } else {
+      errorObj * err = msGetErrorObj();
+      Local<Value> _arg_ = External::New(err);
+
+      argv[0] = Local<Value>::New(MSError::New(err));
+      argv[1] = Local<Value>::New(Null());
+    }
+    cb->Call(Context::GetCurrent()->Global(), 2, argv);
+  }
+  return Undefined();
 }

@@ -8,7 +8,7 @@ void MSOutputFormat::Initialize(Handle<Object> target) {
   
   constructor = Persistent<FunctionTemplate>::New(FunctionTemplate::New(MSOutputFormat::New));
   constructor->InstanceTemplate()->SetInternalFieldCount(1);
-  constructor->SetClassName(String::NewSymbol("Rect"));
+  constructor->SetClassName(String::NewSymbol("OutputFormat"));
   
   RO_PROPERTY(constructor, "name", PropertyGetter);
   RO_PROPERTY(constructor, "mimetype", PropertyGetter);
@@ -20,7 +20,7 @@ void MSOutputFormat::Initialize(Handle<Object> target) {
   // expose format options perhaps?
   // RO_PROPERTY(constructor, "options", PropertyGetter);
   
-  target->Set(String::NewSymbol("OutputFomrat"), constructor->GetFunction());
+  target->Set(String::NewSymbol("OutputFormat"), constructor->GetFunction());
 }
 
 MSOutputFormat::MSOutputFormat(outputFormatObj *of) : ObjectWrap(), this_(of) {}

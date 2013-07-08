@@ -18,6 +18,12 @@
                   String::New("Argument " #I " must be a number")));    \
   VAR = args[I]->NumberValue();
 
+#define REQ_FUN_ARG(I, VAR)                                             \
+  if (args.Length() <= (I) || !args[I]->IsFunction())                   \
+    return ThrowException(Exception::TypeError(                         \
+                  String::New("Argument " #I " must be a function")));  \
+  Local<Function> VAR = Local<Function>::Cast(args[I]);
+
 #define RW_PROPERTY(TEMPL, SYM, GETTER, SETTER)                         \
   TEMPL->InstanceTemplate()->SetAccessor(String::NewSymbol(SYM), GETTER, SETTER);
 
