@@ -15,6 +15,8 @@ void MSRect::Initialize(Handle<Object> target) {
   RW_PROPERTY(constructor, "maxx", PropertyGetter, PropertySetter);
   RW_PROPERTY(constructor, "maxy", PropertyGetter, PropertySetter);
   
+  NODE_SET_PROTOTYPE_METHOD(constructor, "project", Project);
+  
   target->Set(String::NewSymbol("Rect"), constructor->GetFunction());
 }
 
@@ -86,4 +88,43 @@ void MSRect::PropertySetter (Local<String> property, Local<Value> value, const A
   } else if (strcmp(*n, "maxy") == 0) {
     rect->this_->maxy = value->NumberValue();
   }
+}
+
+Handle<Value> MSRect::Project(const Arguments &args) {
+  MSRect *rect = ObjectWrap::Unwrap<MSRect>(args.This());
+  Local<Object> obj;
+  MSProjection *projIn;
+  MSProjection *projOut;
+  
+  if (args.Length() != 2) {
+    THROW_ERROR(Error, "projecting a point requires two projection arguments");
+  }
+  
+  if (!args[0]->IsObject()) {
+    THROW_ERROR(TypeError, "first argument to project must be Projection object");
+  }
+
+  obj = args[0]->ToObject();
+
+  if (obj->IsNull() || obj->IsUndefined() || !MSProjection::constructor->HasInstance(obj)) {
+    THROW_ERROR(TypeError, "first argument to project must be Projection object");
+  }
+
+  projIn = ObjectWrap::Unwrap<MSProjection>(obj);
+  
+  if (!args[1]->IsObject()) {
+    THROW_ERROR(TypeError, "second argument to project must be Projection object");
+  }
+
+  obj = args[1]->ToObject();
+
+  if (obj->IsNull() || obj->IsUndefined() || !MSProjection::constructor->HasInstance(obj)) {
+    THROW_ERROR(TypeError, "first argument to project must be Projection object");
+  }
+
+  projOut = ObjectWrap::Unwrap<MSProjection>(obj);
+  
+  msProjectRect(projIn->this_, projOut->this_, rect->this_);
+    
+  return Undefined();
 }

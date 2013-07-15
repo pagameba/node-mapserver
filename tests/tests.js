@@ -54,8 +54,11 @@ describe('mapserver', function() {
     // quick error test
     var proj = new mapserver.Projection("+init=epsg:4326");
     assert.equal(proj.units, mapserver.MS_DD, 'projection units should be decimal degrees');
+    assert.equal(proj.projString, "+init=epsg:4326", 'getting projection string failed. Got ' + proj.projString);
     err = mapserver.getError();
     assert.equal(err.code, 0, 'should be no errors');
+    proj.projString = "+init=epsg:3857";
+    assert.equal(proj.projString, "+init=epsg:3857", 'setting projection object via string failed. Got ' +  proj.projString);
   });
   
   it('should create a point object', function() {
@@ -167,15 +170,25 @@ describe('mapserver', function() {
     assert.equal(map.defresolution, 96, 'setting map defresolution failed');
   });
 
-  it('should get the map extent', function() {
+  it('should get the map projection', function() {
     assert.doesNotThrow(function() {
       map = new mapserver.Map(mapfile);
     }, Error, 'loading a valid map file should not throw an error.');
+
+    assert.equal(map.projection.projString, "+init=epsg:4326", 'getting map projection string failed. Got ' + map.projection.projString);
     
-    assert.equal(map.extent.minx, -180, 'getting map extent minx failed');
-    assert.equal(map.extent.miny, -90, 'getting map extent miny failed');
-    assert.equal(map.extent.maxx, 180, 'getting map extent maxx failed');
-    assert.equal(map.extent.maxy , 90, 'getting map extent maxy failed');
+    var epsg3857 = new mapserver.Projection("+init=epsg:3857");
+    var point = new mapserver.Point(10.5, 20);
+    point.project(map.projection, epsg3857);
+    assert.equal(point.x.toFixed(6), 1168854.653329.toFixed(6), 'reprojected x was not correct, got ' + point.x.toFixed(6) + ' instead of ' + 1168854.653329.toFixed(6));
+    assert.equal(point.y.toFixed(6), 2273030.926988.toFixed(6), 'reprojected y was not correct, got ' + point.y.toFixed(6) + ' instead of ' + 2273030.926988.toFixed(6));
+  });
+  it('should set the map projection', function() {
+    assert.doesNotThrow(function() {
+      map = new mapserver.Map(mapfile);
+    }, Error, 'loading a valid map file should not throw an error.');
+    map.projection = "+init=epsg:3857";
+    assert.equal(map.projection.projString, "+init=epsg:3857", 'setting map projection string failed. Got ' + map.projection.projString);
   });
 
   it('should set the map extent', function() {
@@ -188,6 +201,13 @@ describe('mapserver', function() {
     assert.equal(map.extent.miny, -45, 'setting map extent miny failed');
     assert.equal(map.extent.maxx, 90, 'setting map extent maxx failed');
     assert.equal(map.extent.maxy, 45, 'setting map extent maxy failed');
+
+    map.extent.project(map.projection, new mapserver.Projection("+init=epsg:3857"));
+    assert.equal(map.extent.minx, -10018754.171394622, 'reprojecting map extent minx failed');
+    assert.equal(map.extent.miny, -5621521.486192066, 'reprojecting map extent miny failed');
+    assert.equal(map.extent.maxx, 10018754.171394622, 'reprojecting map extent maxx failed');
+    assert.equal(map.extent.maxy, 5621521.486192066, 'reprojecting map extent maxy failed');
+    
   });
 
   it('should compute cell size and scaledenom', function() {

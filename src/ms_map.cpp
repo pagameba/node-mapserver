@@ -28,6 +28,7 @@ void MSMap::Initialize(Handle<Object> target) {
   RW_PROPERTY(constructor, "shapepath", PropertyGetter, PropertySetter);
   RW_PROPERTY(constructor, "mappath", PropertyGetter, PropertySetter);
   RW_PROPERTY(constructor, "imagetype", PropertyGetter, PropertySetter);
+  RW_PROPERTY(constructor, "projection", PropertyGetter, PropertySetter);
 
   /* Read-Only Properties */
   RO_PROPERTY(constructor, "cellsize", PropertyGetter);
@@ -170,6 +171,9 @@ Handle<Value> MSMap::PropertyGetter (Local<String> property, const AccessorInfo&
   } else if (strcmp(*n, "outputformat") == 0) {
     HandleScope scope;  
     return scope.Close(MSOutputFormat::New(map->this_->outputformat));
+  } else if (strcmp(*n, "projection") == 0) {
+    HandleScope scope;  
+    return scope.Close(MSProjection::New(&map->this_->projection));
   } else if (strcmp(*n, "layers") == 0) {
     HandleScope scope;
     return scope.Close(MSLayers::New(map->this_));
@@ -204,6 +208,9 @@ void MSMap::PropertySetter (Local<String> property, Local<Value> value, const Ac
     REPLACE_STRING(map->this_->imagetype, value);
   } else if (strcmp(*n, "shapepath") == 0) {
     REPLACE_STRING(map->this_->shapepath, value);
+  } else if (strcmp(*n, "projection") == 0) {
+    v8::String::AsciiValue _v_(value->ToString());
+    msLoadProjectionString(&(map->this_->projection), *_v_);
   } else if (strcmp(*n, "mappath") == 0) {
     REPLACE_STRING(map->this_->mappath, value);
   }

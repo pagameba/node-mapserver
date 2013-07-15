@@ -11,6 +11,7 @@ void MSProjection::Initialize(Handle<Object> target) {
   constructor->SetClassName(String::NewSymbol("Projection"));
   
   RO_PROPERTY(constructor, "units", Units);
+  RW_PROPERTY(constructor, "projString", ProjString, SetProjString);
 
   target->Set(String::NewSymbol("Projection"), constructor->GetFunction());
 }
@@ -77,3 +78,13 @@ Handle<Value> MSProjection::Units (Local<String> property, const AccessorInfo& i
   return scope.Close(result);
 }
 
+Handle<Value> MSProjection::ProjString (Local<String> property, const AccessorInfo& info) {
+  MSProjection *proj = ObjectWrap::Unwrap<MSProjection>(info.This());
+  RETURN_STRING(msGetProjectionString(proj->this_));
+}
+
+void MSProjection::SetProjString (Local<String> property, Local<Value> value, const AccessorInfo& info) {
+  MSProjection *proj = ObjectWrap::Unwrap<MSProjection>(info.Holder());
+  v8::String::AsciiValue _v_(value->ToString());
+  msLoadProjectionString(proj->this_, *_v_);
+}

@@ -7,6 +7,7 @@
 #include <node_object_wrap.h>
 
 #include <mapserver.h>
+#include "ms_common.hpp"
 
 using namespace v8;
 using namespace node;
@@ -19,6 +20,8 @@ public:
   static Handle<Value> New(projectionObj *proj);
   
   static Handle<Value> Units (Local<String> property, const AccessorInfo& info);
+  static Handle<Value> ProjString (Local<String> property, const AccessorInfo& info);
+  static void SetProjString (Local<String> property, Local<Value> value, const AccessorInfo& info);
   
   MSProjection();
   MSProjection(projectionObj *proj);

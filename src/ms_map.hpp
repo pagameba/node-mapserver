@@ -13,6 +13,7 @@
 #include "ms_layers.hpp"
 #include "ms_outputformat.hpp"
 #include "ms_rect.hpp"
+#include "ms_projection.hpp"
 
 using namespace v8;
 using namespace node;
