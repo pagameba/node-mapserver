@@ -71,8 +71,8 @@ describe('mapserver', function() {
     var epsg4326 = new mapserver.Projection("+init=epsg:4326");
     var epsg3857 = new mapserver.Projection("+init=epsg:3857");
     point.project(epsg4326, epsg3857);
-    assert.equal(point.x.toPrecision(6), 1168854.653329, 'reprojected x was not correct, got ' + point.x + ' instead of 1168854.653329');
-    assert.equal(point.y.toPrecision(6), 2273030.926987, 'reprojected y was not correct, got ' + point.y + ' instead of 2273030.926987');
+    assert.equal(point.x.toFixed(6), 1168854.653329.toFixed(6), 'reprojected x was not correct, got ' + point.x.toFixed(6) + ' instead of ' + 1168854.653329.toFixed(6));
+    assert.equal(point.y.toFixed(6), 2273030.926988.toFixed(6), 'reprojected y was not correct, got ' + point.y.toFixed(6) + ' instead of ' + 2273030.926988.toFixed(6));
     point = new mapserver.Point(0,0);
     assert.equal(point.distanceToPoint(new mapserver.Point(1,0)), 1, 'distanceToPoint should be 1');
     
