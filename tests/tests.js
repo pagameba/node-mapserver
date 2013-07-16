@@ -61,7 +61,7 @@ describe('mapserver', function() {
     assert.equal(proj.projString, "+init=epsg:3857", 'setting projection object via string failed. Got ' +  proj.projString);
   });
   
-  it('should create a point object', function() {
+  it('should have a functional point object', function() {
     var point = new mapserver.Point();
     
     assert.equal(point.x, -1, 'default point x should be -1');
@@ -74,12 +74,66 @@ describe('mapserver', function() {
     var epsg4326 = new mapserver.Projection("+init=epsg:4326");
     var epsg3857 = new mapserver.Projection("+init=epsg:3857");
     point.project(epsg4326, epsg3857);
-    assert.equal(point.x.toFixed(6), 1168854.653329.toFixed(6), 'reprojected x was not correct, got ' + point.x.toFixed(6) + ' instead of ' + 1168854.653329.toFixed(6));
-    assert.equal(point.y.toFixed(6), 2273030.926988.toFixed(6), 'reprojected y was not correct, got ' + point.y.toFixed(6) + ' instead of ' + 2273030.926988.toFixed(6));
+
+    assert.ok(Math.abs(point.x - 1168854.6533293733).toFixed(6) == 0, 'reprojected x was not correct');
+    assert.ok(Math.abs(point.y - 2273030.926987688).toFixed(6) == 0, 'reprojected y was not correct');
     point = new mapserver.Point(0,0);
     assert.equal(point.distanceToPoint(new mapserver.Point(1,0)), 1, 'distanceToPoint should be 1');
+  });
+  
+  it('should have a functional rect object', function() {
+    var rect;
     
-  })
+    assert.doesNotThrow(function() {
+      rect = new mapserver.Rect();
+    }, 'creating a rect with 0 arguments should work.');
+    
+    assert.equal(rect.minx, -1, 'default rect constructor minx should equal -1');
+    assert.equal(rect.miny, -1, 'default rect constructor miny should equal -1');
+    assert.equal(rect.maxx, -1, 'default rect constructor maxx should equal -1');
+    assert.equal(rect.maxy, -1, 'default rect constructor maxy should equal -1');
+    
+    assert.doesNotThrow(function() {
+      rect = new mapserver.Rect(1.2, 3.4, 5.6, 7.8);
+    }, 'creating a rect with 4 arguments should work');
+    
+    assert.equal(rect.minx, 1.2, 'rect minx should equal 1.2');
+    assert.equal(rect.miny, 3.4, 'rect miny should equal 3.4');
+    assert.equal(rect.maxx, 5.6, 'rect maxx should equal 5.6');
+    assert.equal(rect.maxy, 7.8, 'rect maxy should equal 7.8');
+    
+    assert['throws'](function() {
+      rect = new mapserver.Rect(1,1);
+    }, Error, 'rect constructor should throw an error with wrong number of arguments.');
+
+    assert['throws'](function() {
+      rect = new mapserver.Rect('a', 'b', 'c', 'd');
+    }, Error, 'rect constructor should throw an error with wrong argument type.');
+    
+    rect = new mapserver.Rect(3, 4, 1, 2);
+    assert.equal(rect.minx, 1, 'rect minx should be minimum x value');
+    assert.equal(rect.miny, 2, 'rect miny should be minimum y value');
+    assert.equal(rect.maxx, 3, 'rect maxx should be maximum x value');
+    assert.equal(rect.maxy, 4, 'rect maxy should be maximum y value');
+    
+    rect = new mapserver.Rect();
+    rect.minx = 1;
+    rect.miny = 2;
+    rect.maxx = 3;
+    rect.maxy = 4;
+    assert.equal(rect.minx, 1, 'rect minx should assignable');
+    assert.equal(rect.miny, 2, 'rect miny should assignable');
+    assert.equal(rect.maxx, 3, 'rect maxx should assignable');
+    assert.equal(rect.maxy, 4, 'rect maxy should assignable');
+
+    rect = new mapserver.Rect(0, 0, 1, 1);
+    rect.project(new mapserver.Projection('+init=epsg:4326'), new mapserver.Projection('+init=epsg:3857'));
+    
+    assert.ok(Math.abs(rect.minx - 0).toFixed(6) == 0, 'reprojecting rect minx failed');
+    assert.ok(Math.abs(rect.miny - 0).toFixed(6) == 0, 'reprojecting rect miny failed');
+    assert.ok(Math.abs(rect.maxx - 111319.49079327231).toFixed(6) == 0, 'reprojecting rect maxx failed');
+    assert.ok(Math.abs(rect.maxy - 111325.14286638486).toFixed(6) == 0, 'reprojecting rect maxy failed');
+  });
   
   it('missing mapfile should throw an error', function() {
     // Test default mapfile pattern (must end in .map)
@@ -180,9 +234,10 @@ describe('mapserver', function() {
     var epsg3857 = new mapserver.Projection("+init=epsg:3857");
     var point = new mapserver.Point(10.5, 20);
     point.project(map.projection, epsg3857);
-    assert.equal(point.x.toFixed(6), 1168854.653329.toFixed(6), 'reprojected x was not correct, got ' + point.x.toFixed(6) + ' instead of ' + 1168854.653329.toFixed(6));
-    assert.equal(point.y.toFixed(6), 2273030.926988.toFixed(6), 'reprojected y was not correct, got ' + point.y.toFixed(6) + ' instead of ' + 2273030.926988.toFixed(6));
+    assert.ok(Math.abs(point.x - 1168854.6533293733).toFixed(6) == 0, 'reprojected x was not correct');
+    assert.ok(Math.abs(point.y - 2273030.926987688).toFixed(6) == 0, 'reprojected y was not correct');
   });
+
   it('should set the map projection', function() {
     assert.doesNotThrow(function() {
       map = new mapserver.Map(mapfile);
@@ -204,10 +259,10 @@ describe('mapserver', function() {
 
     map.extent.project(map.projection, new mapserver.Projection("+init=epsg:3857"));
     
-    assert.equal(map.extent.minx.toFixed(6), -10018754.171394622.toFixed(6), 'reprojecting map extent minx failed');
-    assert.equal(map.extent.miny.toFixed(6), -5621521.486192066.toFixed(6), 'reprojecting map extent miny failed');
-    assert.equal(map.extent.maxx.toFixed(6),  10018754.171394622.toFixed(6), 'reprojecting map extent maxx failed');
-    assert.equal(map.extent.maxy.toFixed(6),  5621521.486192066.toFixed(6), 'reprojecting map extent maxy failed');
+    assert.ok(Math.abs(map.extent.minx - -10018754.171394622).toFixed(6) == 0, 'reprojecting map extent minx failed');
+    assert.ok(Math.abs(map.extent.miny - -5621521.486192066).toFixed(6) == 0, 'reprojecting map extent miny failed');
+    assert.ok(Math.abs(map.extent.maxx -  10018754.171394622).toFixed(6) == 0, 'reprojecting map extent maxx failed');
+    assert.ok(Math.abs(map.extent.maxy -  5621521.486192066).toFixed(6) == 0, 'reprojecting map extent maxy failed');
     
   });
 
@@ -217,8 +272,8 @@ describe('mapserver', function() {
     }, Error, 'loading a valid map file should not throw an error.');
     // test effect of recompute on cellsize and scaledenom
     map.recompute();
-    assert.equal(map.cellsize, 0.6020066889632107, 'recomputing map cellsize failed, got ' + map.cellsize);
-    assert.equal(map.scaledenom, 189621444.28093645, 'recomputing map scaledenom failed, got '+ map.scaledemon);
+    assert.ok(Math.abs(map.cellsize - 0.6020066889632107).toFixed(6) == 0, 'recomputing map cellsize failed, got ' + map.cellsize);
+    assert.ok(Math.abs(map.scaledenom - 189621444.28093645).toFixed(6) == 0, 'recomputing map scaledenom failed, got '+ map.scaledemon);
   });
 
   it('should have access to map layers', function() {
