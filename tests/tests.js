@@ -203,10 +203,11 @@ describe('mapserver', function() {
     assert.equal(map.extent.maxy, 45, 'setting map extent maxy failed');
 
     map.extent.project(map.projection, new mapserver.Projection("+init=epsg:3857"));
-    assert.equal(map.extent.minx, -10018754.171394622, 'reprojecting map extent minx failed');
-    assert.equal(map.extent.miny, -5621521.486192066, 'reprojecting map extent miny failed');
-    assert.equal(map.extent.maxx, 10018754.171394622, 'reprojecting map extent maxx failed');
-    assert.equal(map.extent.maxy, 5621521.486192066, 'reprojecting map extent maxy failed');
+    
+    assert.equal(map.extent.minx.toFixed(6), -10018754.171394622.toFixed(6), 'reprojecting map extent minx failed');
+    assert.equal(map.extent.miny.toFixed(6), -5621521.486192066.toFixed(6), 'reprojecting map extent miny failed');
+    assert.equal(map.extent.maxx.toFixed(6),  10018754.171394622.toFixed(6), 'reprojecting map extent maxx failed');
+    assert.equal(map.extent.maxy.toFixed(6),  5621521.486192066.toFixed(6), 'reprojecting map extent maxy failed');
     
   });
 
