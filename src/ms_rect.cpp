@@ -29,6 +29,7 @@ MSRect::~MSRect() { }
 Handle<Value> MSRect::New(const Arguments &args) {
   HandleScope scope;
   MSRect *obj;
+  double t;
   
   if (!args.IsConstructCall()) {
     return ThrowException(String::New("Cannot call constructor as function, you need to use 'new' keyword"));
@@ -46,11 +47,35 @@ Handle<Value> MSRect::New(const Arguments &args) {
   if(!rect) {
     return args.This();
   }
-
-  rect->minx = -1;
-  rect->miny = -1;
-  rect->maxx = -1;
-  rect->maxy = -1;
+  
+  if (args.Length() == 0) {
+    rect->minx = -1;
+    rect->miny = -1;
+    rect->maxx = -1;
+    rect->maxy = -1;
+  } else if (args.Length() == 4) {
+    REQ_DOUBLE_ARG(0, minx);
+    REQ_DOUBLE_ARG(1, miny);
+    REQ_DOUBLE_ARG(2, maxx);
+    REQ_DOUBLE_ARG(3, maxy);
+    /* coerce correct extent */
+    if (minx > maxx) {
+      t = maxx;
+      maxx = minx;
+      minx = t;
+    }
+    if (miny > maxy) {
+      t = maxy;
+      maxy = miny;
+      miny = t;
+    }
+    rect->minx = minx;
+    rect->miny = miny;
+    rect->maxx = maxx;
+    rect->maxy = maxy;
+  } else {
+    THROW_ERROR(Error, "Rect objects take 0 or 4 arguments.");
+  }
   
   obj = new MSRect(rect);
   obj->Wrap(args.This());
@@ -79,6 +104,8 @@ Handle<Value> MSRect::PropertyGetter (Local<String> property, const AccessorInfo
 void MSRect::PropertySetter (Local<String> property, Local<Value> value, const AccessorInfo& info) {
   MSRect *rect = ObjectWrap::Unwrap<MSRect>(info.Holder());
   v8::String::AsciiValue n(property);
+  double t;
+  
   if (strcmp(*n, "minx") == 0) {
     rect->this_->minx = value->NumberValue();
   } else if (strcmp(*n, "miny") == 0) {
