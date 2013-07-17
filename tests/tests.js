@@ -192,6 +192,8 @@ describe('mapserver', function() {
     assert.equal(map.resolution, 72, 'getting map resolution failed');
     assert.equal(map.defresolution, 72, 'getting map defresolution failed');
     assert.equal(map.shapepath, './', 'getting shapepath failed');
+    assert.equal(map.imagetype, 'png', 'imagetype should be png, got ' + map.imagetype);
+    assert.equal(map.mimetype, 'image/png', 'mimetype should be image/png, got ' + map.mimetype);
   });
   
   it('should set map properties', function() {
