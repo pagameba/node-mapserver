@@ -265,6 +265,25 @@ describe('mapserver', function() {
     assert.ok(Math.abs(map.extent.maxy -  5621521.486192066).toFixed(6) == 0, 'reprojecting map extent maxy failed');
     
   });
+  
+  it('should create a rect from the map extent', function() {
+    assert.doesNotThrow(function() {
+      map = new mapserver.Map(mapfile);
+    }, Error, 'loading a valid map file should not throw an error.');
+    
+    map.setExtent(-90, -45, 90, 45);
+    
+    var rect = new mapserver.Rect(map.extent);
+    
+    assert.equal(rect.minx, -90, 'rect does not match extent: minx failed');
+    assert.equal(rect.miny, -45, 'rect does not match extent: miny failed');
+    assert.equal(rect.maxx, 90, 'rect does not match extent: maxx failed');
+    assert.equal(rect.maxy, 45, 'rect does not match extent: maxy failed');
+
+    rect.minx = 0;
+    assert.equal(map.extent.minx, -90, 'original rect should not be modified by copy modification');
+    assert.equal(rect.minx, 0, 'copied rect should be modified');
+  });
 
   it('should compute cell size and scaledenom', function() {
     assert.doesNotThrow(function() {

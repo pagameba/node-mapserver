@@ -53,6 +53,22 @@ Handle<Value> MSRect::New(const Arguments &args) {
     rect->miny = -1;
     rect->maxx = -1;
     rect->maxy = -1;
+  } else if (args.Length() == 1) {
+    Local<Object> argObj;
+    if (!args[0]->IsObject()) {
+      THROW_ERROR(TypeError, "single argument constructor requires a Rect object");
+    }
+
+    argObj = args[0]->ToObject();
+
+    if (argObj->IsNull() || argObj->IsUndefined() || !MSRect::constructor->HasInstance(argObj)) {
+      THROW_ERROR(TypeError, "single argument to Rect constructor must be a Rect object");
+    }
+
+    MSRect *inRect = ObjectWrap::Unwrap<MSRect>(argObj);
+    
+    memcpy(rect, inRect->this_, sizeof(rectObj));
+    
   } else if (args.Length() == 4) {
     REQ_DOUBLE_ARG(0, minx);
     REQ_DOUBLE_ARG(1, miny);
@@ -74,7 +90,7 @@ Handle<Value> MSRect::New(const Arguments &args) {
     rect->maxx = maxx;
     rect->maxy = maxy;
   } else {
-    THROW_ERROR(Error, "Rect objects take 0 or 4 arguments.");
+    THROW_ERROR(Error, "Rect objects take 0, 1 or 4 arguments.");
   }
   
   obj = new MSRect(rect);
