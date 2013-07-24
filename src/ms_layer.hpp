@@ -21,6 +21,7 @@ public:
   static Handle<Value> PropertyGetter (Local<String> property, const AccessorInfo& info);
   static void PropertySetter (Local<String> property, Local<Value> value, const AccessorInfo& info);
   static Handle<Value> GetGridIntersectionCoordinates (const Arguments& args);
+  static Handle<Value> UpdateFromString (const Arguments& args);
   
   MSLayer();
   MSLayer(layerObj *layer);

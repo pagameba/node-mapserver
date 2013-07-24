@@ -322,6 +322,10 @@ describe('mapserver', function() {
     map.layers['test'].status = mapserver.MS_OFF;
     assert.equal(map.layers['test'].status, mapserver.MS_OFF, 'layer status should change to OFF');
     
+    map.layers['test'].updateFromString('LAYER NAME "stringtest" TYPE POINT STATUS ON END');
+    assert.equal(map.layers[1].name, 'stringtest', 'layer updated from string should have new name');
+    assert.equal(map.layers['stringtest'].status, mapserver.MS_ON, 'layer status should change to ON after updateFromString');
+    
   });
 
   it('should get grid intersection coordinates', function() {

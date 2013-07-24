@@ -11,6 +11,7 @@ void MSLayer::Initialize(Handle<Object> target) {
   constructor->SetClassName(String::NewSymbol("Layer"));
   
   NODE_SET_PROTOTYPE_METHOD(constructor, "getGridIntersectionCoordinates", GetGridIntersectionCoordinates);
+  NODE_SET_PROTOTYPE_METHOD(constructor, "updateFromString", UpdateFromString);
   RW_PROPERTY(constructor, "name", PropertyGetter, PropertySetter);
   RW_PROPERTY(constructor, "status", PropertyGetter, PropertySetter);
   
@@ -125,4 +126,13 @@ Handle<Value> MSLayer::GetGridIntersectionCoordinates (const Arguments& args) {
   result->Set(String::New("right"), right);
   result->Set(String::New("bottom"), bottom);
   return scope.Close(result);
+}
+
+Handle<Value> MSLayer::UpdateFromString (const Arguments& args) {
+  HandleScope scope;
+  int result;
+  MSLayer *layer = ObjectWrap::Unwrap<MSLayer>(args.This());
+  REQ_STR_ARG(0, snippet);
+  result = msUpdateLayerFromString(layer->this_, *snippet, MS_FALSE);
+  return scope.Close(Number::New(result));
 }
