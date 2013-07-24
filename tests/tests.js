@@ -224,6 +224,9 @@ describe('mapserver', function() {
 
     map.defresolution = 96;
     assert.equal(map.defresolution, 96, 'setting map defresolution failed');
+
+    map.imagetype = "jpeg";
+    assert.equal(map.imagetype, 'jpeg', 'setting map imagetype failed');
   });
 
   it('should get the map projection', function() {
