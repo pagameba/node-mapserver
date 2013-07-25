@@ -224,9 +224,6 @@ describe('mapserver', function() {
 
     map.defresolution = 96;
     assert.equal(map.defresolution, 96, 'setting map defresolution failed');
-
-    map.imagetype = "jpeg";
-    assert.equal(map.imagetype, 'jpeg', 'setting map imagetype failed');
   });
 
   it('should get the map projection', function() {
@@ -312,6 +309,7 @@ describe('mapserver', function() {
   
     // test accessor for layer name
     assert.notEqual(map.layers[1].name,'test', 'layer name should not be test before we change it');
+
     map.layers[1].name = 'test';
     assert.equal(map.layers[1].name, 'test', 'layer name should have changed.');
     // layers should be accessible by name too
@@ -321,11 +319,30 @@ describe('mapserver', function() {
     
     map.layers['test'].status = mapserver.MS_OFF;
     assert.equal(map.layers['test'].status, mapserver.MS_OFF, 'layer status should change to OFF');
-    
+
     map.layers['test'].updateFromString('LAYER NAME "stringtest" TYPE POINT STATUS ON END');
     assert.equal(map.layers[1].name, 'stringtest', 'layer updated from string should have new name');
     assert.equal(map.layers['stringtest'].status, mapserver.MS_ON, 'layer status should change to ON after updateFromString');
+  });
+  
+  it('should create a new layer', function() {
+    var layer;
+    assert.doesNotThrow(function() {
+      map = new mapserver.Map(mapfile);
+    }, Error, 'loading a valid map file should not throw an error.');
     
+    assert.doesNotThrow(function() {
+     layer = new mapserver.Layer('foo');
+    }, Error, 'constructing a layer should not throw an error.');
+    
+    assert.ok(layer, 'layer should be an object');
+    assert.equal(layer.name, 'foo', 'new layer should have a name');
+    
+    layer.name = 'bar';
+    assert.equal(layer.name, 'bar', 'should be able to set a name on a new layer');
+    
+    map.insertLayer(layer);
+    assert.equal(map.layers['bar'].name, 'bar', 'the new layer should have a name');
   });
 
   it('should get grid intersection coordinates', function() {

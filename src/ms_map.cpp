@@ -14,6 +14,7 @@ void MSMap::Initialize(Handle<Object> target) {
   NODE_SET_PROTOTYPE_METHOD(constructor, "setExtent", SetExtent);
   NODE_SET_PROTOTYPE_METHOD(constructor, "drawMap", DrawMap);
   NODE_SET_PROTOTYPE_METHOD(constructor, "recompute", Recompute);
+  NODE_SET_PROTOTYPE_METHOD(constructor, "insertLayer", InsertLayer);
   // NODE_SET_PROTOTYPE_METHOD(constructor, "copy", Copy);
   
   /* Read-Write Properties */
@@ -122,6 +123,47 @@ Handle<Value> MSMap::Recompute (const Arguments& args) {
                    _map->resolution,
                    &_map->scaledenom);
   return scope.Close(Boolean::New(true));
+}
+
+Handle<Value> MSMap::InsertLayer (const Arguments& args) {
+  HandleScope scope;
+  MSMap *map = ObjectWrap::Unwrap<MSMap>(args.This());
+  MSLayer *layer;
+  Local<Object> obj;
+  int result;
+  int position = 0;
+  
+  if (args.Length() < 1) {
+    THROW_ERROR(Error, "insertLayer requires at least one argument");
+  }
+  
+  if (!args[0]->IsObject()) {
+    THROW_ERROR(TypeError, "first argument to project must be Layer object");
+  }
+
+  obj = args[0]->ToObject();
+
+  if (obj->IsNull() || obj->IsUndefined() || !MSLayer::constructor->HasInstance(obj)) {
+    THROW_ERROR(TypeError, "first argument to project must be Layer object");
+  }
+
+  layer = ObjectWrap::Unwrap<MSLayer>(obj);
+  
+  if (args.Length() == 2) {
+    if (!args[1]->IsNumber()) {
+      THROW_ERROR(TypeError, "second argument must be an integer");
+    } else {
+      position = args[1]->ToInteger()->Value();
+      if (position >= map->this_->numlayers) {
+        position = map->this_->numlayers-1;
+      } else if (position < 0) {
+        position = 0;
+      }
+    }
+  }
+
+  result = msInsertLayer(map->this_, layer->this_, position);
+  return scope.Close(Number::New(result));
 }
 
 Handle<Value> MSMap::SelectOutputFormat (const Arguments& args) {

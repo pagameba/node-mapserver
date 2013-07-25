@@ -1,5 +1,6 @@
 #include "ms_layer.hpp"
 #include "ms_common.hpp"
+#include "ms_map.hpp"
 
 Persistent<FunctionTemplate> MSLayer::constructor;
 
@@ -26,6 +27,7 @@ MSLayer::~MSLayer() { }
 
 Handle<Value> MSLayer::New(const Arguments &args) {
   HandleScope scope;
+  layerObj *layer;
   MSLayer *obj;
   
   if (!args.IsConstructCall()) {
@@ -40,6 +42,15 @@ Handle<Value> MSLayer::New(const Arguments &args) {
     return args.This();
   }
   
+  REQ_STR_ARG(0, layer_name);
+
+  layer = (layerObj*)calloc(1,sizeof(layerObj));
+  initLayer(layer, (mapObj*)NULL);
+  
+  REPLACE_STRING(layer->name, String::New(*layer_name));
+    
+  obj = new MSLayer(layer);
+  obj->Wrap(args.This());  
   return args.This();
 }
 
