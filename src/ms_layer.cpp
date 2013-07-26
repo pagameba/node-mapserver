@@ -47,7 +47,7 @@ Handle<Value> MSLayer::New(const Arguments &args) {
   layer = (layerObj*)calloc(1,sizeof(layerObj));
   initLayer(layer, (mapObj*)NULL);
   
-  REPLACE_STRING(layer->name, String::New(*layer_name));
+  layer->name = strdup(*layer_name);
     
   obj = new MSLayer(layer);
   obj->Wrap(args.This());  
