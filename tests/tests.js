@@ -21,6 +21,7 @@ var assert = require('assert')
   , path = require('path')
   , datadir = path.join(__dirname, 'data')
   , mapfile = path.join(datadir, 'test.map')
+  , symbolfile = path.join(datadir, 'symbolset.txt')
   , nomapfile = 'missing.map'
   , errormapfile = path.join(datadir, 'error.map')
   , map
@@ -224,6 +225,7 @@ describe('mapserver', function() {
 
     map.defresolution = 96;
     assert.equal(map.defresolution, 96, 'setting map defresolution failed');
+    
   });
 
   it('should get the map projection', function() {
@@ -246,6 +248,14 @@ describe('mapserver', function() {
     }, Error, 'loading a valid map file should not throw an error.');
     map.projection = "+init=epsg:3857";
     assert.equal(map.projection.projString, "+init=epsg:3857", 'setting map projection string failed. Got ' + map.projection.projString);
+  });
+
+  it('should set the map symbol set', function() {
+    assert.doesNotThrow(function() {
+      map = new mapserver.Map(mapfile);
+    }, Error, 'loading a valid map file should not throw an error.');
+    map.setSymbolSet(symbolfile);
+    assert.equal(map.setSymbolSet(symbolfile), 0, 'setting symbolset failed.');
   });
 
   it('should set the map extent', function() {

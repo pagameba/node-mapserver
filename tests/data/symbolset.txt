@@ -1,0 +1,16 @@
+symbolset
+
+symbol
+    name "arrow"
+    type vector
+    points
+        0 1
+        3 1
+        -99 -99
+        2 0
+        3 1
+        2 2
+    end
+end
+
+end

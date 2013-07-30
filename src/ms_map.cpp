@@ -15,6 +15,7 @@ void MSMap::Initialize(Handle<Object> target) {
   NODE_SET_PROTOTYPE_METHOD(constructor, "drawMap", DrawMap);
   NODE_SET_PROTOTYPE_METHOD(constructor, "recompute", Recompute);
   NODE_SET_PROTOTYPE_METHOD(constructor, "insertLayer", InsertLayer);
+  NODE_SET_PROTOTYPE_METHOD(constructor, "setSymbolSet", SetSymbolSet);
   // NODE_SET_PROTOTYPE_METHOD(constructor, "copy", Copy);
   
   /* Read-Write Properties */
@@ -177,6 +178,25 @@ Handle<Value> MSMap::SelectOutputFormat (const Arguments& args) {
   msApplyOutputFormat(&(map->this_->outputformat), format, MS_NOOVERRIDE, 
       MS_NOOVERRIDE, MS_NOOVERRIDE );
   return Undefined();
+}
+
+Handle<Value> MSMap::SetSymbolSet(const Arguments &args) {
+  HandleScope scope;
+  int result;
+  MSMap *map = ObjectWrap::Unwrap<MSMap>(args.This());
+  REQ_STR_ARG(0, symbolfile);
+
+  msFreeSymbolSet(&(map->this_->symbolset));
+  msInitSymbolSet(&(map->this_->symbolset));
+
+  // Set symbolset filename
+  map->this_->symbolset.filename = strdup(*symbolfile);
+
+  // Symbolset shares same fontset as main mapfile
+  map->this_->symbolset.fontset = &(map->this_->fontset);
+
+  result = msLoadSymbolSet(&(map->this_->symbolset), map->this_);
+  return scope.Close(Number::New(result));
 }
 
 Handle<Value> MSMap::PropertyGetter (Local<String> property, const AccessorInfo& info) {

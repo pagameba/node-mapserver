@@ -33,6 +33,8 @@ public:
   
   static Handle<Value> Recompute (const Arguments& args);
   static Handle<Value> InsertLayer (const Arguments& args);
+  static Handle<Value> SetSymbolSet(const Arguments &args);
+  
   // static Handle<Value> Copy (const Arguments& args);
   static Handle<Value> PropertyGetter (Local<String> property, const AccessorInfo& info);
   static void PropertySetter (Local<String> property, Local<Value> value, const AccessorInfo& info);
