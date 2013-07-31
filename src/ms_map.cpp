@@ -16,6 +16,7 @@ void MSMap::Initialize(Handle<Object> target) {
   NODE_SET_PROTOTYPE_METHOD(constructor, "recompute", Recompute);
   NODE_SET_PROTOTYPE_METHOD(constructor, "insertLayer", InsertLayer);
   NODE_SET_PROTOTYPE_METHOD(constructor, "setSymbolSet", SetSymbolSet);
+  NODE_SET_PROTOTYPE_METHOD(constructor, "save", Save);
   // NODE_SET_PROTOTYPE_METHOD(constructor, "copy", Copy);
   
   /* Read-Write Properties */
@@ -196,6 +197,16 @@ Handle<Value> MSMap::SetSymbolSet(const Arguments &args) {
   map->this_->symbolset.fontset = &(map->this_->fontset);
 
   result = msLoadSymbolSet(&(map->this_->symbolset), map->this_);
+  return scope.Close(Number::New(result));
+}
+
+Handle<Value> MSMap::Save(const Arguments &args) {
+  HandleScope scope;
+  int result;
+  MSMap *map = ObjectWrap::Unwrap<MSMap>(args.This());
+  REQ_STR_ARG(0, outputfile);
+
+  result = msSaveMap(map->this_, *outputfile);
   return scope.Close(Number::New(result));
 }
 

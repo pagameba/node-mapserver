@@ -28,6 +28,7 @@ public:
   static Handle<Value> SelectOutputFormat (const Arguments& args);
   static Handle<Value> SetExtent (const Arguments& args);
   static Handle<Value> DrawMap (const Arguments& args);
+  static Handle<Value> Save (const Arguments& args);
   static void DrawMapAfter(uv_work_t *req);
   static void DrawMapWork(uv_work_t *req);
   

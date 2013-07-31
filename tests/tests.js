@@ -319,9 +319,9 @@ describe('mapserver', function() {
   
     // test accessor for layer name
     assert.notEqual(map.layers[1].name,'test', 'layer name should not be test before we change it');
-
     map.layers[1].name = 'test';
     assert.equal(map.layers[1].name, 'test', 'layer name should have changed.');
+
     // layers should be accessible by name too
     assert.equal(map.layers['test'].name, 'test', 'layer should be accessible by name');
     
@@ -330,9 +330,12 @@ describe('mapserver', function() {
     map.layers['test'].status = mapserver.MS_OFF;
     assert.equal(map.layers['test'].status, mapserver.MS_OFF, 'layer status should change to OFF');
 
-    map.layers['test'].updateFromString('LAYER NAME "stringtest" TYPE POINT STATUS ON END');
+    //should be able to replace layer with a valid string
+    map.layers['test'].updateFromString('LAYER NAME "stringtest" TYPE LINE STATUS ON END');
     assert.equal(map.layers[1].name, 'stringtest', 'layer updated from string should have new name');
-    assert.equal(map.layers['stringtest'].status, mapserver.MS_ON, 'layer status should change to ON after updateFromString');
+    assert.equal(map.layers['stringtest'].type, mapserver.MS_LAYER_LINE, 'layer updated from string should be type LINE');
+    assert.equal(map.layers['stringtest'].status, mapserver.MS_ON, 'layer updated from string  should have status ON');
+
   });
   
   it('should create a new layer', function() {
@@ -353,6 +356,7 @@ describe('mapserver', function() {
     
     map.insertLayer(layer);
     assert.equal(map.layers['bar'].name, 'bar', 'the new layer should have a name');
+    assert.equal(map.layers[0].name, 'bar', 'the new layer should be at index 0');
   });
 
   it('should get grid intersection coordinates', function() {
@@ -399,6 +403,7 @@ describe('mapserver', function() {
         } else {
           fs.writeFileSync(path.join(__dirname, 'data', 'test_out.png'), buffer);
           assert.equal(data.toString('hex'), buffer.toString('hex'), 'map draw differed from sample image');
+          map.save('test_out.map');
           done();
         }
       });

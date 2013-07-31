@@ -15,6 +15,7 @@ void MSLayer::Initialize(Handle<Object> target) {
   NODE_SET_PROTOTYPE_METHOD(constructor, "updateFromString", UpdateFromString);
   RW_PROPERTY(constructor, "name", PropertyGetter, PropertySetter);
   RW_PROPERTY(constructor, "status", PropertyGetter, PropertySetter);
+  RW_PROPERTY(constructor, "type", PropertyGetter, PropertySetter);
   
   target->Set(String::NewSymbol("Layer"), constructor->GetFunction());
 }
@@ -65,6 +66,8 @@ Handle<Value> MSLayer::PropertyGetter (Local<String> property, const AccessorInf
     RETURN_STRING(layer->this_->name);
   } else if (strcmp(*n, "status") == 0) {
     RETURN_NUMBER(layer->this_->status);
+  } else if (strcmp(*n, "type") == 0) {
+    RETURN_NUMBER(layer->this_->type);
   }
   return Undefined();
 }
@@ -76,6 +79,11 @@ void MSLayer::PropertySetter (Local<String> property, Local<Value> value, const 
     REPLACE_STRING(layer->this_->name, value)
   } else if (strcmp(*n, "status") == 0) {
     layer->this_->status = value->NumberValue();
+  } else if (strcmp(*n, "type") == 0) {
+    int32_t type = value->Int32Value();
+    if (type >= MS_LAYER_ANNOTATION && type <= MS_LAYER_TILEINDEX) {
+      layer->this_->type = (MS_LAYER_TYPE) type;
+    }
   }
 }
   
