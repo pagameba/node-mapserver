@@ -17,6 +17,7 @@ void MSMap::Initialize(Handle<Object> target) {
   NODE_SET_PROTOTYPE_METHOD(constructor, "insertLayer", InsertLayer);
   NODE_SET_PROTOTYPE_METHOD(constructor, "setSymbolSet", SetSymbolSet);
   NODE_SET_PROTOTYPE_METHOD(constructor, "save", Save);
+  NODE_SET_PROTOTYPE_METHOD(constructor, "getLabelCache", GetLabelCache);
   // NODE_SET_PROTOTYPE_METHOD(constructor, "copy", Copy);
   
   /* Read-Write Properties */
@@ -38,6 +39,7 @@ void MSMap::Initialize(Handle<Object> target) {
   RO_PROPERTY(constructor, "scaledenom", PropertyGetter);
   RO_PROPERTY(constructor, "mimetype", PropertyGetter);
   RO_PROPERTY(constructor, "outputformat", PropertyGetter);
+  RO_PROPERTY(constructor, "labelcount", PropertyGetter);
   
   RO_PROPERTY(constructor, "extent", PropertyGetter);
   RO_PROPERTY(constructor, "layers", PropertyGetter);
@@ -210,6 +212,50 @@ Handle<Value> MSMap::Save(const Arguments &args) {
   return scope.Close(Number::New(result));
 }
 
+Handle<Value> MSMap::GetLabelCache(const Arguments &args) {
+  HandleScope scope;
+  MSMap *map = ObjectWrap::Unwrap<MSMap>(args.This());
+
+  labelCacheObj *labelcache = &(map->this_->labelcache);
+  labelCacheSlotObj *cacheslot;
+  cacheslot = &(labelcache->slots[9]);
+  int nLabels = cacheslot->numlabels;
+
+  Handle<Array> result = Array::New(MS_MAX_LABEL_PRIORITY);
+  Handle<ObjectTemplate> objTempl = ObjectTemplate::New();
+  for(size_t i = 0; i < MS_MAX_LABEL_PRIORITY; ++i)
+  {
+    cacheslot = &(labelcache->slots[i]);
+    Local<Array> labels = Array::New(cacheslot->numlabels);
+    for(size_t j = 0; j < cacheslot->numlabels; ++j)
+    {
+      Local<Object> label = objTempl->NewInstance();
+      //members are marked with MS_ON (1) for drawn, MS_DELETE (4) for not drawn
+      label->Set(String::New("status"), Number::New(cacheslot->labels[j].status));
+      label->Set(String::New("x"), Number::New(cacheslot->labels[j].point.x));
+      label->Set(String::New("y"), Number::New(cacheslot->labels[j].point.y));
+      label->Set(String::New("text"), String::New(cacheslot->labels[j].textsymbols[0]->annotext));
+      label->Set(String::New("layerindex"), Number::New(cacheslot->labels[j].layerindex));
+      label->Set(String::New("classindex"), Number::New(cacheslot->labels[j].classindex));
+      labels->Set(j, label);
+    }
+    Local<Object> val = objTempl->NewInstance();
+    val->Set(String::New("labels"), labels);  
+    result->Set(i, val);
+    //val->Set(String::New("markers"), markers);  
+  }
+  // return object like this:
+  // array of labelCacheSlotObj
+  // [
+  // {
+  //   labels:array,
+  //   markers:array
+  // }
+  // ]
+
+  return scope.Close(result);
+}
+
 Handle<Value> MSMap::PropertyGetter (Local<String> property, const AccessorInfo& info) {
   MSMap *map = ObjectWrap::Unwrap<MSMap>(info.This());
   v8::String::AsciiValue n(property);
@@ -306,6 +352,7 @@ void MSMap::DrawMapWork(uv_work_t *req) {
   drawmap_baton *baton = static_cast<drawmap_baton*>(req->data);
   
   imageObj * im = msDrawMap(baton->map->this_, MS_FALSE);
+
   if (im != NULL) {
     baton->error = NULL;
     baton->data = (char *)msSaveImageBuffer(im, &baton->size, baton->map->this_->outputformat);
@@ -390,12 +437,12 @@ Handle<Value> MSMap::DrawMap (const Arguments& args) {
     Local<Value> argv[2];
     argv[0] = Local<Value>::New(Null());
     imageObj * im = msDrawMap(map->this_, MS_FALSE);
+    
     if (im != NULL) {
       int size;
       char * data = (char *)msSaveImageBuffer(im, &size, map->this_->outputformat);
       msFreeImage(im);
       Buffer * buffer = Buffer::New(data, size, FreeImageBuffer, NULL);
-      
       argv[1] = Local<Value>::New(buffer->handle_);
     } else {
       errorObj * err = msGetErrorObj();

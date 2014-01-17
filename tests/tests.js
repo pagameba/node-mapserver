@@ -15,6 +15,7 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 
 var assert = require('assert')
+  , sleep = require('sleep')
   , util = require('util')
   , mapserver = require('../mapserver')
   , fs = require('fs')
@@ -401,6 +402,7 @@ describe('mapserver', function() {
           util.inspect(drawError, false, 0, true);
           assert.ok(false, 'Error drawing map.');
         } else {
+          console.log('labels' + map.labelcount);
           fs.writeFileSync(path.join(__dirname, 'data', 'test_out.png'), buffer);
           assert.equal(data.toString('hex'), buffer.toString('hex'), 'map draw differed from sample image');
           map.save('test_out.map');

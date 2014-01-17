@@ -35,6 +35,7 @@ public:
   static Handle<Value> Recompute (const Arguments& args);
   static Handle<Value> InsertLayer (const Arguments& args);
   static Handle<Value> SetSymbolSet(const Arguments &args);
+  static Handle<Value> GetLabelCache(const Arguments &args);
   
   // static Handle<Value> Copy (const Arguments& args);
   static Handle<Value> PropertyGetter (Local<String> property, const AccessorInfo& info);
@@ -48,7 +49,8 @@ public:
   MSLayers *layers_;
   MSRect *extent;
   MSOutputFormat *outputformat;
-
+  // labelCacheObj labelcache;
+  
 private:
   ~MSMap();
   
