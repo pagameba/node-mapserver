@@ -34,7 +34,7 @@ fi
 # build and install mapserver
 mkdir build
 cd build
-cmake .. -DWITH_CMAKE_PREFIX_PATH=${PREFIX}/mapserver-install -DWITH_THREAD_SAFETY=1 -DWITH_PROJ=1 -DWITH_FCGI=0 -DWITH_GEOS=0 -DWITH_GDAL=0 -DWITH_OGR=0 || die "cmake failed"
+cmake .. -DWITH_CMAKE_PREFIX_PATH=${PREFIX}/mapserver-install -DWITH_THREAD_SAFETY=1 -DWITH_PROJ=1 -DWITH_FCGI=0 -DWITH_GEOS=0 -DWITH_GDAL=0 -DWITH_OGR=0 -DWITH_WFS=0 -DWITH_WCS=0 -DWITH_WMS=0 || die "cmake failed"
 make || die "make failed"
 make install || die "make install failed"
 
