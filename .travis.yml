@@ -3,10 +3,11 @@ node_js:
   - "0.8"
   - "0.10"
 env:
-  - MAPSERVER_COMMIT=rel-6-2-1  # v6.2.1
+  - MAPSERVER_COMMIT=rfc98-b70 # tbonforts fork, rfc 98 branch
+  - MAPSERVER_FORK=tbonfort # project fork
 before_install:
   - sudo apt-get install libgif-dev                   # mapserver dependencies
-  - sh ./tools/install-deps.sh /tmp $MAPSERVER_COMMIT # install the dependencies
+  - sh ./tools/install-deps.sh /tmp $MAPSERVER_FORK $MAPSERVER_COMMIT # install the dependencies
   - export CXX="g++ -I/tmp/mapserver -L/tmp/mapserver-install/lib -lmapserver"
   - export LD_LIBRARY_PATH=/tmp/mapserver-install/lib:${LD_LIBRARY_PATH}
   - export PATH=/tmp/mapserver-install/bin:${PATH} # ensure `node-gyp` can find `mapserver-config`

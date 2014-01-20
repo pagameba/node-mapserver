@@ -14,10 +14,14 @@ die() {
 }
 
 PREFIX=$1                       # the directory to install into
-MAPSERVER_COMMIT=$2              # the commit number to checkout (optional)
+MAPSERVER_FORK=$2              # mandatory git account name for fork
+MAPSERVER_COMMIT=$3              # the commit id to checkout (optional)
 
 if [ -z "${PREFIX}" ]; then
-    die "usage: install-deps.sh PREFIX [ MAPSERVER_COMMIT ]"
+    die "usage: install-deps.sh PREFIX MAPSERVER_FORK [ MAPSERVER_COMMIT ]"
+fi
+if [ -z "${MAPSERVER_FORK}" ]; then
+    die "usage: install-deps.sh PREFIX MAPSERVER_FORK [ MAPSERVER_COMMIT ]"
 fi
 
 svn co http://svn.osgeo.org/metacrs/proj/branches/4.8/proj/ $PREFIX/proj
@@ -27,7 +31,7 @@ make || die "proj make failed"
 make install || die "proj make install failed"
 
 # clone the mapserver repository
-git clone https://github.com/mapserver/mapserver.git $PREFIX/mapserver || die "Git clone failed"
+git clone https://github.com/$MAPSERVER_FORK/mapserver.git $PREFIX/mapserver || die "Git clone failed"
 cd ${PREFIX}/mapserver || die "Cannot cd to ${PREFIX}/mapserver"
 if [ -n "${MAPSERVER_COMMIT}" ]; then
     git checkout $MAPSERVER_COMMIT || die "Cannot checkout ${MAPSERVER_COMMIT}"
