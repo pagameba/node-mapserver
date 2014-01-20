@@ -5,7 +5,17 @@ node_js:
 env:
   - MAPSERVER_COMMIT=rfc98-b70 MAPSERVER_FORK=tbonfort # tbonforts fork, rfc 98 branch
 before_install:
-  - sudo apt-get install libgif-dev                   # mapserver dependencies
+  - mkdir tmp
+  - cd tmp
+  - wget http://www.freedesktop.org/software/harfbuzz/release/harfbuzz-0.9.19.tar.bz2
+  - tar xjf harfbuzz-0.9.19.tar.bz2
+  - cd harfbuzz-0.9.19
+  - ./configure --without-cairo --without-glib --without-icu
+  - make -j3
+  - sudo make install && sudo ldconfig
+  - cd ../..
+  - sudo apt-get update -qq
+  - sudo apt-get install -qq libfribidi-dev libpng12-dev libjpeg-dev libgif-dev libgd2-noxpm-dev libfreetype6-dev libfcgi-dev libcurl4-gnutls-dev libcairo2-dev libgdal1-dev libproj-dev libxml2-dev
   - sh ./tools/install-deps.sh /tmp $MAPSERVER_FORK $MAPSERVER_COMMIT # install the dependencies
   - export CXX="g++ -I/tmp/mapserver -L/tmp/mapserver-install/lib -lmapserver"
   - export LD_LIBRARY_PATH=/tmp/mapserver-install/lib:${LD_LIBRARY_PATH}
