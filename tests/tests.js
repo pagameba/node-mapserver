@@ -387,7 +387,26 @@ describe('mapserver', function() {
     assert.equal(map.outputformat.name, 'png', 'output format name is incorrect');
     assert.equal(map.outputformat.mimetype, 'image/png', 'output format mimetype is incorrect');
   });
-  
+
+  it('should get the label cache', function(done) {
+    map = new mapserver.Map(mapfile);
+    map.setExtent(-150, 37, -50, 87);
+    map.width = 1000;
+    map.height = 600;
+    
+    var labels = map.getLabelCache();
+    assert.equal(labels[0].labels.length, 0, 'Is not empty before drawing.');
+    map.drawMap(function(drawError, buffer) {
+      if (drawError) {
+        util.inspect(drawError, false, 0, true);
+        assert.ok(false, 'Error drawing map.');
+      } else {
+        labels = map.getLabelCache();
+        assert.equal(labels[0].labels.length, 1248, 'Does not have the right number of labels.');
+        done();
+      }
+    });
+  });
   it('should draw a map', function(done) {
     assert.doesNotThrow(function() {
       map = new mapserver.Map(mapfile);
@@ -401,7 +420,6 @@ describe('mapserver', function() {
           util.inspect(drawError, false, 0, true);
           assert.ok(false, 'Error drawing map.');
         } else {
-          console.log('labels' + map.labelcount);
           fs.writeFileSync(path.join(__dirname, 'data', 'test_out.png'), buffer);
           assert.equal(data.toString('hex'), buffer.toString('hex'), 'map draw differed from sample image');
           map.save('test_out.map');

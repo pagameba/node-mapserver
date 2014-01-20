@@ -72,6 +72,13 @@ LAYER
   STATUS ON
   DATA wgs_province
   CLASS
+    LABEL
+      MINDISTANCE 100
+      TEXT "[NAME][NAME_E]"
+      PRIORITY 1
+      WRAP "*"
+      SIZE TINY
+    END
     NAME "Province"
     STYLE
       OUTLINECOLOR 120 120 120
