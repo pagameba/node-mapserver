@@ -15,7 +15,6 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 
 var assert = require('assert')
-  , sleep = require('sleep')
   , util = require('util')
   , mapserver = require('../mapserver')
   , fs = require('fs')
