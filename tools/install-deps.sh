@@ -38,8 +38,9 @@ if [ -n "${MAPSERVER_COMMIT}" ]; then
 fi
 
 # build and install mapserver
-autoconf || die "autoconf failed"
-./configure --prefix=${PREFIX}/mapserver-install --with-threads --with-proj=${PREFIX}/proj-install || die "configure failed"
+mkdir build
+cd build
+cmake .. -DWITH_CMAKE_PREFIX_PATH=${PREFIX}/mapserver-install -DWITH_THREAD_SAFETY=1 -DWITH_PROJ=${PREFIX}/proj-install
 make || die "make failed"
 make install || die "make install failed"
 
