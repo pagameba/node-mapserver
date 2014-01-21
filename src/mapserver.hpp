@@ -15,6 +15,7 @@
 #include "ms_point.hpp"
 #include "ms_projection.hpp"
 #include "ms_rect.hpp"
+#include "ms_hashtable.hpp"
 #include "ms_common.hpp"
 
 using namespace v8;

@@ -14,6 +14,7 @@
 #include "ms_outputformat.hpp"
 #include "ms_rect.hpp"
 #include "ms_projection.hpp"
+#include "ms_hashtable.hpp"
 
 using namespace v8;
 using namespace node;

@@ -334,8 +334,7 @@ describe('mapserver', function() {
     map.layers['test'].updateFromString('LAYER NAME "stringtest" TYPE LINE STATUS ON END');
     assert.equal(map.layers[1].name, 'stringtest', 'layer updated from string should have new name');
     assert.equal(map.layers['stringtest'].type, mapserver.MS_LAYER_LINE, 'layer updated from string should be type LINE');
-    assert.equal(map.layers['stringtest'].status, mapserver.MS_ON, 'layer updated from string  should have status ON');
-
+    assert.equal(map.layers['stringtest'].status, mapserver.MS_ON, 'layer updated from string  should have status ON');    
   });
   
   it('should create a new layer', function() {
@@ -388,6 +387,25 @@ describe('mapserver', function() {
     assert.equal(map.outputformat.mimetype, 'image/png', 'output format mimetype is incorrect');
   });
 
+  it('should get layer and map metadata', function(done) {
+    assert.doesNotThrow(function() {
+      map = new mapserver.Map(mapfile);
+    }, Error, 'loading a valid map file should not throw an error.');
+    
+    assert.equal(map.metadata.foo, "bar", 'map should have metadata');
+    
+    assert.doesNotThrow(function() {
+     layer = new mapserver.Layer('metalayer');
+    }, Error, 'constructing a layer should not throw an error.');
+    map.insertLayer(layer);
+    
+    assert.equal(map.layers['metalayer'].metadata['foo'], undefined, 'layer should have empty metadata on init');
+    
+    map.layers['metalayer'].updateFromString('LAYER NAME "metatest" METADATA "foo" "bar" END END');
+    assert.equal(map.layers['metatest'].metadata['foo'], "bar", 'layer updated from string containing metadata should have metadata');
+    done();
+  });
+      
   it('should get the label cache', function(done) {
     map = new mapserver.Map(mapfile);
     map.setExtent(-150, 37, -50, 87);

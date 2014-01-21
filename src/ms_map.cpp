@@ -39,7 +39,7 @@ void MSMap::Initialize(Handle<Object> target) {
   RO_PROPERTY(constructor, "scaledenom", PropertyGetter);
   RO_PROPERTY(constructor, "mimetype", PropertyGetter);
   RO_PROPERTY(constructor, "outputformat", PropertyGetter);
-  RO_PROPERTY(constructor, "labelcount", PropertyGetter);
+  RO_PROPERTY(constructor, "metadata", PropertyGetter);
   
   RO_PROPERTY(constructor, "extent", PropertyGetter);
   RO_PROPERTY(constructor, "layers", PropertyGetter);
@@ -242,7 +242,6 @@ Handle<Value> MSMap::GetLabelCache(const Arguments &args) {
     Local<Object> val = objTempl->NewInstance();
     val->Set(String::New("labels"), labels);  
     result->Set(i, val);
-    //val->Set(String::New("markers"), markers);  
   }
   // return object like this:
   // array of labelCacheSlotObj
@@ -296,6 +295,9 @@ Handle<Value> MSMap::PropertyGetter (Local<String> property, const AccessorInfo&
   } else if (strcmp(*n, "layers") == 0) {
     HandleScope scope;
     return scope.Close(MSLayers::New(map->this_));
+  } else if (strcmp(*n, "metadata") == 0) {
+    HandleScope scope;
+    return scope.Close(MSHashTable::New(&(map->this_->web.metadata)));
   } else if (strcmp(*n, "extent") == 0) {
     HandleScope scope;
     return scope.Close(MSRect::New(&map->this_->extent));

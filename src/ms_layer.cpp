@@ -13,9 +13,12 @@ void MSLayer::Initialize(Handle<Object> target) {
   
   NODE_SET_PROTOTYPE_METHOD(constructor, "getGridIntersectionCoordinates", GetGridIntersectionCoordinates);
   NODE_SET_PROTOTYPE_METHOD(constructor, "updateFromString", UpdateFromString);
+
   RW_PROPERTY(constructor, "name", PropertyGetter, PropertySetter);
   RW_PROPERTY(constructor, "status", PropertyGetter, PropertySetter);
   RW_PROPERTY(constructor, "type", PropertyGetter, PropertySetter);
+  
+  RO_PROPERTY(constructor, "metadata", PropertyGetter);
   
   target->Set(String::NewSymbol("Layer"), constructor->GetFunction());
 }
@@ -66,6 +69,9 @@ Handle<Value> MSLayer::PropertyGetter (Local<String> property, const AccessorInf
     RETURN_STRING(layer->this_->name);
   } else if (strcmp(*n, "status") == 0) {
     RETURN_NUMBER(layer->this_->status);
+  } else if (strcmp(*n, "metadata") == 0) {
+    HandleScope scope;
+    return scope.Close(MSHashTable::New(&(layer->this_->metadata)));
   } else if (strcmp(*n, "type") == 0) {
     RETURN_NUMBER(layer->this_->type);
   }
@@ -155,3 +161,4 @@ Handle<Value> MSLayer::UpdateFromString (const Arguments& args) {
   result = msUpdateLayerFromString(layer->this_, *snippet, MS_FALSE);
   return scope.Close(Number::New(result));
 }
+

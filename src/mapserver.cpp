@@ -28,6 +28,7 @@ namespace node_mapserver {
       MSPoint::Initialize(target);
       MSProjection::Initialize(target);
       MSRect::Initialize(target);
+      MSHashTable::Initialize(target);
 
       NODE_SET_METHOD(target, "getVersionInt", node_mapserver::getVersionInt);
       NODE_SET_METHOD(target, "getVersion", node_mapserver::getVersion);

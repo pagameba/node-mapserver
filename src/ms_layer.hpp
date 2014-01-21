@@ -7,6 +7,7 @@
 #include <node_object_wrap.h>
 
 #include <mapserver.h>
+#include "ms_hashtable.hpp"
 
 using namespace v8;
 using namespace node;

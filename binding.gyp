@@ -11,6 +11,7 @@
           "src/ms_outputformat.cpp",
           "src/ms_point.cpp",
           "src/ms_projection.cpp",
+          "src/ms_hashtable.cpp",
           "src/ms_rect.cpp"
      ],
       "libraries":["-lmapserver"]
