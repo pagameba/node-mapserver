@@ -3,7 +3,7 @@ node_js:
   - "0.8"
   - "0.10"
 env:
-  - MAPSERVER_COMMIT=rfc98-b70 MAPSERVER_FORK=tbonfort # tbonforts fork, rfc 98 branch
+  - MAPSERVER_COMMIT=master MAPSERVER_FORK=mapserver # mapserver master
 before_install:
   - mkdir tmp
   - cd tmp
