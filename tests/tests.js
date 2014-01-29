@@ -329,6 +329,11 @@ describe('mapserver', function() {
 
     map.layers['test'].status = mapserver.MS_OFF;
     assert.equal(map.layers['test'].status, mapserver.MS_OFF, 'layer status should change to OFF');
+    //test accessor for layer connection string
+    assert.equal(map.layers['test'].connection, undefined, 'layer should have no connection on init');
+    map.layers['test'].connection = 'myconnectionstring';
+    assert.equal(map.layers['test'].connection, 'myconnectionstring', 'layer should have correct connection string after set');
+    
 
     //should be able to replace layer with a valid string
     map.layers['test'].updateFromString('LAYER NAME "stringtest" TYPE LINE STATUS ON END');

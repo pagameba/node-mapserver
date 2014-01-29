@@ -17,6 +17,7 @@ void MSLayer::Initialize(Handle<Object> target) {
   RW_PROPERTY(constructor, "name", PropertyGetter, PropertySetter);
   RW_PROPERTY(constructor, "status", PropertyGetter, PropertySetter);
   RW_PROPERTY(constructor, "type", PropertyGetter, PropertySetter);
+  RW_PROPERTY(constructor, "connection", PropertyGetter, PropertySetter);
   
   RO_PROPERTY(constructor, "metadata", PropertyGetter);
   
@@ -74,8 +75,12 @@ Handle<Value> MSLayer::PropertyGetter (Local<String> property, const AccessorInf
     return scope.Close(MSHashTable::New(&(layer->this_->metadata)));
   } else if (strcmp(*n, "type") == 0) {
     RETURN_NUMBER(layer->this_->type);
-  }
-  return Undefined();
+  } else if (strcmp(*n, "connection") == 0) {
+    if (layer->this_->connection == NULL) {
+      return Undefined();
+    }
+    RETURN_STRING(layer->this_->connection);
+  } return Undefined();
 }
 
 void MSLayer::PropertySetter (Local<String> property, Local<Value> value, const AccessorInfo& info) {
@@ -90,6 +95,8 @@ void MSLayer::PropertySetter (Local<String> property, Local<Value> value, const 
     if (type >= MS_LAYER_ANNOTATION && type <= MS_LAYER_TILEINDEX) {
       layer->this_->type = (MS_LAYER_TYPE) type;
     }
+  } else if (strcmp(*n, "connection") == 0) {
+    REPLACE_STRING(layer->this_->connection, value)
   }
 }
   
