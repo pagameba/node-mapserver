@@ -18,6 +18,8 @@ void MSLayer::Initialize(Handle<Object> target) {
   RW_PROPERTY(constructor, "status", PropertyGetter, PropertySetter);
   RW_PROPERTY(constructor, "type", PropertyGetter, PropertySetter);
   RW_PROPERTY(constructor, "connection", PropertyGetter, PropertySetter);
+  RW_PROPERTY(constructor, "minscaledenom", PropertyGetter, PropertySetter);
+  RW_PROPERTY(constructor, "maxscaledenom", PropertyGetter, PropertySetter);
   
   RO_PROPERTY(constructor, "metadata", PropertyGetter);
   
@@ -75,6 +77,10 @@ Handle<Value> MSLayer::PropertyGetter (Local<String> property, const AccessorInf
     return scope.Close(MSHashTable::New(&(layer->this_->metadata)));
   } else if (strcmp(*n, "type") == 0) {
     RETURN_NUMBER(layer->this_->type);
+  } else if (strcmp(*n, "minscaledenom") == 0) {
+    RETURN_NUMBER(layer->this_->minscaledenom);
+  } else if (strcmp(*n, "maxscaledenom") == 0) {
+    RETURN_NUMBER(layer->this_->maxscaledenom);
   } else if (strcmp(*n, "connection") == 0) {
     if (layer->this_->connection == NULL) {
       return Undefined();
@@ -90,6 +96,10 @@ void MSLayer::PropertySetter (Local<String> property, Local<Value> value, const 
     REPLACE_STRING(layer->this_->name, value)
   } else if (strcmp(*n, "status") == 0) {
     layer->this_->status = value->NumberValue();
+  } else if (strcmp(*n, "minscaledenom") == 0) {
+    layer->this_->minscaledenom = value->NumberValue();
+  } else if (strcmp(*n, "maxscaledenom") == 0) {
+    layer->this_->maxscaledenom = value->NumberValue();
   } else if (strcmp(*n, "type") == 0) {
     int32_t type = value->Int32Value();
     if (type >= MS_LAYER_ANNOTATION && type <= MS_LAYER_TILEINDEX) {
