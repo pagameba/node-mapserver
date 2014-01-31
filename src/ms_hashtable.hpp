@@ -17,9 +17,10 @@ public:
   static void Initialize(Handle<Object> target);
   static Handle<Value> New(const Arguments &args);
   static Handle<Value> New(hashTableObj *table);
-  
+
   static Handle<Value> NamedGetter (Local<String> property, const AccessorInfo& info);
-  
+  static Handle<Value> NamedSetter (Local<String> property, Local<Value> value, const AccessorInfo& info);
+
   MSHashTable();
   MSHashTable(hashTableObj *table);
   inline hashTableObj *get() { return this_; }
@@ -27,6 +28,6 @@ public:
 
 private:
   ~MSHashTable();
-  
+
 };
 #endif

@@ -5,13 +5,13 @@ Persistent<FunctionTemplate> MSHashTable::constructor;
 
 void MSHashTable::Initialize(Handle<Object> target) {
   HandleScope scope;
-  
+
   constructor = Persistent<FunctionTemplate>::New(FunctionTemplate::New(MSHashTable::New));
   constructor->InstanceTemplate()->SetInternalFieldCount(1);
   constructor->SetClassName(String::NewSymbol("Hashtable"));
-  
-  constructor->InstanceTemplate()->SetNamedPropertyHandler(NamedGetter, NULL, NULL, NULL, NULL);
-  
+
+  constructor->InstanceTemplate()->SetNamedPropertyHandler(NamedGetter, NamedSetter, NULL, NULL, NULL);
+
 }
 
 MSHashTable::MSHashTable(hashTableObj *table) : ObjectWrap(), this_(table) {}
@@ -23,7 +23,7 @@ MSHashTable::~MSHashTable() { }
 Handle<Value> MSHashTable::New(const Arguments &args) {
   HandleScope scope;
   MSHashTable *obj;
-  
+
   if (!args.IsConstructCall()) {
     return ThrowException(String::New("Cannot call constructor as function, you need to use 'new' keyword"));
   }
@@ -35,7 +35,7 @@ Handle<Value> MSHashTable::New(const Arguments &args) {
     obj->Wrap(args.This());
     return args.This();
   }
-  
+
   return args.This();
 }
 
@@ -54,6 +54,16 @@ Handle<Value> MSHashTable::NamedGetter (Local<String> property, const AccessorIn
     return Undefined();
   }
   RETURN_STRING(value);
+}
+
+Handle<Value> MSHashTable::NamedSetter (Local<String> property, Local<Value> value, const AccessorInfo& info) {
+  MSHashTable *table = ObjectWrap::Unwrap<MSHashTable>(info.Holder());
+  v8::String::AsciiValue key(property);
+  v8::String::AsciiValue val(value);
+
+  msInsertHashTable(table->this_, *key, *val);
+
+  RETURN_STRING(*val);
 }
 
 

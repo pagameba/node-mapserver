@@ -5,14 +5,14 @@ Persistent<FunctionTemplate> MSLayers::constructor;
 
 void MSLayers::Initialize(Handle<Object> target) {
   HandleScope scope;
-  
+
   constructor = Persistent<FunctionTemplate>::New(FunctionTemplate::New(MSLayers::New));
   constructor->InstanceTemplate()->SetInternalFieldCount(1);
   constructor->SetClassName(String::NewSymbol("Layers"));
-  
+
   constructor->InstanceTemplate()->SetIndexedPropertyHandler(IndexGetter, NULL, NULL, NULL, NULL);
   constructor->InstanceTemplate()->SetNamedPropertyHandler(NamedGetter, NULL, NULL, NULL, NULL);
-  
+
 }
 
 MSLayers::MSLayers(mapObj *map) : ObjectWrap(), this_(map) {}
@@ -24,7 +24,7 @@ MSLayers::~MSLayers() { }
 Handle<Value> MSLayers::New(const Arguments &args) {
   HandleScope scope;
   MSLayers *obj;
-  
+
   if (!args.IsConstructCall()) {
     return ThrowException(String::New("Cannot call constructor as function, you need to use 'new' keyword"));
   }
@@ -36,7 +36,7 @@ Handle<Value> MSLayers::New(const Arguments &args) {
     obj->Wrap(args.This());
     return args.This();
   }
-  
+
   return args.This();
 }
 
@@ -46,7 +46,7 @@ Handle<Value> MSLayers::New(mapObj *map) {
 
 Handle<Value> MSLayers::IndexGetter(uint32_t index, const AccessorInfo& info) {
   MSLayers *layers = ObjectWrap::Unwrap<MSLayers>(info.This());
-  
+
   if (index >=0 && index < layers->this_->numlayers) {
     HandleScope scope;
     return scope.Close(MSLayer::New(GET_LAYER(layers->this_, index)));

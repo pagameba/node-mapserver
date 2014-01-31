@@ -333,7 +333,7 @@ describe('mapserver', function() {
     assert.equal(map.layers['test'].connection, undefined, 'layer should have no connection on init');
     map.layers['test'].connection = 'myconnectionstring';
     assert.equal(map.layers['test'].connection, 'myconnectionstring', 'layer should have correct connection string after set');
-    
+
 
     //should be able to replace layer with a valid string
     map.layers['test'].updateFromString('LAYER NAME "stringtest" TYPE LINE STATUS ON END');
@@ -392,12 +392,15 @@ describe('mapserver', function() {
     assert.equal(map.outputformat.mimetype, 'image/png', 'output format mimetype is incorrect');
   });
 
-  it('should get layer and map metadata', function(done) {
+  it('should get layer and map metadata', function() {
     assert.doesNotThrow(function() {
       map = new mapserver.Map(mapfile);
     }, Error, 'loading a valid map file should not throw an error.');
 
     assert.equal(map.metadata.foo, "bar", 'map should have metadata');
+
+    map.metadata.bar = 'foo';
+    assert.equal(map.metadata.bar, 'foo', 'should be able to set arbitrary metadata on the map');
 
     assert.doesNotThrow(function() {
      layer = new mapserver.Layer('metalayer');
@@ -408,11 +411,48 @@ describe('mapserver', function() {
 
     map.layers['metalayer'].updateFromString('LAYER NAME "metatest" METADATA "foo" "bar" END END');
     assert.equal(map.layers['metatest'].metadata['foo'], "bar", 'layer updated from string containing metadata should have metadata');
-    done();
+
+    map.layers.metatest.metadata.foo = 'test';
+    assert.equal(map.layers.metatest.metadata.foo, 'test', 'should be able to set metadata on a layer');
+
+    map.layers.metatest.metadata.bar = 'foo';
+    assert.equal(map.layers.metatest.metadata.bar, 'foo', 'should be able to create arbitrary metadata');
+
+  });
+
+  it('should get and set layer properties', function() {
+    assert.doesNotThrow(function() {
+     layer = new mapserver.Layer('foo');
+    }, Error, 'constructing a layer should not throw an error.');
+
+    assert.equal(layer.minscaledenom, -1, 'default minscaledenom value should be -1');
+    assert.equal(layer.maxscaledenom, -1, 'default maxscaledenom value should be -1');
+
+    layer.minscaledenom = 10.1;
+    assert.equal(layer.minscaledenom, 10.1, 'setting minscaledenom to float should work');
+
+    layer.minscaledenom = 9;
+    assert.equal(layer.minscaledenom, 9, 'setting minscaledenom to int should work');
+
+    layer.minscaledenom = -1;
+    assert.equal(layer.minscaledenom, -1, 'setting minscaledenom to -1 should work');
+
+    layer.maxscaledenom = 10.1
+    assert.equal(layer.maxscaledenom, 10.1, 'setting minscaledenom to float should work');
+
+    layer.maxscaledenom = 10
+    assert.equal(layer.maxscaledenom, 10, 'setting minscaledenom to int should work');
+
+    layer.maxscaledenom = -1
+    assert.equal(layer.maxscaledenom, -1, 'setting minscaledenom to -1 should work');
+
   });
 
   it('should get the label cache', function(done) {
-    map = new mapserver.Map(mapfile);
+    assert.doesNotThrow(function() {
+      map = new mapserver.Map(mapfile);
+    }, Error, 'loading a valid map file should not throw an error.');
+
     map.setExtent(-150, 37, -50, 87);
     map.width = 1000;
     map.height = 600;
