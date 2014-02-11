@@ -5,11 +5,11 @@ Persistent<FunctionTemplate> MSMap::constructor;
 
 void MSMap::Initialize(Handle<Object> target) {
   HandleScope scope;
-  
+
   constructor = Persistent<FunctionTemplate>::New(FunctionTemplate::New(MSMap::New));
   constructor->InstanceTemplate()->SetInternalFieldCount(1);
   constructor->SetClassName(String::NewSymbol("Map"));
-  
+
   NODE_SET_PROTOTYPE_METHOD(constructor, "selectOutputFormat", SelectOutputFormat);
   NODE_SET_PROTOTYPE_METHOD(constructor, "setExtent", SetExtent);
   NODE_SET_PROTOTYPE_METHOD(constructor, "drawMap", DrawMap);
@@ -19,7 +19,7 @@ void MSMap::Initialize(Handle<Object> target) {
   NODE_SET_PROTOTYPE_METHOD(constructor, "save", Save);
   NODE_SET_PROTOTYPE_METHOD(constructor, "getLabelCache", GetLabelCache);
   // NODE_SET_PROTOTYPE_METHOD(constructor, "copy", Copy);
-  
+
   /* Read-Write Properties */
   RW_PROPERTY(constructor, "name", PropertyGetter, PropertySetter);
   RW_PROPERTY(constructor, "status", PropertyGetter, PropertySetter);
@@ -40,10 +40,10 @@ void MSMap::Initialize(Handle<Object> target) {
   RO_PROPERTY(constructor, "mimetype", PropertyGetter);
   RO_PROPERTY(constructor, "outputformat", PropertyGetter);
   RO_PROPERTY(constructor, "metadata", PropertyGetter);
-  
+
   RO_PROPERTY(constructor, "extent", PropertyGetter);
   RO_PROPERTY(constructor, "layers", PropertyGetter);
-  
+
   target->Set(String::NewSymbol("Map"), constructor->GetFunction());
 }
 
@@ -53,7 +53,7 @@ MSMap::MSMap(mapObj *map) : ObjectWrap(), this_(map) {}
 
 MSMap::MSMap() : ObjectWrap(), this_(0) {}
 
-MSMap::~MSMap() { 
+MSMap::~MSMap() {
   if (this_) {
     msFreeMap(this_);
   }
@@ -63,7 +63,7 @@ Handle<Value> MSMap::New(const Arguments &args) {
   HandleScope scope;
   mapObj *map;
   MSMap *obj;
-  
+
   if (!args.IsConstructCall())
     return ThrowException(String::New("Cannot call constructor as function, you need to use 'new' keyword"));
 
@@ -74,7 +74,7 @@ Handle<Value> MSMap::New(const Arguments &args) {
     f->Wrap(args.This());
     return args.This();
   }
-  
+
   if (args.Length() == 2) {
     REQ_STR_ARG(0, mapfile);
     REQ_STR_ARG(1, mappath);
@@ -85,7 +85,7 @@ Handle<Value> MSMap::New(const Arguments &args) {
   } else {
     map = msNewMapObj();
   }
-  
+
   if (map == NULL) {
     THROW_ERROR(Error, "Unable to load requested map.");
   }
@@ -136,11 +136,11 @@ Handle<Value> MSMap::InsertLayer (const Arguments& args) {
   Local<Object> obj;
   int result;
   int position = 0;
-  
+
   if (args.Length() < 1) {
     THROW_ERROR(Error, "insertLayer requires at least one argument");
   }
-  
+
   if (!args[0]->IsObject()) {
     THROW_ERROR(TypeError, "first argument to project must be Layer object");
   }
@@ -152,7 +152,7 @@ Handle<Value> MSMap::InsertLayer (const Arguments& args) {
   }
 
   layer = ObjectWrap::Unwrap<MSLayer>(obj);
-  
+
   if (args.Length() == 2) {
     if (!args[1]->IsNumber()) {
       THROW_ERROR(TypeError, "second argument must be an integer");
@@ -178,7 +178,7 @@ Handle<Value> MSMap::SelectOutputFormat (const Arguments& args) {
   if ( format == NULL) {
     THROW_ERROR(Error, "Output format not supported.");
   }
-  msApplyOutputFormat(&(map->this_->outputformat), format, MS_NOOVERRIDE, 
+  msApplyOutputFormat(&(map->this_->outputformat), format, MS_NOOVERRIDE,
       MS_NOOVERRIDE, MS_NOOVERRIDE );
   return Undefined();
 }
@@ -234,13 +234,17 @@ Handle<Value> MSMap::GetLabelCache(const Arguments &args) {
       label->Set(String::New("status"), Number::New(cacheslot->labels[j].status));
       label->Set(String::New("x"), Number::New(cacheslot->labels[j].point.x));
       label->Set(String::New("y"), Number::New(cacheslot->labels[j].point.y));
+#if MS_VERSION_NUM < 60500
+      label->Set(String::New("text"), String::New(cacheslot->labels[j].labels[0].annotext));
+#else
       label->Set(String::New("text"), String::New(cacheslot->labels[j].textsymbols[0]->annotext));
+#endif
       label->Set(String::New("layerindex"), Number::New(cacheslot->labels[j].layerindex));
       label->Set(String::New("classindex"), Number::New(cacheslot->labels[j].classindex));
       labels->Set(j, label);
     }
     Local<Object> val = objTempl->NewInstance();
-    val->Set(String::New("labels"), labels);  
+    val->Set(String::New("labels"), labels);
     result->Set(i, val);
   }
   // return object like this:
@@ -287,10 +291,10 @@ Handle<Value> MSMap::PropertyGetter (Local<String> property, const AccessorInfo&
   } else if (strcmp(*n, "name") == 0) {
     RETURN_STRING(map->this_->name);
   } else if (strcmp(*n, "outputformat") == 0) {
-    HandleScope scope;  
+    HandleScope scope;
     return scope.Close(MSOutputFormat::New(map->this_->outputformat));
   } else if (strcmp(*n, "projection") == 0) {
-    HandleScope scope;  
+    HandleScope scope;
     return scope.Close(MSProjection::New(&map->this_->projection));
   } else if (strcmp(*n, "layers") == 0) {
     HandleScope scope;
@@ -352,7 +356,7 @@ void FreeImageBuffer(char *data, void *hint) {
 
 void MSMap::DrawMapWork(uv_work_t *req) {
   drawmap_baton *baton = static_cast<drawmap_baton*>(req->data);
-  
+
   imageObj * im = msDrawMap(baton->map->this_, MS_FALSE);
 
   if (im != NULL) {
@@ -408,10 +412,10 @@ void MSMap::DrawMapAfter(uv_work_t *req) {
 
 Handle<Value> MSMap::DrawMap (const Arguments& args) {
   HandleScope scope;
-  
+
   REQ_FUN_ARG(0, cb);
   MSMap *map = ObjectWrap::Unwrap<MSMap>(args.This());
-  
+
   char * version = msGetVersion();
   char * regex = "SUPPORTS\\=THREADS";
   int match;
@@ -422,14 +426,14 @@ Handle<Value> MSMap::DrawMap (const Arguments& args) {
     // discard the error reported by msEvalRegex saying that it failed
     msResetErrorList();
   }
-  
-  
+
+
   if (match == 1) {
     drawmap_baton * baton = new drawmap_baton();
     baton->request.data = (void*) baton;
     baton->map = map;
     baton->cb = Persistent<Function>::New(cb);
-  
+
     map->Ref();
     uv_queue_work(uv_default_loop(),
       &baton->request,
@@ -439,7 +443,7 @@ Handle<Value> MSMap::DrawMap (const Arguments& args) {
     Local<Value> argv[2];
     argv[0] = Local<Value>::New(Null());
     imageObj * im = msDrawMap(map->this_, MS_FALSE);
-    
+
     if (im != NULL) {
       int size;
       char * data = (char *)msSaveImageBuffer(im, &size, map->this_->outputformat);
