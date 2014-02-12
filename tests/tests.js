@@ -344,6 +344,8 @@ describe('mapserver', function() {
     map.layers[1].name = 'test';
     assert.equal(map.layers[1].name, 'test', 'layer name should have changed.');
 
+    assert.equal(map.layers.prov_bound.connectiontype, mapserver.MS_SHAPEFILE, 'layer should have connectiontype MS_SHAPEFILE');
+
     // layers should be accessible by name too
     assert.equal(map.layers['test'].name, 'test', 'layer should be accessible by name');
 
@@ -379,6 +381,9 @@ describe('mapserver', function() {
     layer.name = 'bar';
     assert.equal(layer.name, 'bar', 'should be able to set a name on a new layer');
 
+    assert.equal(layer.connectiontype, mapserver.MS_SHAPEFILE, 'layer should have connectiontype MS_SHAPEFILE');
+
+
     map.insertLayer(layer);
     assert.equal(map.layers['bar'].name, 'bar', 'the new layer should have a name');
     assert.equal(map.layers[0].name, 'bar', 'the new layer should be at index 0');
@@ -388,6 +393,8 @@ describe('mapserver', function() {
     assert.doesNotThrow(function() {
       map = new mapserver.Map(mapfile);
     }, Error, 'loading a valid map file should not throw an error.');
+
+    assert.equal(map.layers.grid.connectiontype, mapserver.MS_GRATICULE, 'grid layer should have connectiontype MS_GRATICULE');
 
     var values = map.layers['grid'].getGridIntersectionCoordinates();
     assert.ok(values, 'grid intersection result is not an object');
@@ -413,33 +420,35 @@ describe('mapserver', function() {
     assert.equal(map.outputformat.mimetype, 'image/png', 'output format mimetype is incorrect');
   });
 
-  it('should get layer and map metadata', function() {
-    assert.doesNotThrow(function() {
-      map = new mapserver.Map(mapfile);
-    }, Error, 'loading a valid map file should not throw an error.');
+  if (mapserver.getVersionInt() >= 604000) {
+    it('should get layer and map metadata', function() {
+      assert.doesNotThrow(function() {
+        map = new mapserver.Map(mapfile);
+      }, Error, 'loading a valid map file should not throw an error.');
 
-    assert.equal(map.metadata.foo, "bar", 'map should have metadata');
+      assert.equal(map.metadata.foo, "bar", 'map should have metadata');
 
-    map.metadata.bar = 'foo';
-    assert.equal(map.metadata.bar, 'foo', 'should be able to set arbitrary metadata on the map');
+      map.metadata.bar = 'foo';
+      assert.equal(map.metadata.bar, 'foo', 'should be able to set arbitrary metadata on the map');
 
-    assert.doesNotThrow(function() {
-     layer = new mapserver.Layer('metalayer');
-    }, Error, 'constructing a layer should not throw an error.');
-    map.insertLayer(layer);
+      assert.doesNotThrow(function() {
+       layer = new mapserver.Layer('metalayer');
+      }, Error, 'constructing a layer should not throw an error.');
+      map.insertLayer(layer);
 
-    assert.equal(map.layers['metalayer'].metadata['foo'], undefined, 'layer should have empty metadata on init');
+      assert.equal(map.layers['metalayer'].metadata['foo'], undefined, 'layer should have empty metadata on init');
 
-    map.layers['metalayer'].updateFromString('LAYER NAME "metatest" METADATA "foo" "bar" END END');
-    assert.equal(map.layers['metatest'].metadata['foo'], "bar", 'layer updated from string containing metadata should have metadata');
+      map.layers['metalayer'].updateFromString('LAYER NAME "metatest" METADATA "foo" "bar" END END');
+      assert.equal(map.layers['metatest'].metadata['foo'], "bar", 'layer updated from string containing metadata should have metadata');
 
-    map.layers.metatest.metadata.foo = 'test';
-    assert.equal(map.layers.metatest.metadata.foo, 'test', 'should be able to set metadata on a layer');
+      map.layers.metatest.metadata.foo = 'test';
+      assert.equal(map.layers.metatest.metadata.foo, 'test', 'should be able to set metadata on a layer');
 
-    map.layers.metatest.metadata.bar = 'foo';
-    assert.equal(map.layers.metatest.metadata.bar, 'foo', 'should be able to create arbitrary metadata');
+      map.layers.metatest.metadata.bar = 'foo';
+      assert.equal(map.layers.metatest.metadata.bar, 'foo', 'should be able to create arbitrary metadata');
 
-  });
+    });
+  }
 
   it('should get and set layer properties', function() {
     assert.doesNotThrow(function() {

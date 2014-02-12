@@ -6,11 +6,11 @@ Persistent<FunctionTemplate> MSLayer::constructor;
 
 void MSLayer::Initialize(Handle<Object> target) {
   HandleScope scope;
-  
+
   constructor = Persistent<FunctionTemplate>::New(FunctionTemplate::New(MSLayer::New));
   constructor->InstanceTemplate()->SetInternalFieldCount(1);
   constructor->SetClassName(String::NewSymbol("Layer"));
-  
+
   NODE_SET_PROTOTYPE_METHOD(constructor, "getGridIntersectionCoordinates", GetGridIntersectionCoordinates);
   NODE_SET_PROTOTYPE_METHOD(constructor, "updateFromString", UpdateFromString);
 
@@ -20,9 +20,10 @@ void MSLayer::Initialize(Handle<Object> target) {
   RW_PROPERTY(constructor, "connection", PropertyGetter, PropertySetter);
   RW_PROPERTY(constructor, "minscaledenom", PropertyGetter, PropertySetter);
   RW_PROPERTY(constructor, "maxscaledenom", PropertyGetter, PropertySetter);
-  
+
+  RO_PROPERTY(constructor, "connectiontype", PropertyGetter);
   RO_PROPERTY(constructor, "metadata", PropertyGetter);
-  
+
   target->Set(String::NewSymbol("Layer"), constructor->GetFunction());
 }
 
@@ -36,7 +37,7 @@ Handle<Value> MSLayer::New(const Arguments &args) {
   HandleScope scope;
   layerObj *layer;
   MSLayer *obj;
-  
+
   if (!args.IsConstructCall()) {
     return ThrowException(String::New("Cannot call constructor as function, you need to use 'new' keyword"));
   }
@@ -48,16 +49,16 @@ Handle<Value> MSLayer::New(const Arguments &args) {
     obj->Wrap(args.This());
     return args.This();
   }
-  
+
   REQ_STR_ARG(0, layer_name);
 
   layer = (layerObj*)calloc(1,sizeof(layerObj));
   initLayer(layer, (mapObj*)NULL);
-  
+
   layer->name = strdup(*layer_name);
-    
+
   obj = new MSLayer(layer);
-  obj->Wrap(args.This());  
+  obj->Wrap(args.This());
   return args.This();
 }
 
@@ -86,6 +87,11 @@ Handle<Value> MSLayer::PropertyGetter (Local<String> property, const AccessorInf
       return Undefined();
     }
     RETURN_STRING(layer->this_->connection);
+  } else if (strcmp(*n, "connectiontype") == 0) {
+    if (layer->this_->connectiontype == NULL) {
+      return Undefined();
+    }
+    RETURN_NUMBER(layer->this_->connectiontype);
   } return Undefined();
 }
 
@@ -109,15 +115,15 @@ void MSLayer::PropertySetter (Local<String> property, Local<Value> value, const 
     REPLACE_STRING(layer->this_->connection, value)
   }
 }
-  
+
 Handle<Value> MSLayer::GetGridIntersectionCoordinates (const Arguments& args) {
   HandleScope scope;
   MSLayer *layer = ObjectWrap::Unwrap<MSLayer>(args.This());
-  
+
   int i = 0;
-  
+
   graticuleIntersectionObj *values = msGraticuleLayerGetIntersectionPoints(layer->this_->map, layer->this_);
-  
+
   Handle<ObjectTemplate> objTempl = ObjectTemplate::New();
   objTempl->SetInternalFieldCount(1);
 
@@ -125,7 +131,7 @@ Handle<Value> MSLayer::GetGridIntersectionCoordinates (const Arguments& args) {
   Handle<Array> top = Array::New(values->nTop);
   Handle<Array> right = Array::New(values->nRight);
   Handle<Array> bottom = Array::New(values->nBottom);
-  
+
   for (i=0; i<values->nLeft; i++) {
     Local<Object> val = objTempl->NewInstance();
     val->Set(String::New("x"), Number::New(values->pasLeft[i].x));
@@ -152,9 +158,9 @@ Handle<Value> MSLayer::GetGridIntersectionCoordinates (const Arguments& args) {
     val->Set(String::New("x"), Number::New(values->pasBottom[i].x));
     val->Set(String::New("y"), Number::New(values->pasBottom[i].y));
     val->Set(String::New("label"), String::New(values->papszBottomLabels[i]));
-    bottom->Set(i, val); 
+    bottom->Set(i, val);
   }
-  
+
   // return object like this:
   // {
   //   left: [{position: 0, label: '123.00'}],
