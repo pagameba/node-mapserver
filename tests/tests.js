@@ -14,19 +14,27 @@ ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 
-var assert = require('assert')
-  , util = require('util')
-  , mapserver = require('../mapserver')
-  , fs = require('fs')
-  , path = require('path')
-  , datadir = path.join(__dirname, 'data')
-  , mapfile = path.join(datadir, 'test.map')
-  , symbolfile = path.join(datadir, 'symbolset.txt')
-  , nomapfile = 'missing.map'
-  , errormapfile = path.join(datadir, 'error.map')
-  , map
-  , err
-  ;
+
+/*jshint node:true, sub:true */
+/*global beforeEach, describe, it */
+
+"use strict";
+
+
+var assert = require('assert');
+var util = require('util');
+var mapserver = require('../mapserver');
+var fs = require('fs');
+var path = require('path');
+var datadir = path.join(__dirname, 'data');
+var mapfile = path.join(datadir, 'test.map');
+var symbolfile = path.join(datadir, 'symbolset.txt');
+var nomapfile = 'missing.map';
+var map;
+var layer;
+var err;
+
+console.log('running tests for mapserver ', mapserver.getVersion());
 
 beforeEach(function() {
   mapserver.resetErrorList();
@@ -40,9 +48,9 @@ describe('mapserver', function() {
   });
 
   it('should get some basic info about mapserver', function() {
-    assert.ok(mapserver.getVersionInt());
-    assert.ok(mapserver.getVersion());
-    assert.ok(mapserver.supportsThreads());
+    assert.ok(mapserver.getVersionInt(), 'mapserver should report its version number');
+    assert.ok(mapserver.getVersion(), 'mapserver should report its version string');
+    assert.ok(mapserver.supportsThreads(), 'mapserver compiled without thread support.');
   });
 
   it('should have no errors yet', function() {
@@ -76,8 +84,10 @@ describe('mapserver', function() {
     var epsg3857 = new mapserver.Projection("+init=epsg:3857");
     point.project(epsg4326, epsg3857);
 
-    assert.ok(Math.abs(point.x - 1168854.6533293733).toFixed(6) == 0, 'reprojected x was not correct');
-    assert.ok(Math.abs(point.y - 2273030.926987688).toFixed(6) == 0, 'reprojected y was not correct');
+    var dx = Math.abs(point.x - 1168854.6533293733).toFixed(6);
+    assert.equal(dx, 0, 'reprojected x was not correct, delta was ' + dx);
+    var dy = Math.abs(point.y - 2273030.926987688).toFixed(6);
+    assert.equal(dy, 0, 'reprojected y was not correct, delta was ' + dy);
     point = new mapserver.Point(0,0);
     assert.equal(point.distanceToPoint(new mapserver.Point(1,0)), 1, 'distanceToPoint should be 1');
   });
@@ -130,10 +140,14 @@ describe('mapserver', function() {
     rect = new mapserver.Rect(0, 0, 1, 1);
     rect.project(new mapserver.Projection('+init=epsg:4326'), new mapserver.Projection('+init=epsg:3857'));
 
-    assert.ok(Math.abs(rect.minx - 0).toFixed(6) == 0, 'reprojecting rect minx failed');
-    assert.ok(Math.abs(rect.miny - 0).toFixed(6) == 0, 'reprojecting rect miny failed');
-    assert.ok(Math.abs(rect.maxx - 111319.49079327231).toFixed(6) == 0, 'reprojecting rect maxx failed');
-    assert.ok(Math.abs(rect.maxy - 111325.14286638486).toFixed(6) == 0, 'reprojecting rect maxy failed');
+    var delta = Math.abs(rect.minx - 0).toFixed(6);
+    assert.equal(delta, 0, 'reprojecting rect minx failed, delta was ' + delta);
+    delta = Math.abs(rect.miny - 0).toFixed(6);
+    assert.equal(delta, 0, 'reprojecting rect miny failed, delta was ' + delta);
+    delta = Math.abs(rect.maxx - 111319.49079327231).toFixed(6);
+    assert.equal(delta, 0, 'reprojecting rect maxx failed, delta was ' + delta);
+    delta = Math.abs(rect.maxy - 111325.14286638486).toFixed(6);
+    assert.equal(delta, 0, 'reprojecting rect maxy failed, delta was ' + delta);
   });
 
   it('should throw an error for a missing mapfile', function() {
@@ -238,8 +252,10 @@ describe('mapserver', function() {
     var epsg3857 = new mapserver.Projection("+init=epsg:3857");
     var point = new mapserver.Point(10.5, 20);
     point.project(map.projection, epsg3857);
-    assert.ok(Math.abs(point.x - 1168854.6533293733).toFixed(6) == 0, 'reprojected x was not correct');
-    assert.ok(Math.abs(point.y - 2273030.926987688).toFixed(6) == 0, 'reprojected y was not correct');
+    var delta = Math.abs(point.x - 1168854.6533293733).toFixed(6);
+    assert.equal(delta, 0, 'reprojected x was not correct, delta was ' + delta);
+    delta = Math.abs(point.y - 2273030.926987688).toFixed(6);
+    assert.equal(delta, 0, 'reprojected y was not correct, delta was ' + delta);
   });
 
   it('should set the map projection', function() {
@@ -271,10 +287,14 @@ describe('mapserver', function() {
 
     map.extent.project(map.projection, new mapserver.Projection("+init=epsg:3857"));
 
-    assert.ok(Math.abs(map.extent.minx - -10018754.171394622).toFixed(6) == 0, 'reprojecting map extent minx failed');
-    assert.ok(Math.abs(map.extent.miny - -5621521.486192066).toFixed(6) == 0, 'reprojecting map extent miny failed');
-    assert.ok(Math.abs(map.extent.maxx -  10018754.171394622).toFixed(6) == 0, 'reprojecting map extent maxx failed');
-    assert.ok(Math.abs(map.extent.maxy -  5621521.486192066).toFixed(6) == 0, 'reprojecting map extent maxy failed');
+    var delta = Math.abs(map.extent.minx + 10018754.171394622).toFixed(6);
+    assert.equal(delta, 0, 'reprojecting map extent minx failed, delta was ' + delta);
+    delta = Math.abs(map.extent.miny + 5621521.486192066).toFixed(6);
+    assert.equal(delta, 0, 'reprojecting map extent miny failed, delta was ' + delta);
+    delta = Math.abs(map.extent.maxx -  10018754.171394622).toFixed(6);
+    assert.equal(delta, 0, 'reprojecting map extent maxx failed, delta was ' + delta);
+    delta = Math.abs(map.extent.maxy -  5621521.486192066).toFixed(6);
+    assert.equal(delta, 0, 'reprojecting map extent maxy failed, delta was ' + delta);
 
   });
 
@@ -303,8 +323,10 @@ describe('mapserver', function() {
     }, Error, 'loading a valid map file should not throw an error.');
     // test effect of recompute on cellsize and scaledenom
     map.recompute();
-    assert.ok(Math.abs(map.cellsize - 0.6020066889632107).toFixed(6) == 0, 'recomputing map cellsize failed, got ' + map.cellsize);
-    assert.ok(Math.abs(map.scaledenom - 189621444.28093645).toFixed(6) == 0, 'recomputing map scaledenom failed, got '+ map.scaledemon);
+    var delta = Math.abs(map.cellsize - 0.6020066889632107).toFixed(6);
+    assert.equal(delta, 0, 'recomputing map cellsize failed, got ' + map.cellsize);
+    delta = Math.abs(map.scaledenom - 189621444.28093645).toFixed(6);
+    assert.ok(delta, 0, 'recomputing map scaledenom failed, got '+ map.scaledemon);
   });
 
   it('should have access to map layers', function() {
@@ -343,7 +365,6 @@ describe('mapserver', function() {
   });
 
   it('should create a new layer', function() {
-    var layer;
     assert.doesNotThrow(function() {
       map = new mapserver.Map(mapfile);
     }, Error, 'loading a valid map file should not throw an error.');
@@ -437,13 +458,13 @@ describe('mapserver', function() {
     layer.minscaledenom = -1;
     assert.equal(layer.minscaledenom, -1, 'setting minscaledenom to -1 should work');
 
-    layer.maxscaledenom = 10.1
+    layer.maxscaledenom = 10.1;
     assert.equal(layer.maxscaledenom, 10.1, 'setting minscaledenom to float should work');
 
-    layer.maxscaledenom = 10
+    layer.maxscaledenom = 10;
     assert.equal(layer.maxscaledenom, 10, 'setting minscaledenom to int should work');
 
-    layer.maxscaledenom = -1
+    layer.maxscaledenom = -1;
     assert.equal(layer.maxscaledenom, -1, 'setting minscaledenom to -1 should work');
 
   });
@@ -459,7 +480,7 @@ describe('mapserver', function() {
 
     var labels = map.getLabelCache();
     assert.equal(labels[0].labels.length, 0, 'Is not empty before drawing.');
-    map.drawMap(function(drawError, buffer) {
+    map.drawMap(function(drawError) {
       if (drawError) {
         util.inspect(drawError, false, 0, true);
         assert.ok(false, 'Error drawing map.');
@@ -472,19 +493,20 @@ describe('mapserver', function() {
   });
 
   it('should draw a map', function(done) {
+    var v = mapserver.getVersionInt();
     assert.doesNotThrow(function() {
       map = new mapserver.Map(mapfile);
     }, Error, 'loading a valid map file should not throw an error.');
-    fs.readFile(path.join(__dirname, 'data', 'test_buffer.png'), function(err, data) {
-      if (err) {
-        throw new Error('failed to load test image');
-      }
+    fs.readFile(path.join(__dirname, 'data', 'test_buffer_'+v+'.png'), function(err, data) {
       map.drawMap(function(drawError, buffer) {
         if (drawError) {
           util.inspect(drawError, false, 0, true);
           assert.ok(false, 'Error drawing map.');
         } else {
-          fs.writeFileSync(path.join(__dirname, 'data', 'test_out.png'), buffer);
+          fs.writeFileSync(path.join(__dirname, 'data', 'test_out_'+v+'.png'), buffer);
+          if (err) {
+            throw new Error('failed to load test image');
+          }
           assert.equal(data.toString('hex'), buffer.toString('hex'), 'map draw differed from sample image');
           done();
         }
