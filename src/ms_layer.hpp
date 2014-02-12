@@ -18,12 +18,13 @@ public:
   static void Initialize(Handle<Object> target);
   static Handle<Value> New(const Arguments &args);
   static Handle<Value> New(layerObj *layer);
-  
+
   static Handle<Value> PropertyGetter (Local<String> property, const AccessorInfo& info);
   static void PropertySetter (Local<String> property, Local<Value> value, const AccessorInfo& info);
   static Handle<Value> GetGridIntersectionCoordinates (const Arguments& args);
   static Handle<Value> UpdateFromString (const Arguments& args);
-  
+  static Handle<Value> ToString (const Arguments& args);
+
   MSLayer();
   MSLayer(layerObj *layer);
   inline layerObj *get() { return this_; }
@@ -31,6 +32,6 @@ public:
 
 private:
   ~MSLayer();
-  
+
 };
 #endif
