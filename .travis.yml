@@ -4,6 +4,7 @@ node_js:
   - "0.10"
 env:
   - MAPSERVER_COMMIT=master MAPSERVER_FORK=mapserver # mapserver master
+  - MAPSERVER_COMMIT=rel-6-4-1 MAPSERVER_FORK=mapserver # mapserver master
 before_install:
   - mkdir tmp
   - cd tmp
