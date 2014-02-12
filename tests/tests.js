@@ -399,10 +399,19 @@ describe('mapserver', function() {
 
     assert.equal(layer.connectiontype, mapserver.MS_SHAPEFILE, 'layer should have connectiontype MS_SHAPEFILE');
 
-
     map.insertLayer(layer);
     assert.equal(map.layers['bar'].name, 'bar', 'the new layer should have a name');
-    assert.equal(map.layers[0].name, 'bar', 'the new layer should be at index 0');
+    assert.equal(map.layers[map.layers.length-1].name, 'bar', 'the new layer should be at the end');
+
+    layer = new mapserver.Layer('first');
+
+    map.insertLayer(layer, 0);
+    assert.equal(map.layers[0].name, 'first', 'the new layer should be at index 0');
+
+    layer = new mapserver.Layer('middle');
+
+    map.insertLayer(layer, 2);
+    assert.equal(map.layers[2].name, 'middle', 'the new layer should be at index 2');
   });
 
   it('should get grid intersection coordinates', function() {
@@ -494,6 +503,28 @@ describe('mapserver', function() {
 
   });
 
+  it('should convert a layer to a string', function() {
+    assert.doesNotThrow(function() {
+     layer = new mapserver.Layer('foo');
+    }, Error, 'constructing a layer should not throw an error.');
+
+    var defaultLayerText = 'LAYER\n  NAME "foo"\n  STATUS OFF\n  TILEITEM "location"\n  UNITS METERS\nEND # LAYER\n\n';
+
+    assert.equal(layer.toString(), defaultLayerText, 'unexpected default layer text ' + layer.toString());
+  });
+
+  it('should be able to clone a layer using toString/updateFromString', function() {
+    assert.doesNotThrow(function() {
+      map = new mapserver.Map(mapfile);
+    }, Error, 'loading a valid map file should not throw an error.');
+
+    var grid = map.layers.grid.toString();
+
+    var layer = new mapserver.Layer('grid2');
+    layer.updateFromString(grid);
+    assert.equal(map.layers.grid.toString(), layer.toString(), 'updateFromString produced different results');
+  });
+
   it('should get the label cache', function(done) {
     assert.doesNotThrow(function() {
       map = new mapserver.Map(mapfile);
@@ -511,7 +542,7 @@ describe('mapserver', function() {
         assert.ok(false, 'Error drawing map.');
       } else {
         labels = map.getLabelCache();
-        assert.equal(labels[0].labels.length, 1248, 'Does not have the right number of labels.');
+        assert.equal(labels[0].labels.length, 1248, 'Does not have the right number of labels, got ' + labels[0].labels.length);
         done();
       }
     });
