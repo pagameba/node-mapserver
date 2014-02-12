@@ -135,7 +135,7 @@ Handle<Value> MSMap::InsertLayer (const Arguments& args) {
   MSLayer *layer;
   Local<Object> obj;
   int result;
-  int position = 0;
+  int position = -1;
 
   if (args.Length() < 1) {
     THROW_ERROR(Error, "insertLayer requires at least one argument");
@@ -159,14 +159,12 @@ Handle<Value> MSMap::InsertLayer (const Arguments& args) {
     } else {
       position = args[1]->ToInteger()->Value();
       if (position >= map->this_->numlayers) {
-        position = map->this_->numlayers-1;
-      } else if (position < 0) {
-        position = 0;
+        position = -1;
       }
     }
   }
-
   result = msInsertLayer(map->this_, layer->this_, position);
+
   return scope.Close(Number::New(result));
 }
 
