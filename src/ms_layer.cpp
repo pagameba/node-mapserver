@@ -20,6 +20,7 @@ void MSLayer::Initialize(Handle<Object> target) {
   RW_PROPERTY(constructor, "connection", PropertyGetter, PropertySetter);
   RW_PROPERTY(constructor, "minscaledenom", PropertyGetter, PropertySetter);
   RW_PROPERTY(constructor, "maxscaledenom", PropertyGetter, PropertySetter);
+  RW_PROPERTY(constructor, "projection", PropertyGetter, PropertySetter);
 
   RO_PROPERTY(constructor, "connectiontype", PropertyGetter);
   RO_PROPERTY(constructor, "metadata", PropertyGetter);
@@ -82,6 +83,9 @@ Handle<Value> MSLayer::PropertyGetter (Local<String> property, const AccessorInf
     RETURN_NUMBER(layer->this_->minscaledenom);
   } else if (strcmp(*n, "maxscaledenom") == 0) {
     RETURN_NUMBER(layer->this_->maxscaledenom);
+  } else if (strcmp(*n, "projection") == 0) {
+    HandleScope scope;
+    return scope.Close(MSProjection::New(&layer->this_->projection));
   } else if (strcmp(*n, "connection") == 0) {
     if (layer->this_->connection == NULL) {
       return Undefined();
@@ -106,6 +110,9 @@ void MSLayer::PropertySetter (Local<String> property, Local<Value> value, const 
     layer->this_->minscaledenom = value->NumberValue();
   } else if (strcmp(*n, "maxscaledenom") == 0) {
     layer->this_->maxscaledenom = value->NumberValue();
+  } else if (strcmp(*n, "projection") == 0) {
+    v8::String::AsciiValue _v_(value->ToString());
+    msLoadProjectionString(&(layer->this_->projection), *_v_);
   } else if (strcmp(*n, "type") == 0) {
     int32_t type = value->Int32Value();
     if (type >= MS_LAYER_ANNOTATION && type <= MS_LAYER_TILEINDEX) {

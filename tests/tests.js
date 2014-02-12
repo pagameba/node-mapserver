@@ -266,6 +266,22 @@ describe('mapserver', function() {
     assert.equal(map.projection.projString, "+init=epsg:3857", 'setting map projection string failed. Got ' + map.projection.projString);
   });
 
+  it('should get a layer projection', function() {
+    assert.doesNotThrow(function() {
+      map = new mapserver.Map(mapfile);
+    }, Error, 'loading a valid map file should not throw an error.');
+
+    assert.equal(map.layers.prov_bound.projection.projString, "+init=epsg:4326", 'getting layer projection string failed. Got ' + map.layers.prov_bound.projection.projString);
+  });
+
+  it('should set a layer projection', function() {
+    assert.doesNotThrow(function() {
+      map = new mapserver.Map(mapfile);
+    }, Error, 'loading a valid map file should not throw an error.');
+    map.layers.prov_bound.projection = "+init=epsg:3857";
+    assert.equal(map.layers.prov_bound.projection.projString, "+init=epsg:3857", 'setting map projection string failed. Got ' + map.projection.projString);
+  });
+
   it('should set the map symbol set', function() {
     assert.doesNotThrow(function() {
       map = new mapserver.Map(mapfile);
