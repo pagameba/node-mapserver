@@ -22,6 +22,7 @@ void MSLayer::Initialize(Handle<Object> target) {
   RW_PROPERTY(constructor, "minscaledenom", PropertyGetter, PropertySetter);
   RW_PROPERTY(constructor, "maxscaledenom", PropertyGetter, PropertySetter);
   RW_PROPERTY(constructor, "projection", PropertyGetter, PropertySetter);
+  RW_PROPERTY(constructor, "units", PropertyGetter, PropertySetter);
 
   RO_PROPERTY(constructor, "connectiontype", PropertyGetter);
   RO_PROPERTY(constructor, "metadata", PropertyGetter);
@@ -84,6 +85,8 @@ Handle<Value> MSLayer::PropertyGetter (Local<String> property, const AccessorInf
     RETURN_NUMBER(layer->this_->minscaledenom);
   } else if (strcmp(*n, "maxscaledenom") == 0) {
     RETURN_NUMBER(layer->this_->maxscaledenom);
+  } else if (strcmp(*n, "units") == 0) {
+    RETURN_NUMBER(layer->this_->units);
   } else if (strcmp(*n, "projection") == 0) {
     HandleScope scope;
     return scope.Close(MSProjection::New(&layer->this_->projection));
@@ -111,6 +114,12 @@ void MSLayer::PropertySetter (Local<String> property, Local<Value> value, const 
     layer->this_->minscaledenom = value->NumberValue();
   } else if (strcmp(*n, "maxscaledenom") == 0) {
     layer->this_->maxscaledenom = value->NumberValue();
+  } else if (strcmp(*n, "units") == 0) {
+    int32_t units = value->Int32Value();
+    if (units >= MS_INCHES && units <= MS_NAUTICALMILES) {
+      layer->this_->units = (MS_UNITS) units;
+    }
+    layer->this_->units = value->NumberValue();
   } else if (strcmp(*n, "projection") == 0) {
     v8::String::AsciiValue _v_(value->ToString());
     msLoadProjectionString(&(layer->this_->projection), *_v_);

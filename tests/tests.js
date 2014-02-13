@@ -256,7 +256,15 @@ describe('mapserver', function() {
     assert.equal(delta, 0, 'reprojected x was not correct, delta was ' + delta);
     delta = Math.abs(point.y - 2273030.926987688).toFixed(6);
     assert.equal(delta, 0, 'reprojected y was not correct, delta was ' + delta);
+
   });
+
+  function testProjectionScope(map) {
+    var obj = {
+      proj: map.projection
+    };
+    delete obj.proj;
+  }
 
   it('should set the map projection', function() {
     assert.doesNotThrow(function() {
@@ -482,6 +490,7 @@ describe('mapserver', function() {
 
     assert.equal(layer.minscaledenom, -1, 'default minscaledenom value should be -1');
     assert.equal(layer.maxscaledenom, -1, 'default maxscaledenom value should be -1');
+    assert.equal(layer.units, mapserver.MS_METERS, "default units for layer should be MS_METERS");
 
     layer.minscaledenom = 10.1;
     assert.equal(layer.minscaledenom, 10.1, 'setting minscaledenom to float should work');
@@ -500,6 +509,9 @@ describe('mapserver', function() {
 
     layer.maxscaledenom = -1;
     assert.equal(layer.maxscaledenom, -1, 'setting minscaledenom to -1 should work');
+
+    layer.units = mapserver.MS_DD;
+    assert.equal(layer.units, mapserver.MS_DD, "setting layer units should work");
 
   });
 
