@@ -16,11 +16,18 @@ void MSProjection::Initialize(Handle<Object> target) {
   target->Set(String::NewSymbol("Projection"), constructor->GetFunction());
 }
 
-MSProjection::MSProjection(projectionObj *proj) : ObjectWrap(), this_(proj) {}
+MSProjection::MSProjection(projectionObj *proj) : ObjectWrap(), this_(proj) {
+  this->owner = false;
+}
 
-MSProjection::MSProjection() : ObjectWrap(), this_(0) {}
+MSProjection::MSProjection() : ObjectWrap(), this_(0) { }
 
-MSProjection::~MSProjection() { }
+MSProjection::~MSProjection() {
+  if (this_ && this->owner) {
+    msFreeProjection(this_);
+    free(this_); // should we do this?
+  }
+}
 
 Handle<Value> MSProjection::New(const Arguments &args) {
   HandleScope scope;
@@ -58,6 +65,7 @@ Handle<Value> MSProjection::New(const Arguments &args) {
   }
 
   obj = new MSProjection(proj);
+  obj->owner = true;
   obj->Wrap(args.This());
   return args.This();
 }
