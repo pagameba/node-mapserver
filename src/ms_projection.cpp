@@ -5,11 +5,11 @@ Persistent<FunctionTemplate> MSProjection::constructor;
 
 void MSProjection::Initialize(Handle<Object> target) {
   HandleScope scope;
-  
+
   constructor = Persistent<FunctionTemplate>::New(FunctionTemplate::New(MSProjection::New));
   constructor->InstanceTemplate()->SetInternalFieldCount(1);
   constructor->SetClassName(String::NewSymbol("Projection"));
-  
+
   RO_PROPERTY(constructor, "units", Units);
   RW_PROPERTY(constructor, "projString", ProjString, SetProjString);
 
@@ -20,16 +20,12 @@ MSProjection::MSProjection(projectionObj *proj) : ObjectWrap(), this_(proj) {}
 
 MSProjection::MSProjection() : ObjectWrap(), this_(0) {}
 
-MSProjection::~MSProjection() { 
-  if (this_) {
-    msFreeProjection(this_);
-  }
-}
+MSProjection::~MSProjection() { }
 
 Handle<Value> MSProjection::New(const Arguments &args) {
   HandleScope scope;
   MSProjection *obj;
-  
+
   if (!args.IsConstructCall()) {
     return ThrowException(String::New("Cannot call constructor as function, you need to use 'new' keyword"));
   }
@@ -41,7 +37,7 @@ Handle<Value> MSProjection::New(const Arguments &args) {
     obj->Wrap(args.This());
     return args.This();
   }
-  
+
   REQ_STR_ARG(0, proj_string);
 
   int status;
@@ -51,7 +47,7 @@ Handle<Value> MSProjection::New(const Arguments &args) {
   if(!proj) {
     return args.This();
   }
-   
+
   msInitProjection(proj);
 
   status = msLoadProjectionString(proj, *proj_string);
@@ -60,7 +56,7 @@ Handle<Value> MSProjection::New(const Arguments &args) {
     free(proj);
     return args.This();
   }
-  
+
   obj = new MSProjection(proj);
   obj->Wrap(args.This());
   return args.This();
