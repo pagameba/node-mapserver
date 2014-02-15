@@ -19,11 +19,17 @@ void MSPoint::Initialize(Handle<Object> target) {
   target->Set(String::NewSymbol("Point"), constructor->GetFunction());
 }
 
-MSPoint::MSPoint(pointObj *point) : ObjectWrap(), this_(point) {}
+MSPoint::MSPoint(pointObj *point) : ObjectWrap(), this_(point) {
+  this->owner = false;
+}
 
 MSPoint::MSPoint() : ObjectWrap(), this_(0) {}
 
-MSPoint::~MSPoint() { }
+MSPoint::~MSPoint() {
+  if (this_ && this->owner) {
+    free(this_);
+  }
+}
 
 Handle<Value> MSPoint::New(const Arguments &args) {
   HandleScope scope;
@@ -61,6 +67,7 @@ Handle<Value> MSPoint::New(const Arguments &args) {
   }
 
   obj = new MSPoint(point);
+  obj->owner = true;
   obj->Wrap(args.This());
   return args.This();
 }

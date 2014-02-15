@@ -5,32 +5,38 @@ Persistent<FunctionTemplate> MSRect::constructor;
 
 void MSRect::Initialize(Handle<Object> target) {
   HandleScope scope;
-  
+
   constructor = Persistent<FunctionTemplate>::New(FunctionTemplate::New(MSRect::New));
   constructor->InstanceTemplate()->SetInternalFieldCount(1);
   constructor->SetClassName(String::NewSymbol("Rect"));
-  
+
   RW_PROPERTY(constructor, "minx", PropertyGetter, PropertySetter);
   RW_PROPERTY(constructor, "miny", PropertyGetter, PropertySetter);
   RW_PROPERTY(constructor, "maxx", PropertyGetter, PropertySetter);
   RW_PROPERTY(constructor, "maxy", PropertyGetter, PropertySetter);
-  
+
   NODE_SET_PROTOTYPE_METHOD(constructor, "project", Project);
-  
+
   target->Set(String::NewSymbol("Rect"), constructor->GetFunction());
 }
 
-MSRect::MSRect(rectObj *rect) : ObjectWrap(), this_(rect) {}
+MSRect::MSRect(rectObj *rect) : ObjectWrap(), this_(rect) {
+  this->owner = false;
+}
 
 MSRect::MSRect() : ObjectWrap(), this_(0) {}
 
-MSRect::~MSRect() { }
+MSRect::~MSRect() {
+  if (this_ && this->owner) {
+    free(this_);
+  }
+}
 
 Handle<Value> MSRect::New(const Arguments &args) {
   HandleScope scope;
   MSRect *obj;
   double t;
-  
+
   if (!args.IsConstructCall()) {
     return ThrowException(String::New("Cannot call constructor as function, you need to use 'new' keyword"));
   }
@@ -42,12 +48,12 @@ Handle<Value> MSRect::New(const Arguments &args) {
     obj->Wrap(args.This());
     return args.This();
   }
-  
+
   rectObj *rect = (rectObj *)calloc(1, sizeof(rectObj));
   if(!rect) {
     return args.This();
   }
-  
+
   if (args.Length() == 0) {
     rect->minx = -1;
     rect->miny = -1;
@@ -66,9 +72,9 @@ Handle<Value> MSRect::New(const Arguments &args) {
     }
 
     MSRect *inRect = ObjectWrap::Unwrap<MSRect>(argObj);
-    
+
     memcpy(rect, inRect->this_, sizeof(rectObj));
-    
+
   } else if (args.Length() == 4) {
     REQ_DOUBLE_ARG(0, minx);
     REQ_DOUBLE_ARG(1, miny);
@@ -92,8 +98,9 @@ Handle<Value> MSRect::New(const Arguments &args) {
   } else {
     THROW_ERROR(Error, "Rect objects take 0, 1 or 4 arguments.");
   }
-  
+
   obj = new MSRect(rect);
+  obj->owner = true;
   obj->Wrap(args.This());
   return args.This();
 }
@@ -121,7 +128,7 @@ void MSRect::PropertySetter (Local<String> property, Local<Value> value, const A
   MSRect *rect = ObjectWrap::Unwrap<MSRect>(info.Holder());
   v8::String::AsciiValue n(property);
   double t;
-  
+
   if (strcmp(*n, "minx") == 0) {
     rect->this_->minx = value->NumberValue();
   } else if (strcmp(*n, "miny") == 0) {
@@ -138,11 +145,11 @@ Handle<Value> MSRect::Project(const Arguments &args) {
   Local<Object> obj;
   MSProjection *projIn;
   MSProjection *projOut;
-  
+
   if (args.Length() != 2) {
     THROW_ERROR(Error, "projecting a point requires two projection arguments");
   }
-  
+
   if (!args[0]->IsObject()) {
     THROW_ERROR(TypeError, "first argument to project must be Projection object");
   }
@@ -154,7 +161,7 @@ Handle<Value> MSRect::Project(const Arguments &args) {
   }
 
   projIn = ObjectWrap::Unwrap<MSProjection>(obj);
-  
+
   if (!args[1]->IsObject()) {
     THROW_ERROR(TypeError, "second argument to project must be Projection object");
   }
@@ -166,8 +173,8 @@ Handle<Value> MSRect::Project(const Arguments &args) {
   }
 
   projOut = ObjectWrap::Unwrap<MSProjection>(obj);
-  
+
   msProjectRect(projIn->this_, projOut->this_, rect->this_);
-    
+
   return Undefined();
 }
