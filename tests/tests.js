@@ -368,7 +368,9 @@ describe('mapserver', function() {
     map.layers[1].name = 'test';
     assert.equal(map.layers[1].name, 'test', 'layer name should have changed.');
 
-    assert.equal(map.layers.prov_bound.connectiontype, mapserver.MS_SHAPEFILE, 'layer should have connectiontype MS_SHAPEFILE');
+    console.log(map.layers.prov_bound.name);
+
+    assert.equal(map.layers.prov_bound.connectiontype, mapserver.MS_SHAPEFILE, 'layer should have connectiontype MS_SHAPEFILE, got ' + map.layers.prov_bound.connectiontype);
 
     // layers should be accessible by name too
     assert.equal(map.layers['test'].name, 'test', 'layer should be accessible by name');
@@ -490,7 +492,7 @@ describe('mapserver', function() {
 
     assert.equal(layer.minscaledenom, -1, 'default minscaledenom value should be -1');
     assert.equal(layer.maxscaledenom, -1, 'default maxscaledenom value should be -1');
-    assert.equal(layer.units, mapserver.MS_METERS, "default units for layer should be MS_METERS");
+    assert.equal(layer.units, mapserver.MS_METERS, "default units for layer should be " + mapserver.MS_METERS + ", got " + layer.units);
 
     layer.minscaledenom = 10.1;
     assert.equal(layer.minscaledenom, 10.1, 'setting minscaledenom to float should work');
@@ -515,27 +517,29 @@ describe('mapserver', function() {
 
   });
 
-  it('should convert a layer to a string', function() {
-    assert.doesNotThrow(function() {
-     layer = new mapserver.Layer('foo');
-    }, Error, 'constructing a layer should not throw an error.');
+  if (mapserver.getVersionInt() >= 604000) {
+    it('should convert a layer to a string', function() {
+      assert.doesNotThrow(function() {
+       layer = new mapserver.Layer('foo');
+      }, Error, 'constructing a layer should not throw an error.');
 
-    var defaultLayerText = 'LAYER\n  NAME "foo"\n  STATUS OFF\n  TILEITEM "location"\n  UNITS METERS\nEND # LAYER\n\n';
+      var defaultLayerText = 'LAYER\n  NAME "foo"\n  STATUS OFF\n  TILEITEM "location"\n  UNITS METERS\nEND # LAYER\n\n';
 
-    assert.equal(layer.toString(), defaultLayerText, 'unexpected default layer text ' + layer.toString());
-  });
+      assert.equal(layer.toString(), defaultLayerText, 'unexpected default layer text ' + layer.toString());
+    });
 
-  it('should be able to clone a layer using toString/updateFromString', function() {
-    assert.doesNotThrow(function() {
-      map = new mapserver.Map(mapfile);
-    }, Error, 'loading a valid map file should not throw an error.');
+    it('should be able to clone a layer using toString/updateFromString', function() {
+      assert.doesNotThrow(function() {
+        map = new mapserver.Map(mapfile);
+      }, Error, 'loading a valid map file should not throw an error.');
 
-    var grid = map.layers.grid.toString();
+      var grid = map.layers.grid.toString();
 
-    var layer = new mapserver.Layer('grid2');
-    layer.updateFromString(grid);
-    assert.equal(map.layers.grid.toString(), layer.toString(), 'updateFromString produced different results');
-  });
+      var layer = new mapserver.Layer('grid2');
+      layer.updateFromString(grid);
+      assert.equal(map.layers.grid.toString(), layer.toString(), 'updateFromString produced different results');
+    });
+  }
 
   it('should get the label cache', function(done) {
     assert.doesNotThrow(function() {

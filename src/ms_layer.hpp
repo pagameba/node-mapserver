@@ -23,7 +23,9 @@ public:
   static void PropertySetter (Local<String> property, Local<Value> value, const AccessorInfo& info);
   static Handle<Value> GetGridIntersectionCoordinates (const Arguments& args);
   static Handle<Value> UpdateFromString (const Arguments& args);
+#if MS_VERSION_NUM >= 60400
   static Handle<Value> ToString (const Arguments& args);
+#endif
 
   MSLayer();
   MSLayer(layerObj *layer);

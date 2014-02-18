@@ -13,7 +13,9 @@ void MSLayer::Initialize(Handle<Object> target) {
 
   NODE_SET_PROTOTYPE_METHOD(constructor, "getGridIntersectionCoordinates", GetGridIntersectionCoordinates);
   NODE_SET_PROTOTYPE_METHOD(constructor, "updateFromString", UpdateFromString);
+#if MS_VERSION_NUM >= 60400
   NODE_SET_PROTOTYPE_METHOD(constructor, "toString", ToString);
+#endif
 
   RW_PROPERTY(constructor, "name", PropertyGetter, PropertySetter);
   RW_PROPERTY(constructor, "status", PropertyGetter, PropertySetter);
@@ -202,9 +204,10 @@ Handle<Value> MSLayer::UpdateFromString (const Arguments& args) {
   return scope.Close(Number::New(result));
 }
 
+#if MS_VERSION_NUM >= 60400
 Handle<Value> MSLayer::ToString (const Arguments& args) {
   MSLayer *layer = ObjectWrap::Unwrap<MSLayer>(args.This());
   char *text = msWriteLayerToString(layer->this_);
   RETURN_STRING(text);
 }
-
+#endif

@@ -299,7 +299,13 @@ Handle<Value> MSMap::PropertyGetter (Local<String> property, const AccessorInfo&
     return scope.Close(MSLayers::New(map->this_));
   } else if (strcmp(*n, "metadata") == 0) {
     HandleScope scope;
+#if MS_VERSION_NUM < 60400
+    Handle<ObjectTemplate> objTempl = ObjectTemplate::New();
+    Local<Object> result = objTempl->NewInstance();
+    return scope.Close(result);
+#else
     return scope.Close(MSHashTable::New(&(map->this_->web.metadata)));
+#endif
   } else if (strcmp(*n, "extent") == 0) {
     HandleScope scope;
     return scope.Close(MSRect::New(&map->this_->extent));
