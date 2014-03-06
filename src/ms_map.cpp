@@ -228,11 +228,11 @@ Handle<Value> MSMap::GetLabelCache(const Arguments &args) {
       Local<Object> label = objTempl->NewInstance();
       label->Set(String::New("status"), Number::New(cacheslot->labels[j].status));
       //members with MS_DELETE might be drawn, check the bbox for real status
-      if (cacheslot->labels[j].status == MS_ON || cacheslot->labels[j].bbox.maxx > 0) {
-        label->Set(String::New("drawn"), Boolean::New(true));
-      } else {
-        label->Set(String::New("drawn"), Boolean::New(false));
-      }
+#if MS_VERSION_NUM < 60500
+      label->Set(String::New("drawn"), Boolean::New(cacheslot->labels[j].status == MS_ON));
+#else
+      label->Set(String::New("drawn"), Boolean::New(cacheslot->labels[j].status == MS_ON || cacheslot->labels[j].bbox.maxx > 0));
+#endif
       label->Set(String::New("x"), Number::New(cacheslot->labels[j].point.x));
       label->Set(String::New("y"), Number::New(cacheslot->labels[j].point.y));
 #if MS_VERSION_NUM < 60500
