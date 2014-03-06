@@ -216,8 +216,6 @@ Handle<Value> MSMap::GetLabelCache(const Arguments &args) {
 
   labelCacheObj *labelcache = &(map->this_->labelcache);
   labelCacheSlotObj *cacheslot;
-  cacheslot = &(labelcache->slots[9]);
-  int nLabels = cacheslot->numlabels;
 
   Handle<Array> result = Array::New(MS_MAX_LABEL_PRIORITY);
   Handle<ObjectTemplate> objTempl = ObjectTemplate::New();
@@ -228,8 +226,13 @@ Handle<Value> MSMap::GetLabelCache(const Arguments &args) {
     for(size_t j = 0; j < cacheslot->numlabels; ++j)
     {
       Local<Object> label = objTempl->NewInstance();
-      //members are marked with MS_ON (1) for drawn, MS_DELETE (4) for not drawn
       label->Set(String::New("status"), Number::New(cacheslot->labels[j].status));
+      //members with MS_DELETE might be drawn, check the bbox for real status
+      if (cacheslot->labels[j].status == MS_ON || cacheslot->labels[j].bbox.maxx > 0) {
+        label->Set(String::New("drawn"), Boolean::New(true));
+      } else {
+        label->Set(String::New("drawn"), Boolean::New(false));
+      }
       label->Set(String::New("x"), Number::New(cacheslot->labels[j].point.x));
       label->Set(String::New("y"), Number::New(cacheslot->labels[j].point.y));
 #if MS_VERSION_NUM < 60500
