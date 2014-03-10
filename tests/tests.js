@@ -551,14 +551,14 @@ describe('mapserver', function() {
     map.height = 600;
 
     var labels = map.getLabelCache();
-    assert.equal(labels[0].labels.length, 0, 'Is not empty before drawing.');
+    assert.equal(labels.length, 0, 'Is not empty before drawing.');
     map.drawMap(function(drawError) {
       if (drawError) {
         util.inspect(drawError, false, 0, true);
         assert.ok(false, 'Error drawing map.');
       } else {
         labels = map.getLabelCache();
-        assert.equal(labels[0].labels.length, 1248, 'Does not have the right number of labels, got ' + labels[0].labels.length);
+        assert.equal(labels.length, 119, 'Does not have the right number of labels, got ' + labels.length);
         done();
       }
     });
