@@ -215,49 +215,55 @@ Handle<Value> MSMap::GetLabelCache(const Arguments &args) {
   MSMap *map = ObjectWrap::Unwrap<MSMap>(args.This());
 
   labelCacheObj *labelcache = &(map->this_->labelcache);
-  labelCacheSlotObj *cacheslot;
 
-  Handle<Array> result = Array::New(MS_MAX_LABEL_PRIORITY);
   Handle<ObjectTemplate> objTempl = ObjectTemplate::New();
-  for(size_t i = 0; i < MS_MAX_LABEL_PRIORITY; ++i)
-  {
+#if MS_VERSION_NUM < 60500
+  labelCacheSlotObj *cacheslot;
+  int numLabels = 0;
+  int k = 0;
+  size_t i = 0;
+  size_t j = 0;
+  for(i = 0; i < MS_MAX_LABEL_PRIORITY; ++i) {
+    cacheslot = &(labelcache->slots[i]);
+    for(size_t j = 0; j < cacheslot->numlabels; ++j) {
+      if (cacheslot->labels[j].status == MS_ON) {
+        numLabels ++;
+      }
+    }
+  }
+  Local<Array> labels = Array::New(numLabels);
+  for(i = 0; i < MS_MAX_LABEL_PRIORITY; ++i) {
     cacheslot = &(labelcache->slots[i]);
     Local<Array> labels = Array::New(cacheslot->numlabels);
-    for(size_t j = 0; j < cacheslot->numlabels; ++j)
-    {
+    for(j = 0; j < cacheslot->numlabels; ++j) {
       Local<Object> label = objTempl->NewInstance();
-      label->Set(String::New("status"), Number::New(cacheslot->labels[j].status));
-      //members with MS_DELETE might be drawn, check the bbox for real status
-#if MS_VERSION_NUM < 60500
-      label->Set(String::New("drawn"), Boolean::New(cacheslot->labels[j].status == MS_ON));
-#else
-      label->Set(String::New("drawn"), Boolean::New(cacheslot->labels[j].status == MS_ON || cacheslot->labels[j].bbox.maxx > 0));
-#endif
+      label->Set(String::New("status"), Number::New(MS_ON));
       label->Set(String::New("x"), Number::New(cacheslot->labels[j].point.x));
       label->Set(String::New("y"), Number::New(cacheslot->labels[j].point.y));
-#if MS_VERSION_NUM < 60500
       label->Set(String::New("text"), String::New(cacheslot->labels[j].labels[0].annotext));
-#else
-      label->Set(String::New("text"), String::New(cacheslot->labels[j].textsymbols[0]->annotext));
-#endif
       label->Set(String::New("layerindex"), Number::New(cacheslot->labels[j].layerindex));
       label->Set(String::New("classindex"), Number::New(cacheslot->labels[j].classindex));
-      labels->Set(j, label);
+      labels->Set(k++, label);
     }
-    Local<Object> val = objTempl->NewInstance();
-    val->Set(String::New("labels"), labels);
-    result->Set(i, val);
   }
-  // return object like this:
-  // array of labelCacheSlotObj
-  // [
-  // {
-  //   labels:array,
-  //   markers:array
-  // }
-  // ]
+#else
+  Local<Array> labels = Array::New(labelcache->num_rendered_members);
+  int p = 0;
+  for (p=0; p<labelcache->num_rendered_members; p++) {
+    labelCacheMemberObj* curCachePtr = labelcache->rendered_text_symbols[p];
+    Local<Object> label = objTempl->NewInstance();
+    label->Set(String::New("status"), Number::New(MS_ON));
+    label->Set(String::New("x"), Number::New(curCachePtr->point.x));
+    label->Set(String::New("y"), Number::New(curCachePtr->point.y));
+    label->Set(String::New("text"), String::New(curCachePtr->textsymbols[0]->annotext));
+    label->Set(String::New("layerindex"), Number::New(curCachePtr->layerindex));
+    label->Set(String::New("classindex"), Number::New(curCachePtr->classindex));
+    labels->Set(p, label);
+  }
+#endif
 
-  return scope.Close(result);
+  // return an array of rendered labels
+  return scope.Close(labels);
 }
 
 Handle<Value> MSMap::PropertyGetter (Local<String> property, const AccessorInfo& info) {
