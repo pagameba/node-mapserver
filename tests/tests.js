@@ -34,7 +34,7 @@ var map;
 var layer;
 var err;
 
-console.log('running tests for mapserver ', mapserver.getVersion());
+console.log('running tests for mapserver %s : %s', mapserver.getVersionInt(), mapserver.getVersion());
 
 beforeEach(function() {
   mapserver.resetErrorList();
@@ -455,7 +455,7 @@ describe('mapserver', function() {
     assert.equal(map.outputformat.mimetype, 'image/png', 'output format mimetype is incorrect');
   });
 
-  if (mapserver.getVersionInt() >= 604000) {
+  if (mapserver.getVersionInt() >= 60400) {
     it('should get layer and map metadata', function() {
       assert.doesNotThrow(function() {
         map = new mapserver.Map(mapfile);
@@ -517,7 +517,7 @@ describe('mapserver', function() {
 
   });
 
-  if (mapserver.getVersionInt() >= 604000) {
+  if (mapserver.getVersionInt() >= 60400) {
     it('should convert a layer to a string', function() {
       assert.doesNotThrow(function() {
        layer = new mapserver.Layer('foo');
@@ -558,7 +558,9 @@ describe('mapserver', function() {
         assert.ok(false, 'Error drawing map.');
       } else {
         labels = map.getLabelCache();
-        assert.equal(labels.length, 119, 'Does not have the right number of labels, got ' + labels.length);
+        var numLabels = mapserver.getVersionInt() < 60500 ? 109 : 119;
+
+        assert.equal(labels.length, numLabels, 'Does not have the right number of labels, expected (' + numLabels + ', got ' + labels.length);
         done();
       }
     });
