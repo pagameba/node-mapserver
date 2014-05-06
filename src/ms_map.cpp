@@ -255,7 +255,11 @@ Handle<Value> MSMap::GetLabelCache(const Arguments &args) {
     label->Set(String::New("status"), Number::New(MS_ON));
     label->Set(String::New("x"), Number::New(curCachePtr->point.x));
     label->Set(String::New("y"), Number::New(curCachePtr->point.y));
-    label->Set(String::New("text"), String::New(curCachePtr->textsymbols[0]->annotext));
+    if ((curCachePtr->textsymbols[0]->annotext) == NULL) {
+      label->Set(String::New("text"), String::New(""));
+    } else {
+      label->Set(String::New("text"), String::New(curCachePtr->textsymbols[0]->annotext));
+    }
     label->Set(String::New("layerindex"), Number::New(curCachePtr->layerindex));
     label->Set(String::New("classindex"), Number::New(curCachePtr->classindex));
     labels->Set(p, label);
