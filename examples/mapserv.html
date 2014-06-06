@@ -18,11 +18,23 @@
         // layer options
       });
       map.addLayer(layer);
-      map.setCenter(new OpenLayers.LonLat(436400,1563684.5), 0);
+      map.setCenter(new OpenLayers.LonLat(436400,1563684.5), 1);
     }
   </script>
+  <style type="text/css" media="screen">
+  html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+  }
+  #Map {
+    width: 100%;
+    height: 100%;
+  }
+  </style>
 </head>
 <body onload="onload();">
-  <div id="Map" style="border:1px solid black; width: 600px; height: 600px"></div>
+  <div id="Map"></div>
 </body>
 </html>

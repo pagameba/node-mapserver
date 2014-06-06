@@ -1,0 +1,135 @@
+SYMBOLSET
+    SYMBOL
+        NAME "tent"
+        TYPE VECTOR
+        FILLED TRUE
+        POINTS
+            0 1
+            .5 0                
+            1 1
+            .75 1
+            .5 .5
+            .25 1
+            0 1
+        END
+    END 
+    
+    SYMBOL
+        NAME "star"
+        TYPE VECTOR
+        FILLED TRUE
+        POINTS
+            0 .375
+            .35 .375
+            .5 0  
+            .65 .375
+            1 .375
+            .75 .625
+            .875 1
+            .5 .75
+            .125 1
+            .25 .625
+        END
+    END 
+    
+    SYMBOL
+        NAME "triangle"
+        TYPE VECTOR
+        FILLED TRUE
+        POINTS
+            0 1
+            .5 0
+            1 1
+            0 1
+        END
+    END 
+    
+    SYMBOL
+        NAME "square"
+        TYPE VECTOR
+        FILLED TRUE
+        POINTS
+            0 1
+            0 0
+            1 0
+            1 1
+            0 1
+        END
+    END 
+    
+    SYMBOL
+        NAME "plus"
+        TYPE VECTOR
+        POINTS
+            .5 0
+            .5 1
+            -99 -99
+            0 .5
+            1 .5
+        END
+    END 
+    
+    SYMBOL
+        NAME "cross"
+        TYPE VECTOR
+        POINTS
+            0 0
+            1 1
+            -99 -99
+            0 1
+            1 0
+        END
+    END
+    
+    SYMBOL
+        NAME "circle"
+        TYPE ELLIPSE
+        FILLED TRUE
+        POINTS
+            1 1
+        END
+    END 
+    
+    
+    SYMBOL
+        NAME "line_180"
+        TYPE VECTOR
+        TRANSPARENT 0
+        POINTS
+            0 1
+            1 1
+        END
+    END 
+    
+    SYMBOL
+        NAME "line_90"
+        TYPE VECTOR
+        TRANSPARENT 0
+        POINTS
+            1 0
+            1 1
+        END
+    END 
+    
+    SYMBOL
+        NAME "line_135"
+        TYPE VECTOR
+        TRANSPARENT 0
+        POINTS
+            0 0
+            1 1
+        END
+    END 
+    
+    SYMBOL
+        NAME "line_45"
+        TYPE VECTOR
+        TRANSPARENT 0
+        POINTS
+            0 1
+            1 0
+        END
+    END 
+    
+END
+
