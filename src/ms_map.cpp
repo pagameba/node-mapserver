@@ -10,6 +10,7 @@ void MSMap::Initialize(Handle<Object> target) {
   constructor->InstanceTemplate()->SetInternalFieldCount(1);
   constructor->SetClassName(String::NewSymbol("Map"));
 
+  NODE_SET_PROTOTYPE_METHOD(constructor, "clone", Clone);
   NODE_SET_PROTOTYPE_METHOD(constructor, "selectOutputFormat", SelectOutputFormat);
   NODE_SET_PROTOTYPE_METHOD(constructor, "setExtent", SetExtent);
   NODE_SET_PROTOTYPE_METHOD(constructor, "drawMap", DrawMap);
@@ -98,6 +99,18 @@ Handle<Value> MSMap::New(const Arguments &args) {
 Handle<Value> MSMap::New(mapObj *map) {
   return ClosedPtr<MSMap, mapObj>::Closed(map);
 }
+
+Handle<Value> MSMap::Clone(const Arguments& args) {
+  HandleScope scope;
+  MSMap *map = ObjectWrap::Unwrap<MSMap>(args.This());
+  MSMap *clone;
+  mapObj * _copy = msNewMapObj();
+  if (msCopyMap(_copy, map->this_) == MS_SUCCESS) {
+    return scope.Close(MSMap::New(_copy));
+  }
+  return Undefined();
+}
+
 
 Handle<Value> MSMap::SetExtent(const Arguments &args) {
   HandleScope scope;

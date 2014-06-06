@@ -1,0 +1,298 @@
+MAP
+    NAME "GMAP_DEMO"
+    STATUS ON
+    SYMBOLSET "../etc/symbols.txt"
+    EXTENT -2200000 -712631 3072800 3840000
+    UNITS METERS
+    SHAPEPATH "../data"
+    IMAGECOLOR 255 255 255
+    FONTSET "../etc/fonts.txt"
+    SIZE 612 792
+    IMAGETYPE "aggpng24"
+
+    OUTPUTFORMAT
+        NAME "aggpng24"
+        DRIVER AGG/PNG
+        MIMETYPE "image/png"
+        IMAGEMODE RGB
+        EXTENSION "png"
+    END
+
+    PROJECTION
+        "init=epsg:42304"
+    END
+
+    WEB
+        MINSCALEDENOM 2000000
+        MAXSCALEDENOM 50000000
+        IMAGEPATH "/opt/fgs-dev/tmp/ms_tmp/"
+        IMAGEURL "/ms_tmp/"
+        METADATA
+            "legend_title"     "GMAP Viewer test map"
+            "map_title"        "Map Title goes here test"
+            "map_abstract"     "Short description of a map goes here"
+            "map_description"  "www_common/info.html"
+            "map_copyright"    "&copy; copyright for this map 2010"
+            "map_hyperlink"    "http://openlayers.org/"
+        END
+    END
+
+    LEGEND
+        KEYSIZE 16 16
+    END
+
+    QUERYMAP
+        STYLE HILITE
+        COLOR 255 0 0
+    END
+
+    LAYER
+        NAME "bathymetry"
+        GROUP "Waterbodies"  
+        METADATA
+            "LEGENDLABEL" "Elevation and Bathymetry"
+            "LAYERINFOURL" ""
+            "layer_description" ""
+        END
+        TYPE RASTER
+        STATUS ON
+        DATA "bath_mapserver.tif"
+    END
+                                    
+    LAYER
+        NAME "land_fn"
+        METADATA
+            "LEGENDLABEL" "Foreign Lands"
+            "LAYERINFOURL" "http://google.com/"
+            "layer_description" "path/to/layer/description.html"
+        END
+        TYPE POLYGON
+        STATUS ON
+        DATA "land_fn"
+        CLASS
+            NAME "Foreign Lands"
+            STYLE
+                COLOR 240 240 240
+                OUTLINECOLOR 199 199 199    
+            END
+        END
+    END # layer
+    
+    LAYER
+        NAME "park"
+        METADATA
+            "LEGENDLABEL" "Parks"
+            "RESULT_FIELDS" "NAME_E YEAR_EST AREA_KMSQ"
+            "selectable" "true"   
+            "LAYERINFOURL" ""
+            "layer_description" ""
+        END
+        TYPE POLYGON
+        STATUS OFF
+        DATA "park"
+        CLASS
+            NAME "Parks"
+            TEMPLATE "ttt_query.html"
+            STYLE
+                COLOR 200 255 0
+                OUTLINECOLOR 120 120 120    
+            END
+        END
+        TOLERANCE 5
+    END # Layer
+    
+    LAYER
+        NAME "drain_fn"
+        GROUP "Waterbodies"  
+        METADATA
+            "LEGENDLABEL" "Foreign Water"
+            "LAYERINFOURL" ""
+            "layer_description" ""
+        END
+        TYPE POLYGON
+        STATUS ON
+        DATA "drain_fn"
+        CLASSITEM "Poly_featu" 
+        CLASS
+            EXPRESSION /16|21/  
+            NAME "Water"
+            STYLE
+                COLOR 225 249 255
+                OUTLINECOLOR 186 234 245    
+            END
+        END
+    END # layer
+    
+    LAYER
+        NAME "drainage"
+        GROUP "Waterbodies"  
+        METADATA
+            "LEGENDLABEL" "Drainage"
+            "LAYERINFOURL" ""
+            "layer_description" ""
+        END
+        TYPE POLYGON
+        STATUS ON
+        DATA "drainage"
+        CLASSITEM "Poly_featu" 
+        CLASS
+            EXPRESSION "0"  
+            NAME "Water"
+            STYLE
+                COLOR 225 249 255
+                OUTLINECOLOR 186 234 245  
+            END
+        END
+    END # layer
+    
+    LAYER
+        NAME "prov_bound"
+        METADATA
+            "LEGENDLABEL" "Provinces"
+            "LAYERINFOURL" ""
+            "layer_description" ""
+        END
+        TYPE LINE
+        STATUS ON
+        DATA "province"
+        CLASS
+            NAME "Province"
+            STYLE
+                WIDTH 1
+                COLOR 120 120 120
+            END
+        END
+    END # layer
+    
+    LAYER
+        NAME "fedlimit"
+        METADATA
+            "LEGENDLABEL" "Federal Limit"
+            "LAYERINFOURL" ""
+            "layer_description" ""
+        END
+        TYPE LINE
+        STATUS ON
+        DATA "fedlimit"
+        CLASS
+            NAME "Federal Limit"
+            STYLE
+                WIDTH 1
+                COLOR 0 119 255  
+            END
+        END
+    END # Layer
+    
+    LAYER
+        NAME "rail"
+        METADATA
+            "LEGENDLABEL" "Railroads"
+            "LAYERINFOURL" ""
+            "layer_description" ""
+        END
+        TYPE LINE
+        STATUS OFF
+        DATA "rail"
+        CLASS
+            NAME "Railroads"
+            STYLE
+                WIDTH 1
+                COLOR 168 0 184
+            END
+        END
+    END # Layer
+    
+    LAYER
+        NAME road
+        METADATA
+            "LEGENDLABEL" "Roads"
+            "LAYERINFOURL" ""
+            "layer_description" ""
+        END
+        TYPE LINE
+        STATUS OFF
+        DATA road
+        CLASS
+            NAME "Roads"
+            STYLE
+                WIDTH 1
+                COLOR 220 0 0
+            END
+        END
+    END # Layer
+    
+    LAYER
+        NAME popplace
+        METADATA
+            "LEGENDLABEL" "Cities"
+            "RESULT_FIELDS" "NAME"
+            "selectable" "true"   
+            "LAYERINFOURL" ""
+            "layer_description" ""
+        END
+        TYPE POINT
+        STATUS ON
+        DATA popplace
+        LabelItem "Name"  
+        CLASSITEM "Capital" 
+        CLASS
+            EXPRESSION "1"  
+            TEMPLATE "ttt_query.html"
+            NAME "Cities"
+            LABEL
+                COLOR  255 0 0
+                FONT sans-italic
+                TYPE truetype
+                SIZE 8
+                POSITION AUTO     
+                PARTIALS FALSE
+                OUTLINECOLOR 255 255 255      
+            END   
+            STYLE
+                SYMBOL "star"
+                SIZE 8
+                COLOR 0 0 0
+            END
+        END
+        CLASS
+            EXPRESSION /2|3/
+            TEMPLATE "ttt_query.html"
+            NAME "Cities"
+            LABEL
+                COLOR  0 0 0
+                FONT sans
+                TYPE truetype
+                SIZE 8
+                POSITION AUTO      
+                PARTIALS FALSE
+                OUTLINECOLOR 255 255 255     
+            END 
+            STYLE
+                SYMBOL "circle"
+                SIZE 6
+                COLOR 0 0 0
+            END
+        END
+        TOLERANCE 5
+    END # Layer
+    
+    LAYER
+        NAME "grid"
+        METADATA
+            "LEGENDLABEL" "Graticule"
+            "LAYERINFOURL" ""
+            "layer_description" ""
+        END
+        TYPE LINE
+        STATUS OFF
+        DATA "grid"
+        CLASS
+            NAME "Graticule"
+            STYLE
+                WIDTH 1
+                COLOR 0 0 0
+            END
+        END
+    END # Layer
+
+END # Map File
