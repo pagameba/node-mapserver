@@ -242,6 +242,19 @@ describe('mapserver', function() {
 
   });
 
+  it('should clone a map object', function() {
+    assert.doesNotThrow(function() {
+      map = new mapserver.Map(mapfile);
+    }, Error, 'loading a valid map file should not throw an error.');
+
+    var clone = map.clone();
+
+    ['name','width','height','maxsize','units','resolution','defresolution'].forEach(function(prop) {
+      assert.equal(map[prop], clone[prop], 'it should clone the map ' + prop);
+    });
+
+  });
+
   it('should get the map projection', function() {
     assert.doesNotThrow(function() {
       map = new mapserver.Map(mapfile);
