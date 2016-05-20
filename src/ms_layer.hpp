@@ -1,30 +1,26 @@
 #ifndef _NODE_MS_LAYER_H
 #define _NODE_MS_LAYER_H
 
-#include <v8.h>
-
-#include <node.h>
-#include <node_object_wrap.h>
-
+#include <nan.h>
 #include <mapserver.h>
+
 #include "ms_hashtable.hpp"
+#include "utils.hpp"
 
-using namespace v8;
-using namespace node;
-
-class MSLayer: public ObjectWrap {
+class MSLayer: public Nan::ObjectWrap {
 public:
-  static Persistent<FunctionTemplate> constructor;
-  static void Initialize(Handle<Object> target);
-  static Handle<Value> New(const Arguments &args);
-  static Handle<Value> New(layerObj *layer);
+  static Nan::Persistent<v8::FunctionTemplate> constructor;
+  static void Initialize(v8::Local<v8::Object> target);
+  static NAN_METHOD(New);
+  static v8::Local<v8::Value> NewInstance(layerObj* ptr);
 
-  static Handle<Value> PropertyGetter (Local<String> property, const AccessorInfo& info);
-  static void PropertySetter (Local<String> property, Local<Value> value, const AccessorInfo& info);
-  static Handle<Value> GetGridIntersectionCoordinates (const Arguments& args);
-  static Handle<Value> UpdateFromString (const Arguments& args);
+  static NAN_GETTER(PropertyGetter);
+  static NAN_SETTER(PropertySetter);
+
+  static NAN_METHOD(GetGridIntersectionCoordinates);
+  static NAN_METHOD(UpdateFromString);
 #if MS_VERSION_NUM >= 60400
-  static Handle<Value> ToString (const Arguments& args);
+  static NAN_METHOD(ToString);
 #endif
 
   MSLayer();

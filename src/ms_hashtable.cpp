@@ -1,17 +1,22 @@
 #include "ms_hashtable.hpp"
-#include "ms_common.hpp"
 
-Persistent<FunctionTemplate> MSHashTable::constructor;
+Nan::Persistent<v8::FunctionTemplate> MSHashTable::constructor;
 
-void MSHashTable::Initialize(Handle<Object> target) {
-  HandleScope scope;
+void MSHashTable::Initialize(v8::Local<v8::Object> target) {
+  v8::Local<v8::FunctionTemplate> tpl = Nan::New<v8::FunctionTemplate>(MSHashTable::New);
+  tpl->InstanceTemplate()->SetInternalFieldCount(1);
+  tpl->SetClassName(Nan::New("Hashtable").ToLocalChecked());
 
-  constructor = Persistent<FunctionTemplate>::New(FunctionTemplate::New(MSHashTable::New));
-  constructor->InstanceTemplate()->SetInternalFieldCount(1);
-  constructor->SetClassName(String::NewSymbol("Hashtable"));
+  Nan::SetNamedPropertyHandler(
+        tpl->InstanceTemplate()
+      , NamedPropertyGetter
+      , NamedPropertySetter
+      , NULL
+      , NULL
+      , NULL);
 
-  constructor->InstanceTemplate()->SetNamedPropertyHandler(NamedGetter, NamedSetter, NULL, NULL, NULL);
-
+  target->Set(Nan::New("Hashtable").ToLocalChecked(), tpl->GetFunction());
+  constructor.Reset(tpl);
 }
 
 MSHashTable::MSHashTable(hashTableObj *table) : ObjectWrap(), this_(table) {}
@@ -20,50 +25,47 @@ MSHashTable::MSHashTable() : ObjectWrap(), this_(0) {}
 
 MSHashTable::~MSHashTable() { }
 
-Handle<Value> MSHashTable::New(const Arguments &args) {
-  HandleScope scope;
-  MSHashTable *obj;
-
-  if (!args.IsConstructCall()) {
-    return ThrowException(String::New("Cannot call constructor as function, you need to use 'new' keyword"));
+NAN_METHOD(MSHashTable::New)
+{
+  if (!info.IsConstructCall()) {
+    Nan::ThrowError("Cannot call constructor as function, you need to use 'new' keyword");
+    return;
   }
 
-  if (args[0]->IsExternal()) {
-    Local<External> ext = Local<External>::Cast(args[0]);
-    void* ptr = ext->Value();
-    obj = static_cast<MSHashTable*>(ptr);
-    obj->Wrap(args.This());
-    return args.This();
+  if (info[0]->IsExternal()) {
+    v8::Local<v8::External> ext = info[0].As<v8::External>();
+    void *ptr = ext->Value();
+    MSHashTable *f =  static_cast<MSHashTable *>(ptr);
+    f->Wrap(info.This());
+    info.GetReturnValue().Set(info.This());
+    return;
   }
 
-  return args.This();
+  info.GetReturnValue().Set(info.This());
 }
 
-Handle<Value> MSHashTable::New(hashTableObj *table) {
-  return ClosedPtr<MSHashTable, hashTableObj>::Closed(table);
+v8::Local<v8::Value> MSHashTable::NewInstance(hashTableObj *ptr) {
+  Nan::EscapableHandleScope scope;
+  MSHashTable* obj = new MSHashTable();
+  obj->this_ = ptr;
+  v8::Local<v8::Value> ext = Nan::New<v8::External>(obj);
+  return scope.Escape(Nan::New(constructor)->GetFunction()->NewInstance(1, &ext));
 }
 
-Handle<Value> MSHashTable::NamedGetter (Local<String> property, const AccessorInfo& info) {
-  MSHashTable *table = ObjectWrap::Unwrap<MSHashTable>(info.This());
-  v8::String::AsciiValue key(property);
-  char *value;
-  hashTableObj *metadataTable = table->this_;
-
-  value = msLookupHashTable(metadataTable, *key);
+NAN_PROPERTY_GETTER(MSHashTable::NamedPropertyGetter) {
+  MSHashTable *table = Nan::ObjectWrap::Unwrap<MSHashTable>(info.Holder());
+  char *value = msLookupHashTable(table->this_, TOSTR(property));
   if (value == NULL){
-    return Undefined();
+    info.GetReturnValue().Set(Nan::Undefined());
+    return;
   }
-  RETURN_STRING(value);
+  info.GetReturnValue().Set(Nan::New(value).ToLocalChecked());
 }
 
-Handle<Value> MSHashTable::NamedSetter (Local<String> property, Local<Value> value, const AccessorInfo& info) {
-  MSHashTable *table = ObjectWrap::Unwrap<MSHashTable>(info.Holder());
-  v8::String::AsciiValue key(property);
-  v8::String::AsciiValue val(value);
-
-  msInsertHashTable(table->this_, *key, *val);
-
-  RETURN_STRING(*val);
+NAN_PROPERTY_SETTER(MSHashTable::NamedPropertySetter) {
+  MSHashTable *table = Nan::ObjectWrap::Unwrap<MSHashTable>(info.Holder());
+  msInsertHashTable(table->this_, *v8::String::Utf8Value(property), TOSTR(value));
+  info.GetReturnValue().Set(value);
 }
 
 

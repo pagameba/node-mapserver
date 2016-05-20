@@ -1,27 +1,21 @@
 #ifndef _NODE_MS_RECT_H
 #define _NODE_MS_RECT_H
 
-#include <v8.h>
-
-#include <node.h>
-#include <node_object_wrap.h>
-
+#include <nan.h>
 #include <mapserver.h>
 #include "ms_projection.hpp"
 
-using namespace v8;
-using namespace node;
-
-class MSRect: public ObjectWrap {
+class MSRect: public Nan::ObjectWrap {
 public:
-  static Persistent<FunctionTemplate> constructor;
-  static void Initialize(Handle<Object> target);
-  static Handle<Value> New(const Arguments &args);
-  static Handle<Value> New(rectObj *rect);
-  static Handle<Value> Project(const Arguments &args);
+  static Nan::Persistent<v8::FunctionTemplate> constructor;
+  static void Initialize(v8::Local<v8::Object> target);
+  static NAN_METHOD(New);
+  static v8::Local<v8::Value> NewInstance(rectObj *rect);
 
-  static Handle<Value> PropertyGetter (Local<String> property, const AccessorInfo& info);
-  static void PropertySetter (Local<String> property, Local<Value> value, const AccessorInfo& info);
+  static NAN_GETTER(PropertyGetter);
+  static NAN_SETTER(PropertySetter);
+
+  static NAN_METHOD(Project);
 
   MSRect();
   MSRect(rectObj *rect);

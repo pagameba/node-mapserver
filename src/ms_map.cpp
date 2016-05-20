@@ -1,54 +1,48 @@
 #include "ms_map.hpp"
-#include "ms_common.hpp"
 
-Persistent<FunctionTemplate> MSMap::constructor;
+Nan::Persistent<v8::FunctionTemplate> MSMap::constructor;
 
-void MSMap::Initialize(Handle<Object> target) {
-  HandleScope scope;
+void MSMap::Initialize(v8::Local<v8::Object> target) {
+  v8::Local<v8::FunctionTemplate> tpl = Nan::New<v8::FunctionTemplate>(MSMap::New);
+  tpl->InstanceTemplate()->SetInternalFieldCount(1);
+  tpl->SetClassName(Nan::New("Map").ToLocalChecked());
 
-  constructor = Persistent<FunctionTemplate>::New(FunctionTemplate::New(MSMap::New));
-  constructor->InstanceTemplate()->SetInternalFieldCount(1);
-  constructor->SetClassName(String::NewSymbol("Map"));
-
-  NODE_SET_PROTOTYPE_METHOD(constructor, "clone", Clone);
-  NODE_SET_PROTOTYPE_METHOD(constructor, "selectOutputFormat", SelectOutputFormat);
-  NODE_SET_PROTOTYPE_METHOD(constructor, "setExtent", SetExtent);
-  NODE_SET_PROTOTYPE_METHOD(constructor, "drawMap", DrawMap);
-  NODE_SET_PROTOTYPE_METHOD(constructor, "recompute", Recompute);
-  NODE_SET_PROTOTYPE_METHOD(constructor, "insertLayer", InsertLayer);
-  NODE_SET_PROTOTYPE_METHOD(constructor, "setSymbolSet", SetSymbolSet);
-  NODE_SET_PROTOTYPE_METHOD(constructor, "save", Save);
-  NODE_SET_PROTOTYPE_METHOD(constructor, "getLabelCache", GetLabelCache);
-  // NODE_SET_PROTOTYPE_METHOD(constructor, "copy", Copy);
+  Nan::SetPrototypeMethod(tpl, "clone", Clone);
+  Nan::SetPrototypeMethod(tpl, "selectOutputFormat", SelectOutputFormat);
+  Nan::SetPrototypeMethod(tpl, "setExtent", SetExtent);
+  Nan::SetPrototypeMethod(tpl, "drawMap", DrawMap);
+  Nan::SetPrototypeMethod(tpl, "recompute", Recompute);
+  Nan::SetPrototypeMethod(tpl, "insertLayer", InsertLayer);
+  Nan::SetPrototypeMethod(tpl, "setSymbolSet", SetSymbolSet);
+  Nan::SetPrototypeMethod(tpl, "save", Save);
+  Nan::SetPrototypeMethod(tpl, "getLabelCache", GetLabelCache);
 
   /* Read-Write Properties */
-  RW_PROPERTY(constructor, "name", PropertyGetter, PropertySetter);
-  RW_PROPERTY(constructor, "status", PropertyGetter, PropertySetter);
-  RW_PROPERTY(constructor, "width", PropertyGetter, PropertySetter);
-  RW_PROPERTY(constructor, "height", PropertyGetter, PropertySetter);
-  RW_PROPERTY(constructor, "maxsize", PropertyGetter, PropertySetter);
-  RW_PROPERTY(constructor, "units", PropertyGetter, PropertySetter);
-  RW_PROPERTY(constructor, "resolution", PropertyGetter, PropertySetter);
-  RW_PROPERTY(constructor, "defresolution", PropertyGetter, PropertySetter);
-  RW_PROPERTY(constructor, "shapepath", PropertyGetter, PropertySetter);
-  RW_PROPERTY(constructor, "mappath", PropertyGetter, PropertySetter);
-  RW_PROPERTY(constructor, "imagetype", PropertyGetter, PropertySetter);
-  RW_PROPERTY(constructor, "projection", PropertyGetter, PropertySetter);
+  RW_ATTR(tpl, "name", PropertyGetter, PropertySetter);
+  RW_ATTR(tpl, "status", PropertyGetter, PropertySetter);
+  RW_ATTR(tpl, "width", PropertyGetter, PropertySetter);
+  RW_ATTR(tpl, "height", PropertyGetter, PropertySetter);
+  RW_ATTR(tpl, "maxsize", PropertyGetter, PropertySetter);
+  RW_ATTR(tpl, "units", PropertyGetter, PropertySetter);
+  RW_ATTR(tpl, "resolution", PropertyGetter, PropertySetter);
+  RW_ATTR(tpl, "defresolution", PropertyGetter, PropertySetter);
+  RW_ATTR(tpl, "shapepath", PropertyGetter, PropertySetter);
+  RW_ATTR(tpl, "mappath", PropertyGetter, PropertySetter);
+  RW_ATTR(tpl, "imagetype", PropertyGetter, PropertySetter);
+  RW_ATTR(tpl, "projection", PropertyGetter, PropertySetter);
 
   /* Read-Only Properties */
-  RO_PROPERTY(constructor, "cellsize", PropertyGetter);
-  RO_PROPERTY(constructor, "scaledenom", PropertyGetter);
-  RO_PROPERTY(constructor, "mimetype", PropertyGetter);
-  RO_PROPERTY(constructor, "outputformat", PropertyGetter);
-  RO_PROPERTY(constructor, "metadata", PropertyGetter);
+  RO_ATTR(tpl, "cellsize", PropertyGetter);
+  RO_ATTR(tpl, "scaledenom", PropertyGetter);
+  RO_ATTR(tpl, "mimetype", PropertyGetter);
+  RO_ATTR(tpl, "outputformat", PropertyGetter);
+  RO_ATTR(tpl, "metadata", PropertyGetter);
+  RO_ATTR(tpl, "extent", PropertyGetter);
+  RO_ATTR(tpl, "layers", PropertyGetter);
 
-  RO_PROPERTY(constructor, "extent", PropertyGetter);
-  RO_PROPERTY(constructor, "layers", PropertyGetter);
-
-  target->Set(String::NewSymbol("Map"), constructor->GetFunction());
+  target->Set(Nan::New("Map").ToLocalChecked(), tpl->GetFunction());
+  constructor.Reset(tpl);
 }
-
-
 
 MSMap::MSMap(mapObj *map) : ObjectWrap(), this_(map) {}
 
@@ -57,80 +51,95 @@ MSMap::MSMap() : ObjectWrap(), this_(0) {}
 MSMap::~MSMap() {
   if (this_) {
     msFreeMap(this_);
+    this_ = NULL;
   }
 }
 
-Handle<Value> MSMap::New(const Arguments &args) {
-  HandleScope scope;
+NAN_METHOD(MSMap::New) {
   mapObj *map;
   MSMap *obj;
 
-  if (!args.IsConstructCall())
-    return ThrowException(String::New("Cannot call constructor as function, you need to use 'new' keyword"));
-
-  if (args[0]->IsExternal()) {
-    Local<External> ext = Local<External>::Cast(args[0]);
-    void *ptr = ext->Value();
-    MSMap *f =  static_cast<MSMap *>(ptr);
-    f->Wrap(args.This());
-    return args.This();
+  if (!info.IsConstructCall()) {
+    Nan::ThrowError("Cannot call constructor as function, you need to use 'new' keyword");
+    return;
   }
 
-  if (args.Length() == 2) {
-    REQ_STR_ARG(0, mapfile);
-    REQ_STR_ARG(1, mappath);
-    map = msLoadMap(*mapfile, *mappath);
-  } else if (args.Length() == 1) {
-    REQ_STR_ARG(0, mapfile);
-    map = msLoadMap(*mapfile, NULL);
+  if (info[0]->IsExternal()) {
+    v8::Local<v8::External> ext = info[0].As<v8::External>();
+    void* ptr = ext->Value();
+    obj = static_cast<MSMap*>(ptr);
+    obj->Wrap(info.This());
+    info.GetReturnValue().Set(info.This());
+    return;
+  }
+
+  if (info.Length() == 2) {
+    if (!ISSTR(info, 0) || !ISSTR(info, 1)) {
+      Nan::ThrowTypeError("Map constructor takes one or two string arguments");
+      return;
+    }
+    map = msLoadMap(TOSTR(info[0]), TOSTR(info[1]));
+  } else if (info.Length() == 1) {
+    if (!ISSTR(info, 0)) {
+      Nan::ThrowTypeError("Map constructor takes one or two string arguments");
+      return;
+    }
+    map = msLoadMap(TOSTR(info[0]), NULL);
   } else {
     map = msNewMapObj();
   }
 
   if (map == NULL) {
-    THROW_ERROR(Error, "Unable to load requested map.");
+    Nan::ThrowError("Unable to load requested map.");
+    return;
   }
 
   obj = new MSMap(map);
-  obj->Wrap(args.This());
-  return args.This();
+  obj->Wrap(info.This());
+  info.GetReturnValue().Set(info.This());
 }
 
-Handle<Value> MSMap::New(mapObj *map) {
-  return ClosedPtr<MSMap, mapObj>::Closed(map);
+v8::Local<v8::Value> MSMap::NewInstance(mapObj *ptr) {
+  Nan::EscapableHandleScope scope;
+  MSMap* obj = new MSMap();
+  obj->this_ = ptr;
+  v8::Local<v8::Value> ext = Nan::New<v8::External>(obj);
+  return scope.Escape(Nan::New(constructor)->GetFunction()->NewInstance(1, &ext));
 }
 
-Handle<Value> MSMap::Clone(const Arguments& args) {
-  HandleScope scope;
-  MSMap *map = ObjectWrap::Unwrap<MSMap>(args.This());
-  MSMap *clone;
+NAN_METHOD(MSMap::Clone) {
+  MSMap *map = Nan::ObjectWrap::Unwrap<MSMap>(info.Holder());
   mapObj * _copy = msNewMapObj();
   if (msCopyMap(_copy, map->this_) == MS_SUCCESS) {
-    return scope.Close(MSMap::New(_copy));
+    info.GetReturnValue().Set(MSMap::NewInstance(_copy));
   }
-  return Undefined();
 }
 
 
-Handle<Value> MSMap::SetExtent(const Arguments &args) {
-  HandleScope scope;
-  MSMap *map = ObjectWrap::Unwrap<MSMap>(args.This());
-  REQ_DOUBLE_ARG(0, minx);
-  REQ_DOUBLE_ARG(1, miny);
-  REQ_DOUBLE_ARG(2, maxx);
-  REQ_DOUBLE_ARG(3, maxy);
-  map->this_->extent.minx = minx;
-  map->this_->extent.miny = miny;
-  map->this_->extent.maxx = maxx;
-  map->this_->extent.maxy = maxy;
-  return scope.Close(Boolean::New(true));
+NAN_METHOD(MSMap::SetExtent) {
+  MSMap *map = Nan::ObjectWrap::Unwrap<MSMap>(info.Holder());
+  if (info.Length() != 4) {
+    Nan::ThrowError("SetExtent requires 4 numeric arguments");
+    return;
+  }
+
+  if (!info[0]->IsNumber() || !info[1]->IsNumber() || !info[2]->IsNumber() || !info[3]->IsNumber()) {
+    Nan::ThrowError("SetExtent requires 4 numeric arguments");
+    return;
+  }
+
+  map->this_->extent.minx = Nan::To<double>(info[0]).FromJust();
+  map->this_->extent.miny = Nan::To<double>(info[1]).FromJust();
+  map->this_->extent.maxx = Nan::To<double>(info[2]).FromJust();
+  map->this_->extent.maxy = Nan::To<double>(info[3]).FromJust();
+
+  info.GetReturnValue().Set(Nan::True());
 }
 
-Handle<Value> MSMap::Recompute (const Arguments& args) {
-  HandleScope scope;
-  MSMap *map = ObjectWrap::Unwrap<MSMap>(args.This());
-  mapObj * _map = map->this_;
- _map->cellsize = msAdjustExtent(&(_map->extent),
+NAN_METHOD(MSMap::Recompute) {
+  MSMap *map = Nan::ObjectWrap::Unwrap<MSMap>(info.Holder());
+  mapObj *_map = map->this_;
+  _map->cellsize = msAdjustExtent(&(_map->extent),
                                    _map->width,
                                    _map->height);
   msCalculateScale(_map->extent,
@@ -139,97 +148,104 @@ Handle<Value> MSMap::Recompute (const Arguments& args) {
                    _map->height,
                    _map->resolution,
                    &_map->scaledenom);
-  return scope.Close(Boolean::New(true));
+  info.GetReturnValue().Set(Nan::True());
 }
 
-Handle<Value> MSMap::InsertLayer (const Arguments& args) {
-  HandleScope scope;
-  MSMap *map = ObjectWrap::Unwrap<MSMap>(args.This());
+NAN_METHOD(MSMap::InsertLayer) {
+  MSMap *map = Nan::ObjectWrap::Unwrap<MSMap>(info.Holder());
   MSLayer *layer;
-  Local<Object> obj;
+  v8::Local<v8::Object> obj;
   int result;
   int position = -1;
 
-  if (args.Length() < 1) {
-    THROW_ERROR(Error, "insertLayer requires at least one argument");
+  if (info.Length() < 1) {
+    Nan::ThrowError("insertLayer requires at least one argument");
+    return;
   }
 
-  if (!args[0]->IsObject()) {
-    THROW_ERROR(TypeError, "first argument to project must be Layer object");
+  if (!info[0]->IsObject()) {
+    Nan::ThrowTypeError("first argument to project must be Layer object");
+    return;
   }
 
-  obj = args[0]->ToObject();
+  obj = info[0]->ToObject();
 
-  if (obj->IsNull() || obj->IsUndefined() || !MSLayer::constructor->HasInstance(obj)) {
-    THROW_ERROR(TypeError, "first argument to project must be Layer object");
+  if (obj->IsNull() || obj->IsUndefined() || !Nan::New(MSLayer::constructor)->HasInstance(obj)) {
+    Nan::ThrowTypeError("first argument to project must be Layer object");
+    return;
   }
 
-  layer = ObjectWrap::Unwrap<MSLayer>(obj);
+  layer = Nan::ObjectWrap::Unwrap<MSLayer>(obj);
 
-  if (args.Length() == 2) {
-    if (!args[1]->IsNumber()) {
-      THROW_ERROR(TypeError, "second argument must be an integer");
+  if (info.Length() == 2) {
+    if (!info[1]->IsNumber()) {
+      Nan::ThrowTypeError("second argument must be an integer");
+      return;
     } else {
-      position = args[1]->ToInteger()->Value();
+      position = Nan::To<int>(info[1]).FromJust();
       if (position >= map->this_->numlayers) {
         position = -1;
       }
     }
   }
   result = msInsertLayer(map->this_, layer->this_, position);
-
-  return scope.Close(Number::New(result));
+  info.GetReturnValue().Set(result);
 }
 
-Handle<Value> MSMap::SelectOutputFormat (const Arguments& args) {
-  HandleScope scope;
-  MSMap *map = ObjectWrap::Unwrap<MSMap>(args.This());
-  REQ_STR_ARG(0, imagetype);
-  outputFormatObj * format = msSelectOutputFormat(map->this_, *imagetype);
+NAN_METHOD(MSMap::SelectOutputFormat) {
+  MSMap *map = Nan::ObjectWrap::Unwrap<MSMap>(info.Holder());
+  if (info.Length() != 1 || !info[0]->IsString()) {
+    Nan::ThrowTypeError("selectOuptutFormat requires a string argument");
+    return;
+  }
+  outputFormatObj * format = msSelectOutputFormat(map->this_, TOSTR(info[0]));
   if ( format == NULL) {
-    THROW_ERROR(Error, "Output format not supported.");
+    Nan::ThrowError("Output format not supported.");
+    return;
   }
   msApplyOutputFormat(&(map->this_->outputformat), format, MS_NOOVERRIDE,
       MS_NOOVERRIDE, MS_NOOVERRIDE );
-  return Undefined();
 }
 
-Handle<Value> MSMap::SetSymbolSet(const Arguments &args) {
-  HandleScope scope;
+NAN_METHOD(MSMap::SetSymbolSet) {
+  MSMap *map = Nan::ObjectWrap::Unwrap<MSMap>(info.Holder());
   int result;
-  MSMap *map = ObjectWrap::Unwrap<MSMap>(args.This());
-  REQ_STR_ARG(0, symbolfile);
+
+  if (info.Length() != 1 || !info[0]->IsString()) {
+    Nan::ThrowTypeError("SetSymbolSet requires a string argument");
+    return;
+  }
 
   msFreeSymbolSet(&(map->this_->symbolset));
   msInitSymbolSet(&(map->this_->symbolset));
 
   // Set symbolset filename
-  map->this_->symbolset.filename = strdup(*symbolfile);
+  map->this_->symbolset.filename = strdup(TOSTR(info[0]));
 
   // Symbolset shares same fontset as main mapfile
   map->this_->symbolset.fontset = &(map->this_->fontset);
 
   result = msLoadSymbolSet(&(map->this_->symbolset), map->this_);
-  return scope.Close(Number::New(result));
+  info.GetReturnValue().Set(result);
 }
 
-Handle<Value> MSMap::Save(const Arguments &args) {
-  HandleScope scope;
+NAN_METHOD(MSMap::Save) {
+  MSMap *map = Nan::ObjectWrap::Unwrap<MSMap>(info.Holder());
   int result;
-  MSMap *map = ObjectWrap::Unwrap<MSMap>(args.This());
-  REQ_STR_ARG(0, outputfile);
+  if (info.Length() != 1 || !info[0]->IsString()) {
+    Nan::ThrowTypeError("Save requires a string argument");
+    return;
+  }
 
-  result = msSaveMap(map->this_, *outputfile);
-  return scope.Close(Number::New(result));
+  result = msSaveMap(map->this_, TOSTR(info[0]));
+  info.GetReturnValue().Set(result);
 }
 
-Handle<Value> MSMap::GetLabelCache(const Arguments &args) {
-  HandleScope scope;
-  MSMap *map = ObjectWrap::Unwrap<MSMap>(args.This());
+NAN_METHOD(MSMap::GetLabelCache) {
+  MSMap *map = Nan::ObjectWrap::Unwrap<MSMap>(info.Holder());
 
   labelCacheObj *labelcache = &(map->this_->labelcache);
 
-  Handle<ObjectTemplate> objTempl = ObjectTemplate::New();
 #if MS_VERSION_NUM < 60500
   labelCacheSlotObj *cacheslot;
   int numLabels = 0;
@@ -244,147 +260,138 @@ Handle<Value> MSMap::GetLabelCache(const Arguments &args) {
       }
     }
   }
-  Local<Array> labels = Array::New(numLabels);
+  v8::Local<v8::Array> labels = Nan::New<v8::Array>(numLabels);
   for(i = 0; i < MS_MAX_LABEL_PRIORITY; ++i) {
     cacheslot = &(labelcache->slots[i]);
-    Local<Array> labels = Array::New(cacheslot->numlabels);
+    v8::Local<v8::Array> labels = Nan::New<v8::Array>(cacheslot->numlabels);
     for(j = 0; j < cacheslot->numlabels; ++j) {
-      Local<Object> label = objTempl->NewInstance();
-      label->Set(String::New("status"), Number::New(MS_ON));
-      label->Set(String::New("x"), Number::New(cacheslot->labels[j].point.x));
-      label->Set(String::New("y"), Number::New(cacheslot->labels[j].point.y));
-      label->Set(String::New("text"), String::New(cacheslot->labels[j].labels[0].annotext));
-      label->Set(String::New("layerindex"), Number::New(cacheslot->labels[j].layerindex));
-      label->Set(String::New("classindex"), Number::New(cacheslot->labels[j].classindex));
-      labels->Set(k++, label);
+      v8::Local<v8::Object> label = Nan::New<v8::Object>();
+      Nan::Set(label, Nan::New("status").ToLocalChecked(), Nan::New(MS_ON));
+      Nan::Set(label, Nan::New("x").ToLocalChecked(), Nan::New(cacheslot->labels[j].point.x));
+      Nan::Set(label, Nan::New("y").ToLocalChecked(), Nan::New(cacheslot->labels[j].point.y));
+      Nan::Set(label, Nan::New("text").ToLocalChecked(), Nan::New(cacheslot->labels[j].labels[0].annotext).ToLocalChecked());
+      Nan::Set(label, Nan::New("layerindex").ToLocalChecked(), Nan::New(cacheslot->labels[j].layerindex));
+      Nan::Set(label, Nan::New("classindex").ToLocalChecked(), Nan::New(cacheslot->labels[j].classindex));
+      Nan::Set(labels, k++, label);
     }
   }
 #else
-  Local<Array> labels = Array::New(labelcache->num_rendered_members);
+  v8::Local<v8::Array> labels = Nan::New<v8::Array>(labelcache->num_rendered_members);
   int p = 0;
   for (p=0; p<labelcache->num_rendered_members; p++) {
     labelCacheMemberObj* curCachePtr = labelcache->rendered_text_symbols[p];
-    Local<Object> label = objTempl->NewInstance();
-    label->Set(String::New("status"), Number::New(MS_ON));
-    label->Set(String::New("x"), Number::New(curCachePtr->point.x));
-    label->Set(String::New("y"), Number::New(curCachePtr->point.y));
+    v8::Local<v8::Object> label = Nan::New<v8::Object>();
+    Nan::Set(label, Nan::New("status").ToLocalChecked(), Nan::New(MS_ON));
+    Nan::Set(label, Nan::New("x").ToLocalChecked(), Nan::New(curCachePtr->point.x));
+    Nan::Set(label, Nan::New("y").ToLocalChecked(), Nan::New(curCachePtr->point.y));
     if ((curCachePtr->textsymbols[0]->annotext) == NULL) {
-      label->Set(String::New("text"), String::New(""));
+      Nan::Set(label, Nan::New("text").ToLocalChecked(), Nan::New("").ToLocalChecked());
     } else {
-      label->Set(String::New("text"), String::New(curCachePtr->textsymbols[0]->annotext));
+      Nan::Set(label, Nan::New("text").ToLocalChecked(), Nan::New(curCachePtr->textsymbols[0]->annotext).ToLocalChecked());
     }
-    label->Set(String::New("layerindex"), Number::New(curCachePtr->layerindex));
-    label->Set(String::New("classindex"), Number::New(curCachePtr->classindex));
-    labels->Set(p, label);
+    Nan::Set(label, Nan::New("layerindex").ToLocalChecked(), Nan::New(curCachePtr->layerindex));
+    Nan::Set(label, Nan::New("classindex").ToLocalChecked(), Nan::New(curCachePtr->classindex));
+    Nan::Set(labels, p, label);
   }
 #endif
 
   // return an array of rendered labels
-  return scope.Close(labels);
+  info.GetReturnValue().Set(labels);
 }
 
-Handle<Value> MSMap::PropertyGetter (Local<String> property, const AccessorInfo& info) {
-  MSMap *map = ObjectWrap::Unwrap<MSMap>(info.This());
-  v8::String::AsciiValue n(property);
-  if (strcmp(*n, "width") == 0) {
-    RETURN_NUMBER(map->this_->width);
-  } else if (strcmp(*n, "height") == 0) {
-    RETURN_NUMBER(map->this_->height);
-  } else if (strcmp(*n, "status") == 0) {
-    RETURN_NUMBER(map->this_->status);
-  } else if (strcmp(*n, "maxsize") == 0) {
-    RETURN_NUMBER(map->this_->maxsize);
-  } else if (strcmp(*n, "cellsize") == 0) {
-    RETURN_NUMBER(map->this_->cellsize);
-  } else if (strcmp(*n, "units") == 0) {
-    RETURN_NUMBER(map->this_->units);
-  } else if (strcmp(*n, "scaledenom") == 0) {
-    RETURN_NUMBER(map->this_->scaledenom);
-  } else if (strcmp(*n, "resolution") == 0) {
-    RETURN_NUMBER(map->this_->resolution);
-  } else if (strcmp(*n, "defresolution") == 0) {
-    RETURN_NUMBER(map->this_->defresolution);
-  } else if (strcmp(*n, "imagetype") == 0) {
-    RETURN_STRING(map->this_->imagetype);
-  } else if (strcmp(*n, "mimetype") == 0) {
-    RETURN_STRING(map->this_->outputformat->mimetype);
-  } else if (strcmp(*n, "shapepath") == 0) {
-    RETURN_STRING(map->this_->shapepath);
-  } else if (strcmp(*n, "mappath") == 0) {
-    RETURN_STRING(map->this_->mappath);
-  } else if (strcmp(*n, "name") == 0) {
-    RETURN_STRING(map->this_->name);
-  } else if (strcmp(*n, "outputformat") == 0) {
-    HandleScope scope;
-    return scope.Close(MSOutputFormat::New(map->this_->outputformat));
-  } else if (strcmp(*n, "projection") == 0) {
-    HandleScope scope;
-    return scope.Close(MSProjection::New(&map->this_->projection));
-  } else if (strcmp(*n, "layers") == 0) {
-    HandleScope scope;
-    return scope.Close(MSLayers::New(map->this_));
-  } else if (strcmp(*n, "metadata") == 0) {
-    HandleScope scope;
+NAN_GETTER(MSMap::PropertyGetter) {
+  MSMap *map = Nan::ObjectWrap::Unwrap<MSMap>(info.Holder());
+
+  if (STRCMP(property, "width")) {
+    info.GetReturnValue().Set(map->this_->width);
+  } else if (STRCMP(property, "height")) {
+    info.GetReturnValue().Set(map->this_->height);
+  } else if (STRCMP(property, "status")) {
+    info.GetReturnValue().Set(map->this_->status);
+  } else if (STRCMP(property, "maxsize")) {
+    info.GetReturnValue().Set(map->this_->maxsize);
+  } else if (STRCMP(property, "cellsize")) {
+    info.GetReturnValue().Set(map->this_->cellsize);
+  } else if (STRCMP(property, "units")) {
+    info.GetReturnValue().Set(map->this_->units);
+  } else if (STRCMP(property, "scaledenom")) {
+    info.GetReturnValue().Set(map->this_->scaledenom);
+  } else if (STRCMP(property, "resolution")) {
+    info.GetReturnValue().Set(map->this_->resolution);
+  } else if (STRCMP(property, "defresolution")) {
+    info.GetReturnValue().Set(map->this_->defresolution);
+  } else if (STRCMP(property, "imagetype")) {
+    info.GetReturnValue().Set(Nan::New(map->this_->imagetype).ToLocalChecked());
+  } else if (STRCMP(property, "mimetype")) {
+    info.GetReturnValue().Set(Nan::New(map->this_->outputformat->mimetype).ToLocalChecked());
+  } else if (STRCMP(property, "shapepath")) {
+    info.GetReturnValue().Set(Nan::New(map->this_->shapepath).ToLocalChecked());
+  } else if (STRCMP(property, "mappath")) {
+    info.GetReturnValue().Set(Nan::New(map->this_->mappath).ToLocalChecked());
+  } else if (STRCMP(property, "name")) {
+    info.GetReturnValue().Set(Nan::New(map->this_->name).ToLocalChecked());
+  } else if (STRCMP(property, "outputformat")) {
+    info.GetReturnValue().Set(MSOutputFormat::NewInstance(map->this_->outputformat));
+  } else if (STRCMP(property, "projection")) {
+    info.GetReturnValue().Set(MSProjection::NewInstance(&map->this_->projection));
+  } else if (STRCMP(property, "layers")) {
+    info.GetReturnValue().Set(MSLayers::NewInstance(map->this_));
+  } else if (STRCMP(property, "metadata")) {
 #if MS_VERSION_NUM < 60400
-    Handle<ObjectTemplate> objTempl = ObjectTemplate::New();
-    Local<Object> result = objTempl->NewInstance();
-    return scope.Close(result);
+    info.GetReturnValue().Set(Nan::New<v8::Object>());
 #else
-    return scope.Close(MSHashTable::New(&(map->this_->web.metadata)));
+    info.GetReturnValue().Set(MSHashTable::NewInstance(&(map->this_->web.metadata)));
 #endif
-  } else if (strcmp(*n, "extent") == 0) {
-    HandleScope scope;
-    return scope.Close(MSRect::New(&map->this_->extent));
+  } else if (STRCMP(property, "extent")) {
+    info.GetReturnValue().Set(MSRect::NewInstance(&map->this_->extent));
   }
-  return Undefined();
 }
 
-void MSMap::PropertySetter (Local<String> property, Local<Value> value, const AccessorInfo& info) {
-  MSMap *map = ObjectWrap::Unwrap<MSMap>(info.Holder());
-  v8::String::AsciiValue n(property);
-  if (strcmp(*n, "width") == 0) {
+NAN_SETTER(MSMap::PropertySetter) {
+  MSMap *map = Nan::ObjectWrap::Unwrap<MSMap>(info.Holder());
+
+  if (STRCMP(property, "width")) {
     map->this_->width = value->Int32Value();
-  } else if (strcmp(*n, "height") == 0) {
+  } else if (STRCMP(property, "height")) {
     map->this_->height = value->Int32Value();
-  } else if (strcmp(*n, "maxsize") == 0) {
+  } else if (STRCMP(property, "maxsize")) {
     map->this_->maxsize = value->Int32Value();
-  } else if (strcmp(*n, "units") == 0) {
+  } else if (STRCMP(property, "units")) {
     int32_t units = value->Int32Value();
     if (units >= MS_INCHES && units <= MS_NAUTICALMILES) {
       map->this_->units = (MS_UNITS) units;
     }
-  } else if (strcmp(*n, "resolution") == 0) {
+  } else if (STRCMP(property, "resolution")) {
     map->this_->resolution = value->NumberValue();
-  } else if (strcmp(*n, "defresolution") == 0) {
+  } else if (STRCMP(property, "defresolution")) {
     map->this_->defresolution = value->NumberValue();
-  } else if (strcmp(*n, "name") == 0) {
+  } else if (STRCMP(property, "name")) {
     REPLACE_STRING(map->this_->name, value);
-  } else if (strcmp(*n, "imagetype") == 0) {
+  } else if (STRCMP(property, "imagetype")) {
     REPLACE_STRING(map->this_->imagetype, value);
-  } else if (strcmp(*n, "shapepath") == 0) {
+  } else if (STRCMP(property, "shapepath")) {
     REPLACE_STRING(map->this_->shapepath, value);
-  } else if (strcmp(*n, "projection") == 0) {
-    v8::String::AsciiValue _v_(value->ToString());
-    msLoadProjectionString(&(map->this_->projection), *_v_);
-  } else if (strcmp(*n, "mappath") == 0) {
+  } else if (STRCMP(property, "projection")) {
+    msLoadProjectionString(&(map->this_->projection), TOSTR(value));
+  } else if (STRCMP(property, "mappath")) {
     REPLACE_STRING(map->this_->mappath, value);
   }
 }
 
 struct drawmap_baton {
-	uv_work_t request;
-	MSMap *map;
+  uv_work_t request;
+  MSMap *map;
   errorObj * error;
   int size;
   char * data;
-  Persistent<Function> cb;
+  Nan::Persistent<v8::Function> cb;
 };
 
 void FreeImageBuffer(char *data, void *hint) {
   msFree(data);
 }
 
-void MSMap::DrawMapWork(uv_work_t *req) {
+void MSMap::EIO_DrawMap(uv_work_t *req) {
   drawmap_baton *baton = static_cast<drawmap_baton*>(req->data);
 
   imageObj * im = msDrawMap(baton->map->this_, MS_FALSE);
@@ -397,42 +404,25 @@ void MSMap::DrawMapWork(uv_work_t *req) {
     baton->error = msGetErrorObj();
     baton->data = NULL;
   }
-  return;
 }
 
-void MSMap::DrawMapAfter(uv_work_t *req) {
-  HandleScope scope;
-  // drawmap_baton *drawmap_req =(drawmap_baton *)req->data;
+void MSMap::EIO_AfterDrawMap(uv_work_t *req) {
+  Nan::HandleScope scope;
+
   drawmap_baton *baton = static_cast<drawmap_baton *>(req->data);
-  baton->map->Unref();
 
-  TryCatch try_catch;
-
-  Local<Value> argv[2];
   if (baton->data != NULL) {
-    Buffer * buffer = Buffer::New(baton->data, baton->size, FreeImageBuffer, NULL);
-
-    argv[0] = Local<Value>::New(Null());
-    argv[1] = Local<Value>::New(buffer->handle_);
+    v8::Local<v8::Value> buffer = Nan::NewBuffer(baton->data, baton->size, FreeImageBuffer, NULL).ToLocalChecked();
+    v8::Local<v8::Value> argv[2] = { Nan::Null(), buffer };
+    Nan::MakeCallback(Nan::GetCurrentContext()->Global(), Nan::New(baton->cb), 2, argv);
   } else {
-    Local<Value> _arg_ = External::New(baton->error);
-
-    // argv[0] = Local<Value>::New(ErrorObj::constructor_template->GetFunction()->NewInstance(1, &_arg_));
-    errorObj * err = msGetErrorObj();
-    argv[0] = Local<Value>::New(MSError::New(err));
-    argv[1] = Local<Value>::New(Null());
+    v8::Local<v8::Value> argv[1] = { MSError::NewInstance(baton->error) };
+    Nan::MakeCallback(Nan::GetCurrentContext()->Global(), Nan::New(baton->cb), 1, argv);
   }
 
-
-  baton->cb->Call(Context::GetCurrent()->Global(), 2, argv);
-
-  if (try_catch.HasCaught()) {
-    FatalException(try_catch);
-  }
-
-  baton->cb.Dispose();
+  baton->map->Unref();
+  baton->cb.Reset();
   delete baton;
-  return;
 }
 
 /**
@@ -440,17 +430,23 @@ void MSMap::DrawMapAfter(uv_work_t *req) {
  * image after its been copied into the buffer
  */
 
-Handle<Value> MSMap::DrawMap (const Arguments& args) {
-  HandleScope scope;
+NAN_METHOD(MSMap::DrawMap) {
+  MSMap *map = Nan::ObjectWrap::Unwrap<MSMap>(info.Holder());
 
-  REQ_FUN_ARG(0, cb);
-  MSMap *map = ObjectWrap::Unwrap<MSMap>(args.This());
+  if (info.Length() != 1) {
+    Nan::ThrowTypeError("DrawMap missing callback function");
+    return;
+  }
+
+  if (!info[0]->IsFunction()) {
+    Nan::ThrowTypeError("DrawMap requires a single function argument");
+    return;
+  }
 
   char * version = msGetVersion();
-  char * regex = "SUPPORTS\\=THREADS";
   int match;
   match = 0;
-  if (msEvalRegex(regex, version) == MS_TRUE) {
+  if (msEvalRegex("SUPPORTS\\=THREADS", version) == MS_TRUE) {
     match = 1;
   } else {
     // discard the error reported by msEvalRegex saying that it failed
@@ -462,32 +458,28 @@ Handle<Value> MSMap::DrawMap (const Arguments& args) {
     drawmap_baton * baton = new drawmap_baton();
     baton->request.data = (void*) baton;
     baton->map = map;
-    baton->cb = Persistent<Function>::New(cb);
+    baton->cb.Reset(info[0].As<v8::Function>());
 
     map->Ref();
     uv_queue_work(uv_default_loop(),
       &baton->request,
-      DrawMapWork,
-      (uv_after_work_cb) DrawMapAfter);
+      EIO_DrawMap,
+      (uv_after_work_cb) EIO_AfterDrawMap);
   } else {
-    Local<Value> argv[2];
-    argv[0] = Local<Value>::New(Null());
+    v8::Local<v8::Value> argv[2];
+    argv[0] = Nan::Null();
     imageObj * im = msDrawMap(map->this_, MS_FALSE);
 
     if (im != NULL) {
       int size;
       char * data = (char *)msSaveImageBuffer(im, &size, map->this_->outputformat);
       msFreeImage(im);
-      Buffer * buffer = Buffer::New(data, size, FreeImageBuffer, NULL);
-      argv[1] = Local<Value>::New(buffer->handle_);
+      argv[1] = Nan::NewBuffer(data, size, FreeImageBuffer, NULL).ToLocalChecked();
     } else {
       errorObj * err = msGetErrorObj();
-      Local<Value> _arg_ = External::New(err);
-
-      argv[0] = Local<Value>::New(MSError::New(err));
-      argv[1] = Local<Value>::New(Null());
+      argv[0] = MSError::NewInstance(err);
+      argv[1] = Nan::Null();
     }
-    cb->Call(Context::GetCurrent()->Global(), 2, argv);
+    Nan::MakeCallback(Nan::GetCurrentContext()->Global(), info[0].As<v8::Function>(), 2, argv);
   }
-  return Undefined();
 }

@@ -2,8 +2,8 @@
   "targets": [
     {
       "target_name": "mapserver",
-      "sources": [ 
-          "src/mapserver.cpp", 
+      "sources": [
+          "src/mapserver.cpp",
           "src/ms_error.cpp",
           "src/ms_layer.cpp",
           "src/ms_layers.cpp",
@@ -13,8 +13,11 @@
           "src/ms_projection.cpp",
           "src/ms_hashtable.cpp",
           "src/ms_rect.cpp"
-     ],
-      "libraries":["-lmapserver"]
+      ],
+      "libraries":["-lmapserver"],
+      "include_dirs": [
+          "<!(node -e \"require('nan')\")"
+      ]
     }
   ]
 }

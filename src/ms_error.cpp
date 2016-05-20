@@ -1,88 +1,85 @@
 #include "ms_error.hpp"
-#include "ms_common.hpp"
 
-Persistent<FunctionTemplate> MSError::constructor;
+Nan::Persistent<v8::FunctionTemplate> MSError::constructor;
 
-void MSError::Initialize(Handle<Object> target) {
-  HandleScope scope;
+void MSError::Initialize(v8::Local<v8::Object> target) {
+  v8::Local<v8::FunctionTemplate> tpl = Nan::New <v8::FunctionTemplate>(MSError::New);
+  tpl->InstanceTemplate()->SetInternalFieldCount(1);
+  tpl->SetClassName(Nan::New("MSError").ToLocalChecked());
 
-  constructor = Persistent<FunctionTemplate>::New(FunctionTemplate::New(MSError::New));
-  constructor->InstanceTemplate()->SetInternalFieldCount(1);
-  constructor->SetClassName(String::NewSymbol("MSError"));
-  
-  constructor->InstanceTemplate()->SetNamedPropertyHandler(MSError::NamedPropertyGetter, NULL, MSError::NamedPropertyQuery, NULL, MSError::NamedPropertyEnumerator);
+  Nan::SetNamedPropertyHandler(
+        tpl->InstanceTemplate()
+      , MSError::NamedPropertyGetter
+      , NULL
+      , MSError::NamedPropertyQuery
+      , NULL
+      , MSError::NamedPropertyEnumerator);
 
-  target->Set(String::NewSymbol("MSError"), constructor->GetFunction());
+  target->Set(Nan::New("MSError").ToLocalChecked(), tpl->GetFunction());
+  constructor.Reset(tpl);
 }
 
-MSError::MSError(errorObj *err) : ObjectWrap(), this_(err) { }
+MSError::MSError(errorObj *err) : Nan::ObjectWrap(), this_(err) { }
 
-MSError::MSError() : ObjectWrap(), this_(0) { }
+MSError::MSError() : Nan::ObjectWrap(), this_(0) { }
 
 MSError::~MSError() { }
 
-Handle<Value> MSError::New(const Arguments& args)
+NAN_METHOD(MSError::New)
 {
-  HandleScope scope;
+  if (!info.IsConstructCall()) {
+    Nan::ThrowError("Cannot call constructor as function, you need to use 'new' keyword");
+    return;
+  }
 
-  if (!args.IsConstructCall())
-    return ThrowException(String::New("Cannot call constructor as function, you need to use 'new' keyword"));
-
-  if (args[0]->IsExternal()) {
-    Local<External> ext = Local<External>::Cast(args[0]);
+  if (info[0]->IsExternal()) {
+    v8::Local<v8::External> ext = info[0].As<v8::External>();
     void *ptr = ext->Value();
     MSError *f =  static_cast<MSError *>(ptr);
-    f->Wrap(args.This());
-    return args.This();
+    f->Wrap(info.This());
+    info.GetReturnValue().Set(info.This());
+    return;
   }
 
-  return args.This();
+  info.GetReturnValue().Set(info.This());
 }
 
-Handle<Value> MSError::New(errorObj *err) {
-  return ClosedPtr<MSError, errorObj>::Closed(err);
+v8::Local<v8::Value> MSError::NewInstance(errorObj *err_ptr) {
+  Nan::EscapableHandleScope scope;
+  MSError* err = new MSError();
+  err->this_ = err_ptr;
+  v8::Local<v8::Value> ext = Nan::New<v8::External>(err);
+  return scope.Escape(Nan::New(constructor)->GetFunction()->NewInstance(1, &ext));
 }
 
-Handle<Value> MSError::NamedPropertyGetter (Local<String> property, const AccessorInfo& info) {
-  HandleScope scope;
-  MSError *err = ObjectWrap::Unwrap<MSError>(info.This());
-  v8::String::AsciiValue n(property);
-  if (strcmp(*n, "code") == 0) {
-    return scope.Close(Integer::New(err->this_->code));
-  } else if (strcmp(*n, "codeStr") == 0) {
-    return scope.Close(String::New(msGetErrorCodeString(err->this_->code)));
-  } else if (strcmp(*n, "message") == 0) {
-    return scope.Close(String::New(err->this_->message));
-  } else if (strcmp(*n, "routine") == 0) {
-    return scope.Close(String::New(err->this_->routine));
+NAN_PROPERTY_GETTER(MSError::NamedPropertyGetter) {
+  MSError *err = Nan::ObjectWrap::Unwrap<MSError>(info.Holder());
+
+  if (STRCMP(property, "code")) {
+    info.GetReturnValue().Set(err->this_->code);
+  } else if (STRCMP(property, "message")) {
+    info.GetReturnValue().Set(Nan::New(err->this_->message).ToLocalChecked());
+  } else if (STRCMP(property, "routine")) {
+    info.GetReturnValue().Set(Nan::New(err->this_->routine).ToLocalChecked());
   }
-  return Undefined();
 }
 
-Handle<Integer> MSError::NamedPropertyQuery(Local<String> property,
-                                   const AccessorInfo& info) {
-  HandleScope scope;
-  v8::String::AsciiValue n(property);
-  if (strcmp(*n, "code") == 0) {
-    return scope.Close(Integer::New(None));
-  } else if (strcmp(*n, "codeStr") == 0) {
-    return scope.Close(Integer::New(None));
-  } else if (strcmp(*n, "message") == 0) {
-    return scope.Close(Integer::New(None));
-  } else if (strcmp(*n, "routine") == 0) {
-    return scope.Close(Integer::New(None));
+NAN_PROPERTY_QUERY(MSError::NamedPropertyQuery) {
+  if (STRCMP(property, "code")) {
+    info.GetReturnValue().Set(Nan::New<v8::Integer>(v8::None));
+  } else if (STRCMP(property, "message")) {
+    info.GetReturnValue().Set(Nan::New<v8::Integer>(v8::None));
+  } else if (STRCMP(property, "routine")) {
+    info.GetReturnValue().Set(Nan::New<v8::Integer>(v8::None));
+  } else {
+    info.GetReturnValue().Set(Nan::New<v8::Integer>(v8::DontEnum));
   }
-  return Handle<Integer>();
 }
 
-Handle<Array> MSError::NamedPropertyEnumerator(const AccessorInfo& info) {
-  HandleScope scope;
-
-  Local<Array> env = Array::New(4);
-  env->Set(0, String::New("code"));
-  env->Set(1, String::New("codeStr"));
-  env->Set(2, String::New("message"));
-  env->Set(3, String::New("routine"));
-
-  return scope.Close(env);
+NAN_PROPERTY_ENUMERATOR(MSError::NamedPropertyEnumerator) {
+  v8::Local<v8::Array> env = Nan::New<v8::Array>(4);
+  Nan::Set(env, 0, Nan::New("code").ToLocalChecked());
+  Nan::Set(env, 2, Nan::New("message").ToLocalChecked());
+  Nan::Set(env, 3, Nan::New("routine").ToLocalChecked());
+  info.GetReturnValue().Set(env);
 }

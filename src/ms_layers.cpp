@@ -1,18 +1,18 @@
 #include "ms_layers.hpp"
-#include "ms_common.hpp"
+#include "ms_layer.hpp"
 
-Persistent<FunctionTemplate> MSLayers::constructor;
+Nan::Persistent<v8::FunctionTemplate> MSLayers::constructor;
 
-void MSLayers::Initialize(Handle<Object> target) {
-  HandleScope scope;
+void MSLayers::Initialize(v8::Local<v8::Object> target) {
+  v8::Local<v8::FunctionTemplate> tpl = Nan::New<v8::FunctionTemplate>(MSLayers::New);
+  tpl->InstanceTemplate()->SetInternalFieldCount(1);
+  tpl->SetClassName(Nan::New("Layers").ToLocalChecked());
 
-  constructor = Persistent<FunctionTemplate>::New(FunctionTemplate::New(MSLayers::New));
-  constructor->InstanceTemplate()->SetInternalFieldCount(1);
-  constructor->SetClassName(String::NewSymbol("Layers"));
+  Nan::SetIndexedPropertyHandler(tpl->InstanceTemplate(), IndexGetter, NULL, NULL, NULL, NULL);
+  Nan::SetNamedPropertyHandler(tpl->InstanceTemplate(), NamedGetter, NULL, NULL, NULL, NULL);
 
-  constructor->InstanceTemplate()->SetIndexedPropertyHandler(IndexGetter, NULL, NULL, NULL, NULL);
-  constructor->InstanceTemplate()->SetNamedPropertyHandler(NamedGetter, NULL, NULL, NULL, NULL);
-
+  target->Set(Nan::New("Layers").ToLocalChecked(), tpl->GetFunction());
+  constructor.Reset(tpl);
 }
 
 MSLayers::MSLayers(mapObj *map) : ObjectWrap(), this_(map) {}
@@ -21,55 +21,53 @@ MSLayers::MSLayers() : ObjectWrap(), this_(0) {}
 
 MSLayers::~MSLayers() { }
 
-Handle<Value> MSLayers::New(const Arguments &args) {
-  HandleScope scope;
+NAN_METHOD(MSLayers::New) {
   MSLayers *obj;
 
-  if (!args.IsConstructCall()) {
-    return ThrowException(String::New("Cannot call constructor as function, you need to use 'new' keyword"));
+  if (!info.IsConstructCall()) {
+    Nan::ThrowError("Cannot call constructor as function, you need to use 'new' keyword");
+    return;
   }
 
-  if (args[0]->IsExternal()) {
-    Local<External> ext = Local<External>::Cast(args[0]);
+  if (info[0]->IsExternal()) {
+    v8::Local<v8::External> ext = info[0].As<v8::External>();
     void* ptr = ext->Value();
     obj = static_cast<MSLayers*>(ptr);
-    obj->Wrap(args.This());
-    return args.This();
+    obj->Wrap(info.This());
+    info.GetReturnValue().Set(info.This());
+    return;
   }
-
-  return args.This();
+  info.GetReturnValue().Set(info.This());
 }
 
-Handle<Value> MSLayers::New(mapObj *map) {
-  return ClosedPtr<MSLayers, mapObj>::Closed(map);
+v8::Local<v8::Value> MSLayers::NewInstance(mapObj *ptr) {
+  Nan::EscapableHandleScope scope;
+  MSLayers* obj = new MSLayers();
+  obj->this_ = ptr;
+  v8::Local<v8::Value> ext = Nan::New<v8::External>(obj);
+  return scope.Escape(Nan::New(constructor)->GetFunction()->NewInstance(1, &ext));
 }
 
-Handle<Value> MSLayers::IndexGetter(uint32_t index, const AccessorInfo& info) {
-  MSLayers *layers = ObjectWrap::Unwrap<MSLayers>(info.This());
+NAN_INDEX_GETTER(MSLayers::IndexGetter) {
+  MSLayers *layers = Nan::ObjectWrap::Unwrap<MSLayers>(info.Holder());
 
-  if (index >=0 && index < layers->this_->numlayers) {
-    HandleScope scope;
-    return scope.Close(MSLayer::New(GET_LAYER(layers->this_, index)));
+  if ((int)index < layers->this_->numlayers) {
+    info.GetReturnValue().Set(MSLayer::NewInstance(GET_LAYER(layers->this_, index)));
   }
-
-  return Undefined();
 }
 
-Handle<Value> MSLayers::NamedGetter (Local<String> property, const AccessorInfo& info) {
-  MSLayers *layers = ObjectWrap::Unwrap<MSLayers>(info.This());
-  v8::String::AsciiValue n(property);
-  if (strcmp(*n, "length") == 0) {
-    RETURN_NUMBER(layers->this_->numlayers);
+NAN_PROPERTY_GETTER(MSLayers::NamedGetter) {
+  MSLayers *layers = Nan::ObjectWrap::Unwrap<MSLayers>(info.Holder());
+  if (STRCMP(property, "length")) {
+    info.GetReturnValue().Set(layers->this_->numlayers);
   } else {
     int i;
     for (i=0; i<layers->this_->numlayers; i++) {
-      if (strcmp(*n, GET_LAYER(layers->this_, i)->name) == 0) {
-        HandleScope scope;
-        return scope.Close(MSLayer::New(GET_LAYER(layers->this_, i)));
+      if (STRCMP(property, GET_LAYER(layers->this_, i)->name)) {
+        info.GetReturnValue().Set(MSLayer::NewInstance(GET_LAYER(layers->this_, i)));
       }
     }
   }
-  return Undefined();
 }
 
 

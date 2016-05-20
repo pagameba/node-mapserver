@@ -378,6 +378,8 @@ describe('mapserver', function() {
     map.layers[1].name = 'test';
     assert.equal(map.layers[1].name, 'test', 'layer name should have changed.');
 
+    console.log(map.layers.prov_bound.name);
+
     assert.equal(map.layers.prov_bound.connectiontype, mapserver.MS_SHAPEFILE, 'layer should have connectiontype MS_SHAPEFILE, got ' + map.layers.prov_bound.connectiontype);
 
     // layers should be accessible by name too
@@ -549,28 +551,6 @@ describe('mapserver', function() {
     });
   }
 
-  it('should draw a map', function(done) {
-    var v = mapserver.getVersionInt();
-    assert.doesNotThrow(function() {
-      map = new mapserver.Map(mapfile);
-    }, Error, 'loading a valid map file should not throw an error.');
-    fs.readFile(path.join(__dirname, 'data', 'test_buffer_'+v+'.png'), function(err, data) {
-      map.drawMap(function(drawError, buffer) {
-        if (drawError) {
-          util.inspect(drawError, false, 0, true);
-          assert.ok(false, 'Error drawing map.');
-        } else {
-          fs.writeFileSync(path.join(__dirname, 'data', 'test_out_'+v+'.png'), buffer);
-          if (err) {
-            throw new Error('failed to load test image');
-          }
-          assert.equal(data.toString('hex'), buffer.toString('hex'), 'map draw differed from sample image');
-          done();
-        }
-      });
-    });
-  });
-
   it('should get the label cache', function(done) {
     assert.doesNotThrow(function() {
       map = new mapserver.Map(mapfile);
@@ -596,4 +576,25 @@ describe('mapserver', function() {
     });
   });
 
+  it('should draw a map', function(done) {
+    var v = mapserver.getVersionInt();
+    assert.doesNotThrow(function() {
+      map = new mapserver.Map(mapfile);
+    }, Error, 'loading a valid map file should not throw an error.');
+    fs.readFile(path.join(__dirname, 'data', 'test_buffer_'+v+'.png'), function(err, data) {
+      map.drawMap(function(drawError, buffer) {
+        if (drawError) {
+          util.inspect(drawError, false, 0, true);
+          assert.ok(false, 'Error drawing map.');
+        } else {
+          fs.writeFileSync(path.join(__dirname, 'data', 'test_out_'+v+'.png'), buffer);
+          if (err) {
+            throw new Error('failed to load test image');
+          }
+          assert.equal(data.toString('hex'), buffer.toString('hex'), 'map draw differed from sample image');
+          done();
+        }
+      });
+    });
+  });
 });

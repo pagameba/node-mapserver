@@ -1,162 +1,179 @@
 #include "ms_point.hpp"
-#include "ms_common.hpp"
 
-Persistent<FunctionTemplate> MSPoint::constructor;
+Nan::Persistent<v8::FunctionTemplate> MSPoint::constructor;
 
-void MSPoint::Initialize(Handle<Object> target) {
-  HandleScope scope;
+void MSPoint::Initialize(v8::Local<v8::Object> target) {
+  v8::Local<v8::FunctionTemplate> tpl = Nan::New<v8::FunctionTemplate>(MSPoint::New);
+  tpl->InstanceTemplate()->SetInternalFieldCount(1);
+  tpl->SetClassName(Nan::New("Point").ToLocalChecked());
 
-  constructor = Persistent<FunctionTemplate>::New(FunctionTemplate::New(MSPoint::New));
-  constructor->InstanceTemplate()->SetInternalFieldCount(1);
-  constructor->SetClassName(String::NewSymbol("Point"));
+  RW_ATTR(tpl, "x", PropertyGetter, PropertySetter);
+  RW_ATTR(tpl, "y", PropertyGetter, PropertySetter);
 
-  RW_PROPERTY(constructor, "x", PropertyGetter, PropertySetter);
-  RW_PROPERTY(constructor, "y", PropertyGetter, PropertySetter);
+  Nan::SetPrototypeMethod(tpl, "project", Project);
+  Nan::SetPrototypeMethod(tpl, "distanceToPoint", DistanceToPoint);
 
-  NODE_SET_PROTOTYPE_METHOD(constructor, "project", Project);
-  NODE_SET_PROTOTYPE_METHOD(constructor, "distanceToPoint", DistanceToPoint);
-
-  target->Set(String::NewSymbol("Point"), constructor->GetFunction());
+  target->Set(Nan::New("Point").ToLocalChecked(), tpl->GetFunction());
+  constructor.Reset(tpl);
 }
 
 MSPoint::MSPoint(pointObj *point) : ObjectWrap(), this_(point) {
-  this->owner = false;
+  owner = false;
 }
 
-MSPoint::MSPoint() : ObjectWrap(), this_(0) {}
+MSPoint::MSPoint() : ObjectWrap(), this_(0) { owner = false; }
 
 MSPoint::~MSPoint() {
-  if (this_ && this->owner) {
+  if (this_ && owner) {
     free(this_);
+    owner = false;
   }
 }
 
-Handle<Value> MSPoint::New(const Arguments &args) {
-  HandleScope scope;
+NAN_METHOD(MSPoint::New) {
   MSPoint *obj;
 
-  if (!args.IsConstructCall()) {
-    return ThrowException(String::New("Cannot call constructor as function, you need to use 'new' keyword"));
+  if (!info.IsConstructCall()) {
+    Nan::ThrowError("Cannot call constructor as function, you need to use 'new' keyword");
   }
 
-  if (args[0]->IsExternal()) {
-    Local<External> ext = Local<External>::Cast(args[0]);
+  if (info[0]->IsExternal()) {
+    v8::Local<v8::External> ext = info[0].As<v8::External>();
     void* ptr = ext->Value();
     obj = static_cast<MSPoint*>(ptr);
-    obj->Wrap(args.This());
-    return args.This();
+    obj->Wrap(info.This());
+    info.GetReturnValue().Set(info.This());
+    return;
   }
 
   pointObj *point = (pointObj *)calloc(1, sizeof(pointObj));
   if(!point) {
-    return args.This();
+    info.GetReturnValue().Set(info.This());
+    return;
   }
 
-  if (args.Length() == 1) {
-    THROW_ERROR(Error, "Points take 2 arguments, x and y.");
+  double x = -1;
+  double y = -1;
+
+
+  if (info.Length() == 1) {
+    Nan::ThrowTypeError("Points take numeric 2 arguments, x and y.");
+    return;
   }
 
-  if (args.Length() == 2) {
-    REQ_DOUBLE_ARG(0, x);
-    REQ_DOUBLE_ARG(1, y);
-    point->x = x;
-    point->y = y;
-  } else {
-    point->x = -1;
-    point->y = -1;
+  if (info.Length() == 2) {
+    if (info[0]->IsNumber() && info[1]->IsNumber()) {
+      x = info[0]->NumberValue();
+      y = info[1]->NumberValue();
+    } else {
+      Nan::ThrowTypeError("Points take numeric 2 arguments, x and y.");
+      return;
+    }
   }
+
+  point->x = x;
+  point->y = y;
 
   obj = new MSPoint(point);
   obj->owner = true;
-  obj->Wrap(args.This());
-  return args.This();
+  obj->Wrap(info.This());
+  info.GetReturnValue().Set(info.This());
 }
 
-Handle<Value> MSPoint::New(pointObj *point) {
-  return ClosedPtr<MSPoint, pointObj>::Closed(point);
+v8::Local<v8::Value> MSPoint::NewInstance(pointObj *ptr) {
+  Nan::EscapableHandleScope scope;
+  MSPoint* obj = new MSPoint();
+  obj->this_ = ptr;
+  v8::Local<v8::Value> ext = Nan::New<v8::External>(obj);
+  return scope.Escape(Nan::New(constructor)->GetFunction()->NewInstance(1, &ext));
 }
 
-Handle<Value> MSPoint::PropertyGetter (Local<String> property, const AccessorInfo& info) {
-  MSPoint *point = ObjectWrap::Unwrap<MSPoint>(info.This());
-  v8::String::AsciiValue n(property);
-  if (strcmp(*n, "x") == 0) {
-    RETURN_NUMBER(point->this_->x);
-  } else if (strcmp(*n, "y") == 0) {
-    RETURN_NUMBER(point->this_->y);
-  }
-  return Undefined();
-}
+NAN_GETTER(MSPoint::PropertyGetter) {
+  MSPoint *obj = Nan::ObjectWrap::Unwrap<MSPoint>(info.Holder());
 
-void MSPoint::PropertySetter (Local<String> property, Local<Value> value, const AccessorInfo& info) {
-  MSPoint *point = ObjectWrap::Unwrap<MSPoint>(info.Holder());
-  v8::String::AsciiValue n(property);
-  if (strcmp(*n, "x") == 0) {
-    point->this_->x = value->NumberValue();
-  } else if (strcmp(*n, "y") == 0) {
-    point->this_->y = value->NumberValue();
+  if (STRCMP(property, "x")) {
+    info.GetReturnValue().Set(obj->this_->x);
+  } else if (STRCMP(property, "y")) {
+    info.GetReturnValue().Set(obj->this_->y);
   }
 }
 
-Handle<Value> MSPoint::Project(const Arguments &args) {
-  MSPoint *point = ObjectWrap::Unwrap<MSPoint>(args.This());
-  Local<Object> obj;
+NAN_SETTER(MSPoint::PropertySetter) {
+  MSPoint *obj = Nan::ObjectWrap::Unwrap<MSPoint>(info.Holder());
+  if (STRCMP(property, "x")) {
+    obj->this_->x = value->NumberValue();
+  } else if (STRCMP(property, "y")) {
+    obj->this_->y = value->NumberValue();
+  }
+}
+
+NAN_METHOD(MSPoint::Project) {
+  MSPoint *point = Nan::ObjectWrap::Unwrap<MSPoint>(info.Holder());
+
+  v8::Local<v8::Object> obj;
   MSProjection *projIn;
   MSProjection *projOut;
 
-  if (args.Length() != 2) {
-    THROW_ERROR(Error, "projecting a point requires two projection arguments");
+  if (info.Length() != 2) {
+    Nan::ThrowError("projecting a point requires two projection arguments");
+    return;
   }
 
-  if (!args[0]->IsObject()) {
-    THROW_ERROR(TypeError, "first argument to project must be Projection object");
+  if (!info[0]->IsObject()) {
+    Nan::ThrowTypeError("first argument to project must be Projection object");
+    return;
   }
 
-  obj = args[0]->ToObject();
+  obj = info[0].As<v8::Object>();
 
-  if (obj->IsNull() || obj->IsUndefined() || !MSProjection::constructor->HasInstance(obj)) {
-    THROW_ERROR(TypeError, "first argument to project must be Projection object");
+  if (obj->IsNull() || obj->IsUndefined() || !Nan::New(MSProjection::constructor)->HasInstance(obj)) {
+    Nan::ThrowTypeError("first argument to project must be Projection object");
+    return;
   }
 
-  projIn = ObjectWrap::Unwrap<MSProjection>(obj);
+  projIn = Nan::ObjectWrap::Unwrap<MSProjection>(obj);
 
-  if (!args[1]->IsObject()) {
-    THROW_ERROR(TypeError, "second argument to project must be Projection object");
+  if (!info[1]->IsObject()) {
+    Nan::ThrowTypeError("second argument to project must be Projection object");
+    return;
   }
 
-  obj = args[1]->ToObject();
+  obj = info[1].As<v8::Object>();
 
-  if (obj->IsNull() || obj->IsUndefined() || !MSProjection::constructor->HasInstance(obj)) {
-    THROW_ERROR(TypeError, "second argument to project must be Projection object");
+
+  if (obj->IsNull() || obj->IsUndefined() || !Nan::New(MSProjection::constructor)->HasInstance(obj)) {
+    Nan::ThrowTypeError("second argument to project must be Projection object");
+    return;
   }
 
-  projOut = ObjectWrap::Unwrap<MSProjection>(obj);
+  projOut = Nan::ObjectWrap::Unwrap<MSProjection>(obj);
 
   msProjectPoint(projIn->this_, projOut->this_, point->this_);
-
-  return Undefined();
 }
 
-Handle<Value> MSPoint::DistanceToPoint(const Arguments &args) {
-  MSPoint *point = ObjectWrap::Unwrap<MSPoint>(args.This());
-  Local<Object> obj;
+NAN_METHOD(MSPoint::DistanceToPoint) {
+  MSPoint *point = Nan::ObjectWrap::Unwrap<MSPoint>(info.Holder());
+
+  v8::Local<v8::Object> obj;
   MSPoint *anotherPoint;
 
-  if (args.Length() != 1) {
-    THROW_ERROR(Error, "distanceToPoint needs a Point to measure to");
+  if (info.Length() != 1) {
+    Nan::ThrowError("distanceToPoint needs a Point to measure to");
   }
 
-  if (!args[0]->IsObject()) {
-    THROW_ERROR(TypeError, "distanceToPoint argument must be Point object");
+  obj = info[0].As<v8::Object>();
+
+  if (!obj->IsObject()) {
+    Nan::ThrowTypeError("distanceToPoint argument must be Point object");
   }
 
-  obj = args[0]->ToObject();
 
-  if (obj->IsNull() || obj->IsUndefined() || !MSPoint::constructor->HasInstance(obj)) {
-    THROW_ERROR(TypeError, "distanceToPoint argument must be Point object");
+  if (obj->IsNull() || obj->IsUndefined() /*|| !Nan::New(MSPoint::constructor)->HasInstance(obj)*/) {
+    Nan::ThrowTypeError("distanceToPoint argument must be Point object");
   }
 
-  anotherPoint = ObjectWrap::Unwrap<MSPoint>(obj);
+  anotherPoint = Nan::ObjectWrap::Unwrap<MSPoint>(obj);
 
   int distance = msDistancePointToPoint(point->this_, anotherPoint->this_);
-  RETURN_NUMBER(distance);
+  info.GetReturnValue().Set(distance);
 }

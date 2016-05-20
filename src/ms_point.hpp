@@ -1,38 +1,32 @@
 #ifndef _NODE_MS_POINT_H
 #define _NODE_MS_POINT_H
 
-#include <v8.h>
-
-#include <node.h>
-#include <node_object_wrap.h>
-
+#include <nan.h>
 #include <mapserver.h>
 #include "ms_projection.hpp"
+#include "utils.hpp"
 
-using namespace v8;
-using namespace node;
-
-class MSPoint: public ObjectWrap {
+class MSPoint: public Nan::ObjectWrap {
 public:
-  static Persistent<FunctionTemplate> constructor;
-  static void Initialize(Handle<Object> target);
-  static Handle<Value> New(const Arguments &args);
-  static Handle<Value> New(pointObj *point);
+  static Nan::Persistent<v8::FunctionTemplate> constructor;
+  static void Initialize(v8::Local<v8::Object> target);
+  static NAN_METHOD(New);
+  static v8::Local<v8::Value> NewInstance(pointObj *point);
 
-  static Handle<Value> PropertyGetter (Local<String> property, const AccessorInfo& info);
-  static void PropertySetter (Local<String> property, Local<Value> value, const AccessorInfo& info);
+  static NAN_GETTER(PropertyGetter);
+  static NAN_SETTER(PropertySetter);
 
-  static Handle<Value> Project(const Arguments &args);
-  static Handle<Value> DistanceToPoint(const Arguments &args);
+  static NAN_METHOD(Project);
+  static NAN_METHOD(DistanceToPoint);
 
   MSPoint();
   MSPoint(pointObj *point);
   inline pointObj *get() { return this_; }
-  pointObj *this_;
   bool owner;
 
 private:
   ~MSPoint();
+  pointObj *this_;
 
 };
 #endif

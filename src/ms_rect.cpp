@@ -1,85 +1,93 @@
 #include "ms_rect.hpp"
-#include "ms_common.hpp"
 
-Persistent<FunctionTemplate> MSRect::constructor;
+Nan::Persistent<v8::FunctionTemplate> MSRect::constructor;
 
-void MSRect::Initialize(Handle<Object> target) {
-  HandleScope scope;
+void MSRect::Initialize(v8::Local<v8::Object> target) {
+  v8::Local<v8::FunctionTemplate> tpl = Nan::New<v8::FunctionTemplate>(MSRect::New);
+  tpl->InstanceTemplate()->SetInternalFieldCount(1);
+  tpl->SetClassName(Nan::New("Rect").ToLocalChecked());
 
-  constructor = Persistent<FunctionTemplate>::New(FunctionTemplate::New(MSRect::New));
-  constructor->InstanceTemplate()->SetInternalFieldCount(1);
-  constructor->SetClassName(String::NewSymbol("Rect"));
+  RW_ATTR(tpl, "minx", PropertyGetter, PropertySetter);
+  RW_ATTR(tpl, "miny", PropertyGetter, PropertySetter);
+  RW_ATTR(tpl, "maxx", PropertyGetter, PropertySetter);
+  RW_ATTR(tpl, "maxy", PropertyGetter, PropertySetter);
 
-  RW_PROPERTY(constructor, "minx", PropertyGetter, PropertySetter);
-  RW_PROPERTY(constructor, "miny", PropertyGetter, PropertySetter);
-  RW_PROPERTY(constructor, "maxx", PropertyGetter, PropertySetter);
-  RW_PROPERTY(constructor, "maxy", PropertyGetter, PropertySetter);
+  Nan::SetPrototypeMethod(tpl, "project", Project);
 
-  NODE_SET_PROTOTYPE_METHOD(constructor, "project", Project);
-
-  target->Set(String::NewSymbol("Rect"), constructor->GetFunction());
+  target->Set(Nan::New("Rect").ToLocalChecked(), tpl->GetFunction());
+  constructor.Reset(tpl);
 }
 
 MSRect::MSRect(rectObj *rect) : ObjectWrap(), this_(rect) {
-  this->owner = false;
+  owner = false;
 }
 
-MSRect::MSRect() : ObjectWrap(), this_(0) {}
+MSRect::MSRect() : ObjectWrap(), this_(0) { owner = false; }
 
 MSRect::~MSRect() {
-  if (this_ && this->owner) {
+  if (this_ && owner) {
     free(this_);
+    owner = false;
   }
 }
 
-Handle<Value> MSRect::New(const Arguments &args) {
-  HandleScope scope;
+NAN_METHOD(MSRect::New) {
   MSRect *obj;
   double t;
 
-  if (!args.IsConstructCall()) {
-    return ThrowException(String::New("Cannot call constructor as function, you need to use 'new' keyword"));
+  if (!info.IsConstructCall()) {
+    Nan::ThrowError("Cannot call constructor as function, you need to use 'new' keyword");
+    return;
   }
 
-  if (args[0]->IsExternal()) {
-    Local<External> ext = Local<External>::Cast(args[0]);
+  if (info[0]->IsExternal()) {
+    v8::Local<v8::External> ext = info[0].As<v8::External>();
     void* ptr = ext->Value();
     obj = static_cast<MSRect*>(ptr);
-    obj->Wrap(args.This());
-    return args.This();
+    obj->Wrap(info.This());
+    info.GetReturnValue().Set(info.This());
+    return;
   }
 
   rectObj *rect = (rectObj *)calloc(1, sizeof(rectObj));
   if(!rect) {
-    return args.This();
+    info.GetReturnValue().Set(info.This());
+    return;
   }
 
-  if (args.Length() == 0) {
+  if (info.Length() == 0) {
     rect->minx = -1;
     rect->miny = -1;
     rect->maxx = -1;
     rect->maxy = -1;
-  } else if (args.Length() == 1) {
-    Local<Object> argObj;
-    if (!args[0]->IsObject()) {
-      THROW_ERROR(TypeError, "single argument constructor requires a Rect object");
+  } else if (info.Length() == 1) {
+
+    if (!info[0]->IsObject()) {
+      Nan::ThrowError("single argument constructor requires a Rect object");
+      return;
     }
 
-    argObj = args[0]->ToObject();
+    v8::Local<v8::Object> obj = info[0].As<v8::Object>();
 
-    if (argObj->IsNull() || argObj->IsUndefined() || !MSRect::constructor->HasInstance(argObj)) {
-      THROW_ERROR(TypeError, "single argument to Rect constructor must be a Rect object");
+    if (obj->IsNull() || obj->IsUndefined() || !Nan::New(MSRect::constructor)->HasInstance(obj)) {
+      Nan::ThrowError("single argument to Rect constructor must be a Rect object");
+      return;
     }
 
-    MSRect *inRect = ObjectWrap::Unwrap<MSRect>(argObj);
+    MSRect *inRect = Nan::ObjectWrap::Unwrap<MSRect>(obj);
 
     memcpy(rect, inRect->this_, sizeof(rectObj));
 
-  } else if (args.Length() == 4) {
-    REQ_DOUBLE_ARG(0, minx);
-    REQ_DOUBLE_ARG(1, miny);
-    REQ_DOUBLE_ARG(2, maxx);
-    REQ_DOUBLE_ARG(3, maxy);
+  } else if (info.Length() == 4) {
+
+    if (!ISNUMERIC(info,0) || !ISNUMERIC(info,1) || !ISNUMERIC(info,2) || !ISNUMERIC(info,3)) {
+      Nan::ThrowTypeError("Rect constructor requires four numeric values");
+      return;
+    }
+    double minx = info[0]->NumberValue();
+    double miny = info[1]->NumberValue();
+    double maxx = info[2]->NumberValue();
+    double maxy = info[3]->NumberValue();
     /* coerce correct extent */
     if (minx > maxx) {
       t = maxx;
@@ -96,85 +104,91 @@ Handle<Value> MSRect::New(const Arguments &args) {
     rect->maxx = maxx;
     rect->maxy = maxy;
   } else {
-    THROW_ERROR(Error, "Rect objects take 0, 1 or 4 arguments.");
+    Nan::ThrowError("Rect objects take 0, 1 or 4 arguments.");
+    return;
   }
 
   obj = new MSRect(rect);
   obj->owner = true;
-  obj->Wrap(args.This());
-  return args.This();
+  obj->Wrap(info.This());
+  info.GetReturnValue().Set(info.This());
 }
 
-Handle<Value> MSRect::New(rectObj *rect) {
-  return ClosedPtr<MSRect, rectObj>::Closed(rect);
+v8::Local<v8::Value> MSRect::NewInstance(rectObj *ptr) {
+  Nan::EscapableHandleScope scope;
+  MSRect* obj = new MSRect();
+  obj->this_ = ptr;
+  v8::Local<v8::Value> ext = Nan::New<v8::External>(obj);
+  return scope.Escape(Nan::New(constructor)->GetFunction()->NewInstance(1, &ext));
 }
 
-Handle<Value> MSRect::PropertyGetter (Local<String> property, const AccessorInfo& info) {
-  MSRect *rect = ObjectWrap::Unwrap<MSRect>(info.This());
-  v8::String::AsciiValue n(property);
-  if (strcmp(*n, "minx") == 0) {
-    RETURN_NUMBER(rect->this_->minx);
-  } else if (strcmp(*n, "miny") == 0) {
-    RETURN_NUMBER(rect->this_->miny);
-  } else if (strcmp(*n, "maxx") == 0) {
-    RETURN_NUMBER(rect->this_->maxx);
-  } else if (strcmp(*n, "maxy") == 0) {
-    RETURN_NUMBER(rect->this_->maxy);
+NAN_GETTER(MSRect::PropertyGetter) {
+  MSRect *rect = Nan::ObjectWrap::Unwrap<MSRect>(info.Holder());
+
+  if (STRCMP(property, "minx")) {
+    info.GetReturnValue().Set(rect->this_->minx);
+  } else if (STRCMP(property, "miny")) {
+    info.GetReturnValue().Set(rect->this_->miny);
+  } else if (STRCMP(property, "maxx")) {
+    info.GetReturnValue().Set(rect->this_->maxx);
+  } else if (STRCMP(property, "maxy")) {
+    info.GetReturnValue().Set(rect->this_->maxy);
   }
-  return Undefined();
 }
 
-void MSRect::PropertySetter (Local<String> property, Local<Value> value, const AccessorInfo& info) {
-  MSRect *rect = ObjectWrap::Unwrap<MSRect>(info.Holder());
-  v8::String::AsciiValue n(property);
-  double t;
+NAN_SETTER(MSRect::PropertySetter) {
+  MSRect *rect = Nan::ObjectWrap::Unwrap<MSRect>(info.Holder());
 
-  if (strcmp(*n, "minx") == 0) {
+  if (STRCMP(property, "minx")) {
     rect->this_->minx = value->NumberValue();
-  } else if (strcmp(*n, "miny") == 0) {
+  } else if (STRCMP(property, "miny")) {
     rect->this_->miny = value->NumberValue();
-  } else if (strcmp(*n, "maxx") == 0) {
+  } else if (STRCMP(property, "maxx")) {
     rect->this_->maxx = value->NumberValue();
-  } else if (strcmp(*n, "maxy") == 0) {
+  } else if (STRCMP(property, "maxy")) {
     rect->this_->maxy = value->NumberValue();
   }
 }
 
-Handle<Value> MSRect::Project(const Arguments &args) {
-  MSRect *rect = ObjectWrap::Unwrap<MSRect>(args.This());
-  Local<Object> obj;
+NAN_METHOD(MSRect::Project) {
+  MSRect *rect = Nan::ObjectWrap::Unwrap<MSRect>(info.Holder());
+
+  v8::Local<v8::Object> obj;
   MSProjection *projIn;
   MSProjection *projOut;
 
-  if (args.Length() != 2) {
-    THROW_ERROR(Error, "projecting a point requires two projection arguments");
+  if (info.Length() != 2) {
+    Nan::ThrowError("projecting a rect requires two projection arguments");
+    return;
   }
 
-  if (!args[0]->IsObject()) {
-    THROW_ERROR(TypeError, "first argument to project must be Projection object");
+  if (!info[0]->IsObject()) {
+    Nan::ThrowTypeError("first argument to project must be Projection object");
+    return;
   }
 
-  obj = args[0]->ToObject();
+  obj = info[0].As<v8::Object>();
 
-  if (obj->IsNull() || obj->IsUndefined() || !MSProjection::constructor->HasInstance(obj)) {
-    THROW_ERROR(TypeError, "first argument to project must be Projection object");
+  if (obj->IsNull() || obj->IsUndefined() || !Nan::New(MSProjection::constructor)->HasInstance(obj)) {
+    Nan::ThrowTypeError("first argument to project must be Projection object");
+    return;
   }
 
-  projIn = ObjectWrap::Unwrap<MSProjection>(obj);
+  projIn = Nan::ObjectWrap::Unwrap<MSProjection>(obj);
 
-  if (!args[1]->IsObject()) {
-    THROW_ERROR(TypeError, "second argument to project must be Projection object");
+  if (!info[1]->IsObject()) {
+    Nan::ThrowTypeError("second argument to project must be Projection object");
+    return;
   }
 
-  obj = args[1]->ToObject();
+  obj = info[1].As<v8::Object>();
 
-  if (obj->IsNull() || obj->IsUndefined() || !MSProjection::constructor->HasInstance(obj)) {
-    THROW_ERROR(TypeError, "first argument to project must be Projection object");
+  if (obj->IsNull() || obj->IsUndefined() || !Nan::New(MSProjection::constructor)->HasInstance(obj)) {
+    Nan::ThrowTypeError("second argument to project must be Projection object");
+    return;
   }
 
-  projOut = ObjectWrap::Unwrap<MSProjection>(obj);
+  projOut = Nan::ObjectWrap::Unwrap<MSProjection>(obj);
 
   msProjectRect(projIn->this_, projOut->this_, rect->this_);
-
-  return Undefined();
 }

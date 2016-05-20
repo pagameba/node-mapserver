@@ -1,26 +1,20 @@
 #ifndef _NODE_MS_OUTPUTFORMAT_H
 #define _NODE_MS_OUTPUTFORMAT_H
 
-#include <v8.h>
-
-#include <node.h>
-#include <node_object_wrap.h>
-
+#include <nan.h>
 #include <mapserver.h>
+#include "utils.hpp"
 
-using namespace v8;
-using namespace node;
-
-class MSOutputFormat: public ObjectWrap {
+class MSOutputFormat: public Nan::ObjectWrap {
 public:
-  static Persistent<FunctionTemplate> constructor;
-  static void Initialize(Handle<Object> target);
-  static Handle<Value> New(const Arguments &args);
-  static Handle<Value> New(outputFormatObj *of);
-  
-  static Handle<Value> PropertyGetter (Local<String> property, const AccessorInfo& info);
-  static void PropertySetter (Local<String> property, Local<Value> value, const AccessorInfo& info);
-  
+  static Nan::Persistent<v8::FunctionTemplate> constructor;
+  static void Initialize(v8::Local<v8::Object> target);
+  static NAN_METHOD(New);
+  static v8::Local<v8::Value> NewInstance(outputFormatObj *of);
+
+  static NAN_GETTER(PropertyGetter);
+  static NAN_SETTER(PropertySetter);
+
   MSOutputFormat();
   MSOutputFormat(outputFormatObj *of);
   inline outputFormatObj *get() { return this_; }
@@ -28,6 +22,6 @@ public:
 
 private:
   ~MSOutputFormat();
-  
+
 };
 #endif

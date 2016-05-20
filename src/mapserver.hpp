@@ -1,11 +1,11 @@
-// v8
-#include <v8.h>
+#ifndef NODE_MAPSERVER_H
+#define NODE_MAPSERVER_H
 
-// node
-#include <node.h>
-
+#include <nan.h>
 #include <mapserver.h>
 #include <assert.h>
+
+#include "utils.hpp"
 
 #include "ms_error.hpp"
 #include "ms_layer.hpp"
@@ -16,31 +16,29 @@
 #include "ms_projection.hpp"
 #include "ms_rect.hpp"
 #include "ms_hashtable.hpp"
-#include "ms_common.hpp"
+// #include "ms_common.hpp"
 
 using namespace v8;
 using namespace node;
 
 namespace node_mapserver {
 
-  static Handle<Value> getVersionInt(const Arguments &args) {
-    HandleScope scope;
+  static NAN_METHOD(getVersionInt) {
+    Nan::HandleScope scope;
     int version = msGetVersionInt();
-
-    return scope.Close(Integer::New(version));
+    info.GetReturnValue().Set(version);
   }
 
-  static Handle<Value> getVersion(const Arguments &args) {
-    HandleScope scope;
+  static NAN_METHOD(getVersion) {
+    Nan::HandleScope scope;
     char * version = msGetVersion();
-
-    return scope.Close(String::New(version));
+    info.GetReturnValue().Set(Nan::New(version).ToLocalChecked());
   }
 
-  static Handle<Value> supportsThreads(const Arguments &args) {
-    HandleScope scope;
+  static NAN_METHOD(supportsThreads) {
+    Nan::HandleScope scope;
     char * version = msGetVersion();
-    char * regex = "SUPPORTS\\=THREADS";
+    char const * regex = "SUPPORTS\\=THREADS";
     int match;
     match = 0;
     if (msEvalRegex(regex, version) == MS_TRUE) {
@@ -49,48 +47,18 @@ namespace node_mapserver {
       // discard the error reported by msEvalRegex saying that it failed
       msResetErrorList();
     }
-
-    return scope.Close(Integer::New(match));
+    info.GetReturnValue().Set(match);
   }
-  
-  static Handle<Value> resetErrorList(const Arguments &args) {
+
+  static NAN_METHOD(resetErrorList) {
     msResetErrorList();
-    return Undefined();
   }
-  
-  static Handle<Value> getError(const Arguments &args) {
-    HandleScope scope;
+
+  static NAN_METHOD(getError) {
+    Nan::HandleScope scope;
     errorObj *err = msGetErrorObj();
-
-    if (err == NULL) {
-      return Null();
-    }
-    return scope.Close(MSError::New(err));
+    info.GetReturnValue().Set(MSError::NewInstance(err));
   }
-  
-  // static Handle<Value> projectPoint (const Arguments& args) {
-  //   HandleScope scope;
-  //   
-  //   REQ_EXT_ARG(0, in);
-  //   REQ_EXT_ARG(1, out);
-  //   REQ_EXT_ARG(2, point);
-  //   
-  //   int result = msProjectPoint(*in, *out, *point);
-  //   if (result == MS_FAILURE) {
-  //     THROW_ERROR(Error, "msProjectPoint failed.");
-  //   }
-  //   Local<Array> coords = Array::New(2); 
-  //   
-  //   //TODO: args?https://groups.google.com/forum/#!topic/v8-users/-hQ5hjNowZs
-  //   Handle<Number> index = Number::New(0); 
-  //   Handle<String> val = Float::New(point->x); 
-  //   coords->Set( index, val); 
-  //   index = Number::New(1); 
-  //   val = Float::New(point->y); 
-  //   coords->Set( index, val); 
-  //   
-  //   return scope.Close(coords);
-  // }
-  
-
 }
+
+#endif
