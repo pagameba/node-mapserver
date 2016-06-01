@@ -146,9 +146,10 @@ NAN_METHOD(MSLayer::GetGridIntersectionCoordinates) {
   v8::Local<v8::Array> top = Nan::New<v8::Array>(values->nTop);
   v8::Local<v8::Array> right = Nan::New<v8::Array>(values->nRight);
   v8::Local<v8::Array> bottom = Nan::New<v8::Array>(values->nBottom);
-  v8::Local<v8::Object> val = Nan::New<v8::Object>();
+  v8::Local<v8::Object> val;
 
   for (i=0; i<values->nLeft; i++) {
+    val = Nan::New<v8::Object>();
     val->Set(Nan::New("x").ToLocalChecked(), Nan::New(values->pasLeft[i].x));
     val->Set(Nan::New("y").ToLocalChecked(), Nan::New(values->pasLeft[i].y));
     val->Set(Nan::New("label").ToLocalChecked(), Nan::New(values->papszLeftLabels[i]).ToLocalChecked());
