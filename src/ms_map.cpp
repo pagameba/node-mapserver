@@ -410,14 +410,17 @@ void MSMap::EIO_AfterDrawMap(uv_work_t *req) {
   Nan::HandleScope scope;
 
   drawmap_baton *baton = static_cast<drawmap_baton *>(req->data);
-
+  Nan::AsyncResource resource("mapserver:callback");
   if (baton->data != NULL) {
     v8::Local<v8::Value> buffer = Nan::NewBuffer(baton->data, baton->size, FreeImageBuffer, NULL).ToLocalChecked();
     v8::Local<v8::Value> argv[2] = { Nan::Null(), buffer };
-    Nan::MakeCallback(Nan::GetCurrentContext()->Global(), Nan::New(baton->cb), 2, argv);
+    Nan::Callback *callback = new Nan::Callback(Nan::New(baton->cb));
+    callback->Call(Nan::GetCurrentContext()->Global(), 2, argv, &resource);
+
   } else {
     v8::Local<v8::Value> argv[1] = { MSError::NewInstance(baton->error) };
-    Nan::MakeCallback(Nan::GetCurrentContext()->Global(), Nan::New(baton->cb), 1, argv);
+    Nan::Callback *callback = new Nan::Callback(Nan::New(baton->cb));
+    callback->Call(Nan::GetCurrentContext()->Global(), 1, argv, &resource);
   }
 
   baton->map->Unref();
@@ -480,6 +483,10 @@ NAN_METHOD(MSMap::DrawMap) {
       argv[0] = MSError::NewInstance(err);
       argv[1] = Nan::Null();
     }
-    Nan::MakeCallback(Nan::GetCurrentContext()->Global(), info[0].As<v8::Function>(), 2, argv);
+
+    Nan::AsyncResource resource("mapserver:callback");
+
+    Nan::Callback *callback = new Nan::Callback(info[0].As<v8::Function>());
+    callback->Call(Nan::GetCurrentContext()->Global(), 2, argv, &resource);
   }
 }

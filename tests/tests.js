@@ -206,7 +206,7 @@ describe('mapserver', function() {
     assert.equal(map.height, 300, 'getting map height failed');
     assert.equal(map.cellsize, 0, 'default map cellsize should be 0, got ' + map.cellsize);
     assert.equal(map.scaledenom, -1, 'default map scaledenom should be -1, got ' + map.scaledenom);
-    assert.equal(map.maxsize, 2048, 'getting map maxsize failed');
+    assert.equal(map.maxsize, 4096, 'getting map maxsize failed');
     assert.equal(map.units, mapserver.MS_DD, 'getting map units failed');
     assert.equal(map.resolution, 72, 'getting map resolution failed');
     assert.equal(map.defresolution, 72, 'getting map defresolution failed');
