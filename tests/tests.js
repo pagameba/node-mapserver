@@ -28,6 +28,7 @@ var fs = require('fs');
 var path = require('path');
 var datadir = path.join(__dirname, 'data');
 var mapfile = path.join(datadir, 'test.map');
+var badmapfile = path.join(datadir, 'bad.map');
 var symbolfile = path.join(datadir, 'symbolset.txt');
 var nomapfile = 'missing.map';
 var map;
@@ -206,7 +207,7 @@ describe('mapserver', function() {
     assert.equal(map.height, 300, 'getting map height failed');
     assert.equal(map.cellsize, 0, 'default map cellsize should be 0, got ' + map.cellsize);
     assert.equal(map.scaledenom, -1, 'default map scaledenom should be -1, got ' + map.scaledenom);
-    assert.equal(map.maxsize, 2048, 'getting map maxsize failed');
+    assert.equal(map.maxsize, 4096, 'getting map maxsize failed');
     assert.equal(map.units, mapserver.MS_DD, 'getting map units failed');
     assert.equal(map.resolution, 72, 'getting map resolution failed');
     assert.equal(map.defresolution, 72, 'getting map defresolution failed');
@@ -533,6 +534,8 @@ describe('mapserver', function() {
 
       var defaultLayerText = 'LAYER\n  NAME "foo"\n  STATUS OFF\n  TILEITEM "location"\n  UNITS METERS\nEND # LAYER\n\n';
 
+console.log(layer)
+
       assert.equal(layer.toString(), defaultLayerText, 'unexpected default layer text ' + layer.toString());
     });
 
@@ -570,6 +573,26 @@ describe('mapserver', function() {
       });
     });
   });
+
+  it('should not segfault', function(done) {
+    var v = mapserver.getVersionInt();
+    assert.doesNotThrow(function() {
+      map = new mapserver.Map(badmapfile);
+    }, Error, 'loading a invalid map file should throw an error.');
+    
+    map.drawMap(function(drawError, buffer) {
+      if (drawError) {
+        console.log('error', drawError)
+        assert.ok(true, 'Returned error from bad map')
+        done();
+      } else {
+        fs.writeFileSync(path.join(__dirname, 'data', 'bad_out_'+v+'.png'), buffer);
+
+        assert.ok(false, 'Did not receive error drawing map.');
+      }
+    });
+  });
+
 
   it('should get the label cache', function(done) {
     assert.doesNotThrow(function() {

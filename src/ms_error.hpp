@@ -13,9 +13,12 @@ class MSError: public Nan::ObjectWrap {
     static NAN_METHOD(New);
     static v8::Local<v8::Value> NewInstance(errorObj* err_ptr);
 
+    static NAN_METHOD(ToString);
+
     MSError();
     MSError(errorObj *err);
     inline errorObj *get() { return this_; }
+    errorObj *this_;
 
   protected:
     static NAN_PROPERTY_GETTER(NamedPropertyGetter);
@@ -24,7 +27,6 @@ class MSError: public Nan::ObjectWrap {
 
   private:
     ~MSError();
-    errorObj *this_;
 };
 
 #endif
