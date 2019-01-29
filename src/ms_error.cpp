@@ -6,6 +6,8 @@ void MSError::Initialize(v8::Local<v8::Object> target) {
   v8::Local<v8::FunctionTemplate> tpl = Nan::New <v8::FunctionTemplate>(MSError::New);
   tpl->InstanceTemplate()->SetInternalFieldCount(1);
   tpl->SetClassName(Nan::New("MSError").ToLocalChecked());
+  Nan::SetPrototypeMethod(tpl, "toString", ToString);
+  Nan::SetPrototypeMethod(tpl, "toDetailString", ToString);
 
   Nan::SetNamedPropertyHandler(
         tpl->InstanceTemplate()
@@ -50,6 +52,11 @@ v8::Local<v8::Value> MSError::NewInstance(errorObj *err_ptr) {
   err->this_ = err_ptr;
   v8::Local<v8::Value> ext = Nan::New<v8::External>(err);
   return scope.Escape(Nan::New(constructor)->GetFunction()->NewInstance(1, &ext));
+}
+
+NAN_METHOD(MSError::ToString) {
+  MSError *err = Nan::ObjectWrap::Unwrap<MSError>(info.Holder());
+  info.GetReturnValue().Set(Nan::New(err->this_->message).ToLocalChecked());
 }
 
 NAN_PROPERTY_GETTER(MSError::NamedPropertyGetter) {
